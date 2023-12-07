@@ -1,8 +1,9 @@
 import express from 'express';
 import cors from 'cors'; 
 import indexRoute from './routes/index.js';
-import usersRoute from './routes/users.js';
+import fellowsRoute from './routes/fellow.js';
 import bodyParser from 'body-parser';
+import { connect } from './config/connectionState.js'
 
 const app = express();
 const PORT = process.env.PORT || 3000;
@@ -17,8 +18,12 @@ app.use(express.json());
 
 
 
+//connect database
+connect();
+
+
 app.use('/', indexRoute);
-app.use('/users', usersRoute);
+app.use('/fellows', fellowsRoute);
 
 
 
