@@ -13,6 +13,17 @@ const trainingProviderSchema = new mongoose.Schema ({
     address: String,
     password: String,
     googleId: String,
+    survey: {
+        computerAccess: Boolean,
+        internetAccess: Boolean,
+        gender: String,
+        employmentStatus: String,
+        trainingHours: String,
+        age: String,
+        preferedCourse: String,
+        yearsOfExperience: String,
+        currentEducation: String, 
+      },
 });
 
 trainingProviderSchema.plugin(passportLocalMongoose);
