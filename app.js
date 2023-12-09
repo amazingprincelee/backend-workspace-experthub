@@ -1,7 +1,8 @@
 import express from 'express';
 import cors from 'cors'; 
 import indexRoute from './routes/index.js';
-import fellowsRoute from './routes/fellow.js';
+import ApplicantRoute from './routes/applicantRoute.js';
+import trainingProviderRoute from './routes/trainingProviderRoute.js'
 import bodyParser from 'body-parser';
 import { connect } from './config/connectionState.js'
 
@@ -23,7 +24,9 @@ connect();
 
 
 app.use('/', indexRoute);
-app.use('/fellows', fellowsRoute);
+app.use('/applicant', ApplicantRoute);
+app.use('/training-provider', trainingProviderRoute);
+
 
 
 
