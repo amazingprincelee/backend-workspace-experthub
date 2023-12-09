@@ -48,12 +48,22 @@ router.post('/register', (req, res) => {
     if (err) {
       console.error(err);
       return res.status(500).json({ message: 'Registration failed. Please try again later.' });
+    }else{
+      passport.authenticate("local")(req, res, () => {
+        res.status(201).json({
+          message: 'Successfully registered',
+          user: {
+            id: user._id,
+            username: user.username,
+            email: user.email,
+            // Add more user properties as needed
+          },
+        });
+        console.log("Successful Registered");
+      });
     }
 
-    passport.authenticate("local")(req, res, () => {
-      res.redirect("/assessment");
-      console.log("successful");
-    });
+    
   });
 });
 

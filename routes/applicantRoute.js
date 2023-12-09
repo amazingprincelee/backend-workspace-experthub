@@ -24,8 +24,8 @@ const router = express.Router();
 // ];
 
 
-router.post('/register',  (req, res) => {
-  
+router.post('/register', (req, res) => {
+
 
   // Process form data and store in the database
   const { fullname, email, phone, country, state, address, password } = req.body;
@@ -51,12 +51,22 @@ router.post('/register',  (req, res) => {
     if (err) {
       console.error(err);
       return res.status(500).json({ message: 'Registration failed. Please try again later.' });
+    }else{
+      passport.authenticate("local")(req, res, () => {
+        res.status(201).json({
+          message: 'Successfully registered',
+          user: {
+            id: user._id,
+            username: user.username,
+            email: user.email,
+            // Add more user properties as needed
+          },
+        });
+        console.log("successful");
+      });
     }
 
-    passport.authenticate("local")(req, res, () => {
-      res.redirect("/assessment");
-      console.log("successful");
-    });
+  
   });
 
 

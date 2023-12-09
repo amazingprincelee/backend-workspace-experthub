@@ -1,4 +1,6 @@
 import express from 'express';
+import session from 'express-session';
+import passport from 'passport';
 import cors from 'cors'; 
 import indexRoute from './routes/index.js';
 import ApplicantRoute from './routes/applicantRoute.js';
@@ -17,7 +19,14 @@ app.use(express.static('public'))
 app.set('view engine', 'ejs');
 app.use(express.json());
 
+app.use(session({
+  secret: "Our little secret.",
+  resave: false,
+  saveUninitialized: false
+}));
 
+app.use(passport.initialize());
+app.use(passport.session());
 
 //connect database
 connect();
