@@ -4,9 +4,11 @@ import passportLocalMongoose from "passport-local-mongoose";
 import findOrCreate from 'mongoose-findorcreate';
 import { Strategy as GoogleStrategy } from 'passport-google-oauth20';
 
+
+
 const trainingProviderSchema = new mongoose.Schema ({
+    username: String,
     fullname: String,
-    email: String,
     phone: Number,
     country: String,
     state: String,

@@ -1,3 +1,4 @@
+import 'dotenv/config.js'
 import express from 'express';
 import session from 'express-session';
 import passport from 'passport';
@@ -7,6 +8,8 @@ import ApplicantRoute from './routes/applicantRoute.js';
 import trainingProviderRoute from './routes/trainingProviderRoute.js'
 import bodyParser from 'body-parser';
 import { connect } from './config/connectionState.js'
+
+
 
 const app = express();
 const PORT = process.env.PORT || 3000;

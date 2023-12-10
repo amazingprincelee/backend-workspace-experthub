@@ -6,9 +6,10 @@ import { Strategy as GoogleStrategy } from 'passport-google-oauth20';
 
 
 
+
 const applicantSchema = new mongoose.Schema ({
+    username: String,
     fullname: String,
-    email: String,
     phone: Number,
     country: String,
     state: String,

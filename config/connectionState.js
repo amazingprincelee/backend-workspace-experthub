@@ -1,4 +1,3 @@
-// connectionState.js
 import mongoose from 'mongoose';
 
 const connectionState = {
