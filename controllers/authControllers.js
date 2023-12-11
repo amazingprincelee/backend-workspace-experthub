@@ -1,6 +1,6 @@
 import passport from "passport";
-import Applicant from "../models/applicantModel.js";
-import TrainingProvider from "../models/trainingProvider.js";
+import User from "../models/expertHubUsers.js";
+
 
 const applicant = {
   register: async (req, res) => {
@@ -15,16 +15,24 @@ const applicant = {
         state,
         address,
         password,
+        role: "student"
       };
 
-      await Applicant.register(newApplicant, password, (err, user) => {
+      await User.register(newApplicant, password, (err, user) => {
         if (err) {
           console.error(err);
           return res.status(500).json({ message: 'Internal Server Error' });
         } else {
           passport.authenticate('local')(req, res, () => {
-            console.log("user is registered");
-            res.status(201).json({ message: 'New Applicant registered' });
+            res.status(201).json({
+              message: 'Successfully registered',
+              user: {
+                id: user._id,
+                username: user.username,
+                email: user.email,
+                role: user.role,
+              },
+            });
           });
         }
       });
@@ -61,9 +69,9 @@ const trainingProvider = {
   register: (req, res) => {
     try {
       // Process form data and store in the database
-      const { fullname, email, phone, country, state, address, password } = req.body;
+      const { fullname, username, phone, country, state, address, password } = req.body;
 
-      const newApplicant = new Applicant({
+      const newTrainer = {
         username,
         fullname,
         phone,
@@ -71,12 +79,13 @@ const trainingProvider = {
         state,
         address,
         password,
-      });
+        role: "Tutor"
+      };
 
-      console.log(trainingProviderInfo);
+      
 
-      // Change the model from "Applicant" to "TrainingProvider"
-      TrainingProvider.register(trainingProviderInfo, password, (err, user) => {
+      
+      User.register(newTrainer, password, (err, user) => {
         if (err) {
           console.error(err);
           return res.status(500).json({ message: 'Registration failed. Please try again later.' });
@@ -88,7 +97,7 @@ const trainingProvider = {
                 id: user._id,
                 username: user.username,
                 email: user.email,
-                // Add more user properties as needed
+                role: user.role,
               },
             });
             console.log('Successful Registered');

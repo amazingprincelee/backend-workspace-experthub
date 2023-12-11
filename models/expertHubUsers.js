@@ -7,7 +7,7 @@ import { Strategy as GoogleStrategy } from 'passport-google-oauth20';
 
 
 
-const applicantSchema = new mongoose.Schema ({
+const userSchema = new mongoose.Schema ({
     username: String,
     fullname: String,
     phone: Number,
@@ -15,6 +15,7 @@ const applicantSchema = new mongoose.Schema ({
     state: String,
     address: String,
     password: String,
+    role: String,
     googleId: String,
     survey: {
       computerAccess: Boolean,
@@ -31,19 +32,19 @@ const applicantSchema = new mongoose.Schema ({
     
   });
   
-  applicantSchema.plugin(passportLocalMongoose);
-  applicantSchema.plugin(findOrCreate);
+  userSchema.plugin(passportLocalMongoose);
+  userSchema.plugin(findOrCreate);
   
-  const Applicant = new mongoose.model("Applicant", applicantSchema);
+  const User = new mongoose.model("User", userSchema);
   
-  passport.use(Applicant.createStrategy());
+  passport.use(User.createStrategy());
   
   passport.serializeUser(function(user, done) {
     done(null, user.id);
   });
   
   passport.deserializeUser(function(id, done) {
-    Applicant.findById(id)
+    User.findById(id)
       .exec()
       .then(user => {
         done(null, user);
@@ -62,10 +63,10 @@ const applicantSchema = new mongoose.Schema ({
   function(accessToken, refreshToken, profile, cb) {
     console.log(profile);
 
-    Applicant.findOrCreate({ googleId: profile.id }, function (err, user) {
+    User.findOrCreate({ googleId: profile.id }, function (err, user) {
       return cb(err, user);
     });
   }
 ));
 
-  export default Applicant;
+  export default User;

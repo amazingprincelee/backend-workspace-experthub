@@ -9,7 +9,7 @@ const connectionState = {
 const connect = async () => {
   connectionState.connecting = true;
   try {
-    await mongoose.connect(`mongodb://127.0.0.1:27017/trainingsDB`)
+    await mongoose.connect(`mongodb://127.0.0.1:27017/expertHub`)
     .then(() => console.log('Connected!'));
     connectionState.connected = true;
   } catch (error) {

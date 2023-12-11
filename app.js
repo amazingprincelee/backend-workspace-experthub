@@ -3,9 +3,7 @@ import express from 'express';
 import session from 'express-session';
 import passport from 'passport';
 import cors from 'cors'; 
-import indexRoute from './routes/index.js';
-import ApplicantRoute from './routes/applicantRoute.js';
-import trainingProviderRoute from './routes/trainingProviderRoute.js'
+import authRoute from './routes/authRoute.js';
 import bodyParser from 'body-parser';
 import { connect } from './config/connectionState.js'
 
@@ -35,9 +33,8 @@ app.use(passport.session());
 connect();
 
 
-app.use('/', indexRoute);
-app.use('/applicant', ApplicantRoute);
-app.use('/training-provider', trainingProviderRoute);
+app.use('/', authRoute);
+
 
 
 
