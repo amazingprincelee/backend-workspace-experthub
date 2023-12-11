@@ -29,6 +29,13 @@ const userSchema = new mongoose.Schema ({
       currentEducation: String,
       joiningAccomplishment: String,
     },
+
+    aptitudeTest: {
+      dadicate6Hours: String,
+      describeSelf: String,
+      personality: String,
+      doForFun: String,
+    },
     
   });
   
