@@ -90,7 +90,7 @@ const applicant = {
   aptitudeTest: async (req, res) => {
     try {
       const {
-      dadicate6Hours,
+      willDadicate6Hours,
       describeSelf,
       personality,
       doForFun,
@@ -100,7 +100,7 @@ const applicant = {
       if (foundUser) {
         // Update the aptitudeTest data in the user document
         foundUser.aptitudeTest = {
-          dadicate6Hours,
+          willDadicate6Hours,
           describeSelf,
           personality,
           doForFun,
@@ -213,7 +213,7 @@ const trainingProvider = {
   aptitudeTest: async (req, res) => {
     try {
       const {
-      dadicate6Hours,
+      willDadicate6Hours,
       describeSelf,
       personality,
       doForFun,
@@ -223,7 +223,7 @@ const trainingProvider = {
       if (foundUser) {
         // Update the aptitudeTest data in the user document
         foundUser.aptitudeTest = {
-          dadicate6Hours,
+          willDadicate6Hours,
           describeSelf,
           personality,
           doForFun,

@@ -31,7 +31,7 @@ const userSchema = new mongoose.Schema ({
     },
 
     aptitudeTest: {
-      dadicate6Hours: String,
+      willDadicate6Hours: String,
       describeSelf: String,
       personality: String,
       doForFun: String,
