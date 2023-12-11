@@ -1,5 +1,5 @@
 import passport from "passport";
-import User from "../models/expertHubUsers.js";
+import User from "../models/user.js";
 
 
 const applicant = {
@@ -58,6 +58,28 @@ const applicant = {
       } = req.body;
 
       const foundUser = await User.findById(req.user.id);
+      if (foundUser) {
+        // Update the survey data in the user document
+        foundUser.survey = {
+          computerAccess,
+          internetAccess,
+          gender,
+          employmentStatus,
+          trainingHours,
+          age,
+          preferedCourse,
+          yearsOfExperience,
+          currentEducation,
+          joiningAccomplishment,
+        };
+
+        // Save the user document with the updated survey data
+        await foundUser.save();
+
+        return res.status(200).json({ message: 'Survey data saved successfully' });
+      } else {
+        return res.status(404).json({ message: 'User not found' });
+      }
     } catch (error) {
       console.error(error);
       return res.status(500).json({ message: 'Unexpected error during survey processing' });
@@ -107,6 +129,50 @@ const trainingProvider = {
     } catch (error) {
       console.error(error);
       return res.status(500).json({ message: 'Unexpected error during registration' });
+    }
+  },
+
+  survey: async (req, res) => {
+    try {
+      const {
+        computerAccess,
+        internetAccess,
+        gender,
+        employmentStatus,
+        trainingHours,
+        age,
+        preferedCourse,
+        yearsOfExperience,
+        currentEducation,
+        joiningAccomplishment,
+      } = req.body;
+
+      const foundUser = await User.findById(req.user.id);
+      if (foundUser) {
+        // Update the survey data in the user document
+        foundUser.survey = {
+          computerAccess,
+          internetAccess,
+          gender,
+          employmentStatus,
+          trainingHours,
+          age,
+          preferedCourse,
+          yearsOfExperience,
+          currentEducation,
+          joiningAccomplishment,
+        };
+
+        // Save the user document with the updated survey data
+        await foundUser.save();
+
+        return res.status(200).json({ message: 'Survey data saved successfully' });
+      } else {
+        return res.status(404).json({ message: 'User not found' });
+      }
+    } catch (error) {
+      console.error(error);
+      return res.status(500).json({ message: 'Unexpected error during survey processing' });
     }
   },
 };
