@@ -2,12 +2,12 @@ import passport from "passport";
 import User from "../models/user.js";
 
 
-const applicant = {
+const student = {
   register: async (req, res) => {
     try {
       const { username, fullname, phone, country, state, address, password } = req.body;
 
-      const newApplicant = {
+      const newStudent = {
         username,
         fullname,
         phone,
@@ -18,15 +18,16 @@ const applicant = {
         role: "student"
       };
 
-      await User.register(newApplicant, password, (err, user) => {
+      await User.register(newStudent, password, (err, user) => {
         if (err) {
           console.error(err);
           return res.status(500).json({ message: 'Internal Server Error' });
         } else {
           passport.authenticate('local')(req, res, () => {
             res.status(201).json({
-              message: 'Successfully registered',
+              message: 'Successfully Registered a Student',
               user: {
+                fullName: user.fullname,
                 id: user._id,
                 username: user.username,
                 email: user.email,
@@ -120,13 +121,13 @@ const applicant = {
   },
 };
 
-const trainingProvider = {
+const tutor = {
   register: (req, res) => {
     try {
       // Process form data and store in the database
       const { fullname, username, phone, country, state, address, password } = req.body;
 
-      const newTrainer = {
+      const newTutor = {
         username,
         fullname,
         phone,
@@ -140,15 +141,16 @@ const trainingProvider = {
       
 
       
-      User.register(newTrainer, password, (err, user) => {
+      User.register(newTutor, password, (err, user) => {
         if (err) {
           console.error(err);
           return res.status(500).json({ message: 'Registration failed. Please try again later.' });
         } else {
           passport.authenticate('local')(req, res, () => {
             res.status(201).json({
-              message: 'Successfully registered',
+              message: 'Successfully registered a Tutor',
               user: {
+                fullName: user.fullname,
                 id: user._id,
                 username: user.username,
                 email: user.email,
@@ -286,6 +288,51 @@ const admin = {
     }
   },
 
+};
+
+const superAdmin = {
+  register: (req, res) => {
+    try {
+      // Process form data and store in the database
+      const { fullname, username, phone, country, state, address, password } = req.body;
+
+      const newAdmin = {
+        username,
+        fullname,
+        phone,
+        country,
+        state,
+        address,
+        password,
+        role: "Super Admin"
+      };
+    
+      
+      User.register(newAdmin, password, (err, user) => {
+        if (err) {
+          console.error(err);
+          return res.status(500).json({ message: 'Registration failed. Please try again later.' });
+        } else {
+          passport.authenticate('local')(req, res, () => {
+            res.status(201).json({
+              message: 'Successfully registered',
+              user: {
+                id: user._id,
+                username: user.username,
+                email: user.email,
+                role: user.role,
+              },
+            });
+            console.log('Successful Registered');
+          });
+        }
+      });
+    } catch (error) {
+      console.error(error);
+      return res.status(500).json({ message: 'Unexpected error during registration' });
+    }
+  },
+
 }
 
-export { applicant, trainingProvider, admin };
+export { student, tutor, admin, superAdmin };
