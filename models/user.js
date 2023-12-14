@@ -38,6 +38,13 @@ const userSchema = new mongoose.Schema({
     doForFun: String,
   },
 
+  isVerified: {
+    type: Boolean,
+    default: false, 
+  },
+
+  verificationCode: String,
+
 });
 
 userSchema.plugin(passportLocalMongoose);

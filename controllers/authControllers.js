@@ -1,5 +1,9 @@
 import passport from "passport";
 import User from "../models/user.js";
+import { generateVerificationCode }  from "../utils/verficationCodeGenerator.js";
+import { sendVerificationEmail } from '../utils/nodeMailer.js'
+
+const verificationCode = generateVerificationCode();
 
 
 const student = {
@@ -15,14 +19,18 @@ const student = {
         state,
         address,
         password,
-        role: "student"
+        role: "student",
+        verificationCode
       };
 
-      await User.register(newStudent, password, (err, user) => {
+      await User.register(newStudent, password, async (err, user) => {
         if (err) {
           console.error(err);
           return res.status(500).json({ message: 'Internal Server Error' });
         } else {
+          // Send verification code via email
+           await sendVerificationEmail(user.username, verificationCode);
+
           passport.authenticate('local')(req, res, () => {
             res.status(201).json({
               message: 'Successfully Registered a Student',
