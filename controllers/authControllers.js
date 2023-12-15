@@ -7,6 +7,9 @@ const verificationCode = generateVerificationCode();
 
 
 const student = {
+
+  //Post Routes
+
   register: async (req, res) => {
     try {
       const { username, fullname, phone, country, state, address, password } = req.body;
@@ -32,16 +35,10 @@ const student = {
            await sendVerificationEmail(user.username, verificationCode);
 
           passport.authenticate('local')(req, res, () => {
-            res.status(201).json({
-              message: 'Successfully Registered a Student',
-              user: {
-                fullName: user.fullname,
-                id: user._id,
-                username: user.username,
-                email: user.email,
-                role: user.role,
-              },
-            });
+
+            // Redirect to verify route 
+            res.status(200).json({message:"Verification code sent to email", redirectTo: "/student/verify"})
+            
           });
         }
       });
@@ -127,13 +124,51 @@ const student = {
       return res.status(500).json({ message: 'Unexpected error during Aptitude Test processing' });
     }
   },
+
+
+   // Verify 
+   verify: async (req, res) => {
+    try {
+      const { verifyCode } = req.body;
+
+      // Check if the user is authenticated
+      if (!req.isAuthenticated()) {
+        return res.status(401).json({ message: 'Unauthorized' });
+      }
+
+      // Check if the verification code matches the one in the database
+      if (req.user.verificationCode !== verifyCode) {
+        return res.status(400).json({ message: 'Invalid verification code' });
+      }
+
+      // Update user's verification status
+      req.user.isVerified = true;
+      req.user.verificationCode = null; //clear the code after successful verification
+      await req.user.save();
+
+      // Return information to populate dashboard
+    return res.status(201).json({
+      message: 'Successfully Registered a Student',
+      user: {
+        fullName: req.user.fullname,
+        id: req.user._id,
+        username: req.user.username,
+        email: req.user.email,
+        role: req.user.role,
+      },
+    });
+
+    } catch (error) {
+      console.error(error);
+      return res.status(500).json({ message: 'Unexpected error during verification' });
+    }
+  },
 };
 
 const tutor = {
-  register: (req, res) => {
+  register:  async (req, res) => {
     try {
-      // Process form data and store in the database
-      const { fullname, username, phone, country, state, address, password } = req.body;
+      const { username, fullname, phone, country, state, address, password } = req.body;
 
       const newTutor = {
         username,
@@ -143,29 +178,23 @@ const tutor = {
         state,
         address,
         password,
-        role: "Tutor"
+        role: "tutor",
+        verificationCode
       };
 
-      
-
-      
-      User.register(newTutor, password, (err, user) => {
+      await User.register(newTutor, password, async (err, user) => {
         if (err) {
           console.error(err);
-          return res.status(500).json({ message: 'Registration failed. Please try again later.' });
+          return res.status(500).json({ message: 'Internal Server Error' });
         } else {
+          // Send verification code via email
+           await sendVerificationEmail(user.username, verificationCode);
+
           passport.authenticate('local')(req, res, () => {
-            res.status(201).json({
-              message: 'Successfully registered a Tutor',
-              user: {
-                fullName: user.fullname,
-                id: user._id,
-                username: user.username,
-                email: user.email,
-                role: user.role,
-              },
-            });
-            console.log('Successful Registered');
+
+            // Redirect to verify route 
+            res.status(200).json({message:"Verification code sent to email", redirectTo: "/tutor/verify"})
+            
           });
         }
       });

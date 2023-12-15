@@ -32,7 +32,12 @@ const courseSchema = new mongoose.Schema({
         student: String,
         courses: String,
         courseCategory: String,
-    }
+    },
+
+    enrolledStudents: [{
+        type: mongoose.Schema.Types.ObjectId,
+        ref: 'User',
+    }],
 
 });
 

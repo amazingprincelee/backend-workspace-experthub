@@ -6,10 +6,12 @@ import { student, tutor, admin, superAdmin } from '../controllers/authController
 
 //student registration and login routes
 router.post('/student/register', student.register);
+router.post('/student/verify', student.verify);
 router.post('/student/survey', student.survey);
 router.post('/student/aptitude-test', student.aptitudeTest);
 //tutor registration and login routes
 router.post('/tutor/register', tutor.register);
+router.post('/tutor/verify', student.verify);
 router.post('/tutor/survey', tutor.survey);
 router.post('/tutor/aptitude-test', tutor.aptitudeTest);
 //admin registeration and login routes
