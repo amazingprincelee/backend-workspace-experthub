@@ -22,11 +22,13 @@ router.post('/student/login', student.login);
 router.post('/student/verify', student.verify);
 router.post('/student/survey', student.survey);
 router.post('/student/aptitude-test', student.aptitudeTest);
+router.put("/student/profile", student.profile);
 //tutor registration and login routes
 router.post('/tutor/register', tutor.register);
 router.post('/tutor/verify', student.verify);
 router.post('/tutor/survey', tutor.survey);
 router.post('/tutor/aptitude-test', tutor.aptitudeTest);
+router.put("/tutor/profile", tutor.profile);
 //admin registeration and login routes
 router.post('/admin/register', admin.register);
 //superAdmin registeration and login routes
@@ -38,7 +40,11 @@ router.get("/courses/category/:category", courseController.getCourseByCategory);
 router.get("/courses", courseController.getAllCourses);
 router.post("/add-course", courseController.addCourse);
 //course enroll route
-router.post('/enroll/:courseId', courseController.enrollCourse)
+router.post('/enroll/:courseId', courseController.enrollCourse);
+
+
+
+
 
 
 

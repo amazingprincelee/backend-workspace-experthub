@@ -9,10 +9,10 @@ const connectionState = {
 const connect = async () => {
   connectionState.connecting = true;
 
-//mongodb+srv://evansb45:7QeF3uOMZ26lnFUt@theplaint.u7pbgty.mongodb.net/?retryWrites=true&w=majority
+//
 
   try {
-    await mongoose.connect(`mongodb://127.0.0.1:27017/expertHub`)
+    await mongoose.connect(`mongodb+srv://${process.env.DB_USERNAME}:${process.env.DB_PASSWORD}@theplaint.u7pbgty.mongodb.net/?retryWrites=true&w=majority`)
     .then(() => console.log('Connected!'));
     connectionState.connected = true;
   } catch (error) {
