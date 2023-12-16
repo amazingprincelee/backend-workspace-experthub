@@ -34,6 +34,13 @@ const courseController = {
             return res.status(401).json({ message: 'Please log in to add a course' });
         }
 
+        // Check if the user has the necessary role to add a course
+        const allowedRoles = ['tutor', 'admin', 'super admin'];
+        if (!req.user || !allowedRoles.includes(req.user.role)) {
+            return res.status(403).json({ message: 'Permission denied. Only tutors and admins can add courses' });
+        }
+
+
         const newCourse = {
             instructor: req.user.fullname,
             title,

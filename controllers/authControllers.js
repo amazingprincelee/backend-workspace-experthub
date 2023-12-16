@@ -95,7 +95,13 @@ const student = {
       } = req.body;
 
       const foundUser = await User.findById(req.user.id);
+
       if (foundUser) {
+        // Check if the user has already submitted a survey
+        if (foundUser.survey) {
+          return res.status(400).json({ message: 'Survey already submitted' });
+        }
+
         // Update the survey data in the user document
         foundUser.survey = {
           computerAccess,
@@ -215,8 +221,13 @@ const tutor = {
 
       await User.register(newTutor, password, async (err, user) => {
         if (err) {
-          console.error(err);
-          return res.status(500).json({ message: 'Internal Server Error' });
+          console.error(err);if (err.name === 'UserExistsError') {
+            // Handle the case where the user is already registered
+            return res.status(400).json({ message: 'User already registered' });
+          } else {
+            console.error(err);
+            return res.status(500).json({ message: 'Internal Server Error' });
+          }
         } else {
           // Send verification code via email
            await sendVerificationEmail(user.username, verificationCode);
@@ -277,9 +288,14 @@ const tutor = {
         currentEducation,
         joiningAccomplishment,
       } = req.body;
-
       const foundUser = await User.findById(req.user.id);
+
       if (foundUser) {
+        // Check if the user has already submitted a survey
+        if (foundUser.survey) {
+          return res.status(400).json({ message: 'Survey already submitted' });
+        }
+
         // Update the survey data in the user document
         foundUser.survey = {
           computerAccess,
