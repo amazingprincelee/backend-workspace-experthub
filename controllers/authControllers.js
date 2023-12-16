@@ -26,8 +26,13 @@ const student = {
 
       await User.register(newStudent, password, async (err, user) => {
         if (err) {
-          console.error(err);
-          return res.status(500).json({ message: 'Internal Server Error' });
+          console.error(err);if (err.name === 'UserExistsError') {
+            // Handle the case where the user is already registered
+            return res.status(400).json({ message: 'User already registered' });
+          } else {
+            console.error(err);
+            return res.status(500).json({ message: 'Internal Server Error' });
+          }
         } else {
           // Send verification code via email
            await sendVerificationEmail(user.username, verificationCode);
