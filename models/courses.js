@@ -1,24 +1,23 @@
 import mongoose from "mongoose";
 
 
-
 const courseSchema = new mongoose.Schema({
-    courseTitle: String,
-    coursePhoto: String,
-    courseCategory: String,
+    title: String,
+    file: String,
+    category: String,
     privacy: {
         student: String,
     },
-    aboutCourse: String,
+    about: String,
     instructor: String,
     duration: Number,
     type: String,
-    startDate:Date,
-    endDate: Date,
-    startTime: Date,
-    endTime: Date,
+    startDate: String,
+    endDate: String,
+    startTime: String,
+    endTime: String,
     fee: Number,
-    originalFee: Number,
+    strikedFee: Number,
     resources: {
         title: String,
         privacy: {
@@ -39,7 +38,18 @@ const courseSchema = new mongoose.Schema({
         ref: 'User',
     }],
 
+    videos: [{
+        title: String,
+        videoUrl: String,
+    }],
+
 });
+
+
+//populate enrolled students
+courseSchema.methods.populateEnrolledStudents = async function () {
+    await this.populate('enrolledStudents').execPopulate();
+};
 
 
 

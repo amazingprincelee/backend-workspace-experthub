@@ -8,8 +8,6 @@ const verificationCode = generateVerificationCode();
 
 const student = {
 
-  //Post Routes
-
   register: async (req, res) => {
     try {
       const { username, fullname, phone, country, state, address, password } = req.body;
@@ -47,6 +45,34 @@ const student = {
       return res.status(500).json({ message: 'Unexpected error during registration' });
     }
   },
+
+  login: async (req, res) => {
+    const user = new User({
+        username: req.body.username,
+        password: req.body.password
+    });
+
+    req.login(user, (err) => {
+        if (err) {
+            console.log(err);
+        } else {
+            passport.authenticate("local")(req, res, () => {
+                 res.status(201).json({
+                  message: 'Successfully logged in',
+                  user: {
+                    fullName: req.user.fullname,
+                    id: req.user._id,
+                    username: req.user.username,
+                    email: req.user.email,
+                    role: req.user.role,
+                  },
+                });
+            })
+        }
+    })
+
+
+},
 
   survey: async (req, res) => {
     try {
@@ -204,6 +230,34 @@ const tutor = {
     }
   },
 
+  login: async (req, res) => {
+    const user = new User({
+        username: req.body.username,
+        password: req.body.password
+    });
+
+    req.login(user, (err) => {
+        if (err) {
+            console.log(err);
+        } else {
+            passport.authenticate("local")(req, res, () => {
+                 res.status(201).json({
+                  message: 'Successfully logged in',
+                  user: {
+                    fullName: req.user.fullname,
+                    id: req.user._id,
+                    username: req.user.username,
+                    email: req.user.email,
+                    role: req.user.role,
+                  },
+                });
+            })
+        }
+    })
+
+
+},
+
   survey: async (req, res) => {
     try {
       const {
@@ -325,6 +379,31 @@ const admin = {
     }
   },
 
+  login: async (req, res) => {
+    const user = new User({
+        username: req.body.username,
+        password: req.body.password
+    });
+
+    req.login(user, (err) => {
+        if (err) {
+            console.log(err);
+        } else {
+            passport.authenticate("local")(req, res, () => {
+                 res.status(201).json({
+                  message: 'Successfully logged in',
+                  user: {
+                    email: req.user.email,
+                    role: req.user.role,
+                  },
+                });
+            })
+        }
+    })
+
+
+},
+
 };
 
 const superAdmin = {
@@ -369,6 +448,31 @@ const superAdmin = {
       return res.status(500).json({ message: 'Unexpected error during registration' });
     }
   },
+
+  login: async (req, res) => {
+    const user = new User({
+        username: req.body.username,
+        password: req.body.password
+    });
+
+    req.login(user, (err) => {
+        if (err) {
+            console.log(err);
+        } else {
+            passport.authenticate("local")(req, res, () => {
+                 res.status(201).json({
+                  message: 'Successfully logged in',
+                  user: {
+                    email: req.user.email,
+                    role: req.user.role,
+                  },
+                });
+            })
+        }
+    })
+
+
+},
 
 }
 
