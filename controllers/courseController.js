@@ -29,6 +29,11 @@ const courseController = {
     addCourse: async (req, res) => {
         const { title, about, duration, type, startDate, endDate, startTime, endTime, category, privacy, fee, strikedFee, scholarship } = req.body;
 
+        // Check if the user is logged in
+        if (!req.user || !req.user.fullname) {
+            return res.status(401).json({ message: 'Please log in to add a course' });
+        }
+
         const newCourse = {
             instructor: req.user.fullname,
             title,
@@ -46,11 +51,11 @@ const courseController = {
             scholarship,
         }
 
-        try{
+        try {
 
             const course = await Course.create(newCourse);
             return res.status(201).json({ message: 'Course added successfully', course });
-        }catch(error){
+        } catch (error) {
             console.error(error);
             return res.status(500).json({ message: 'Unexpected error during course creation' });
         }
