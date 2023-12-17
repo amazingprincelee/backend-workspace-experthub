@@ -2,7 +2,7 @@ import nodemailer from 'nodemailer';
 
 const transporter = nodemailer.createTransport({
     host: 'mail.privateemail.com',
-    port: 587,  
+    port: 465,  
     auth: {
       user: 'verify@experthubllc.com',
       pass: process.env.EMAIL_PASSWORD,

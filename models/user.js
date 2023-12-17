@@ -9,6 +9,7 @@ import { Strategy as GoogleStrategy } from 'passport-google-oauth20';
 
 const userSchema = new mongoose.Schema({
   username: String,
+  email: String,
   fullname: String,
   phone: Number,
   gender: String,
@@ -50,7 +51,7 @@ const userSchema = new mongoose.Schema({
 
 });
 
-userSchema.plugin(passportLocalMongoose);
+userSchema.plugin(passportLocalMongoose, { usernameField: 'email' });
 userSchema.plugin(findOrCreate);
 
 const User = new mongoose.model("User", userSchema);

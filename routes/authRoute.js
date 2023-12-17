@@ -25,6 +25,7 @@ router.post('/student/aptitude-test', student.aptitudeTest);
 router.put("/student/profile", student.profile);
 //tutor registration and login routes
 router.post('/tutor/register', tutor.register);
+router.post('/tutor/login', tutor.login);
 router.post('/tutor/verify', student.verify);
 router.post('/tutor/survey', tutor.survey);
 router.post('/tutor/aptitude-test', tutor.aptitudeTest);
