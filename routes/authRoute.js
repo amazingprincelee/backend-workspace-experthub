@@ -40,7 +40,7 @@ router.post('/super-admin/login', superAdmin.login);
 
 //COURSE
 router.get("/courses/category/:category", courseController.getCourseByCategory);
-router.get("/courses", courseController.getAllCourses);
+router.get("/courses/all", courseController.getAllCourses);
 router.post("/add-course", courseController.addCourse);
 //course enroll route
 router.post('/enroll/:courseId', courseController.enrollCourse);

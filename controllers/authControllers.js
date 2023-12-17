@@ -12,7 +12,7 @@ const student = {
 
   register: async (req, res) => {
     try {
-      const { email, fullname, phone, country, state, address, password } = req.body;
+      const { fullname, email, phone, country, state, address, password } = req.body;
 
       const newStudent = {
         username: email,
@@ -103,7 +103,7 @@ const student = {
       }
     });
   },
-
+  
 
   survey: async (req, res) => {
     try {
