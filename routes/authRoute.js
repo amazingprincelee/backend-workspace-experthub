@@ -32,8 +32,10 @@ router.post('/tutor/aptitude-test', tutor.aptitudeTest);
 router.put("/tutor/profile", tutor.profile);
 //admin registeration and login routes
 router.post('/admin/register', admin.register);
+router.post('/admin/login', admin.login);
 //superAdmin registeration and login routes
 router.post('/super-admin/register', superAdmin.register);
+router.post('/super-admin/login', superAdmin.login);
 
 
 //COURSE

@@ -508,38 +508,38 @@ const tutor = {
 };
 
 const admin = {
-  register: (req, res) => {
+  register: async (req, res) => {
     try {
-      // Process form data and store in the database
-      const { fullname, username, phone, country, state, address, password } = req.body;
+      const { email, fullname, phone, country, state, address, password } = req.body;
 
-      const newAdmin = {
-        username,
+      const newStudent = {
+        username: email,
+        email,
         fullname,
         phone,
         country,
         state,
         address,
-        role: "Admin"
+        role: "admin",
+        verificationCode
       };
 
-
-      User.register(newAdmin, password, (err, user) => {
+      await User.register(newStudent, password, async (err, user) => {
         if (err) {
-          console.error(err);
-          return res.status(500).json({ message: 'Registration failed. Please try again later.' });
+          console.error(err); if (err.name === 'UserExistsError') {
+            // Handle the case where the user is already registered
+            return res.status(400).json({ message: 'Admin already registered' });
+          } else {
+            console.error(err);
+            return res.status(500).json({ message: 'Internal Server Error' });
+          }
         } else {
+          
+
           passport.authenticate('local')(req, res, () => {
-            res.status(201).json({
-              message: 'Successfully registered',
-              user: {
-                id: user._id,
-                username: user.username,
-                email: user.email,
-                role: user.role,
-              },
-            });
-            console.log('Successful Registered');
+
+            res.status(200).json({ message: "Successfully Registered"})
+
           });
         }
       });
@@ -551,7 +551,7 @@ const admin = {
 
   login: async (req, res) => {
     const user = new User({
-      username: req.body.username,
+      username: req.body.email,
       password: req.body.password
     });
 
@@ -577,39 +577,38 @@ const admin = {
 };
 
 const superAdmin = {
-  register: (req, res) => {
+  register: async (req, res) => {
     try {
-      // Process form data and store in the database
-      const { fullname, username, phone, country, state, address, password } = req.body;
+      const { email, fullname, phone, country, state, address, password } = req.body;
 
-      const newAdmin = {
-        username,
+      const newStudent = {
+        username: email,
+        email,
         fullname,
         phone,
         country,
         state,
         address,
-        password,
-        role: "Super Admin"
+        role: "admin",
+        verificationCode
       };
 
-
-      User.register(newAdmin, password, (err, user) => {
+      await User.register(newStudent, password, async (err, user) => {
         if (err) {
-          console.error(err);
-          return res.status(500).json({ message: 'Registration failed. Please try again later.' });
+          console.error(err); if (err.name === 'UserExistsError') {
+            // Handle the case where the user is already registered
+            return res.status(400).json({ message: 'Super admin already registered' });
+          } else {
+            console.error(err);
+            return res.status(500).json({ message: 'Internal Server Error' });
+          }
         } else {
+          
+
           passport.authenticate('local')(req, res, () => {
-            res.status(201).json({
-              message: 'Successfully registered',
-              user: {
-                id: user._id,
-                username: user.username,
-                email: user.email,
-                role: user.role,
-              },
-            });
-            console.log('Successful Registered');
+
+            res.status(200).json({ message: "Successfully Registered"})
+
           });
         }
       });
@@ -621,7 +620,7 @@ const superAdmin = {
 
   login: async (req, res) => {
     const user = new User({
-      username: req.body.username,
+      username: req.body.email,
       password: req.body.password
     });
 
