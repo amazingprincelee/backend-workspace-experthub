@@ -3,6 +3,9 @@ const router = express.Router();
 import { student, tutor, admin, superAdmin } from '../controllers/authControllers.js';
 import courseController from '../controllers/courseController.js';
 
+router.get("/", (req, res)=>{
+  res.status(200).json({message:"Welcome to ExpertHub"})
+});
 
 router.get("/logout", function(req, res){
     req.logout((err)=>{
