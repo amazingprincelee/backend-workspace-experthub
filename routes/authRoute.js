@@ -15,7 +15,9 @@ router.post('/auth/login', authControllers.login);
 router.post('/auth/verify', authControllers.verify);
 
 //User controllers routes
-router.put("/user/profile", userControllers.profile);
+router.get("/user/profile", userControllers.getProfile)
+router.put("/user/update-profile", userControllers.upDateprofile);
+
 
 
 //COURSE
