@@ -22,6 +22,9 @@ const userSchema = new mongoose.Schema({
   role: String,
   googleId: String,
   profilePicture: String,
+  assessmentAnswers: {
+    type: [String], // Array to store user's assessment answers
+  },
   survey: {
     computerAccess: Boolean,
     internetAccess: Boolean,

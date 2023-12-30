@@ -2,7 +2,7 @@ import express from 'express';
 const router = express.Router();
 import authControllers from '../controllers/authController.js';
 import userControllers from '../controllers/userController.js';
-import accessmentControllers from '../controllers/accessmentRoute.js';
+import assessmentControllers from '../controllers/accessmentRoute.js';
 import courseController from '../controllers/courseController.js';
 
 router.get("/", (req, res)=>{
@@ -27,9 +27,18 @@ router.post("/add-course", courseController.addCourse);
 //course enroll route
 router.post('/enroll/:courseId', courseController.enrollCourse);
 
-//Accessment (test and survey) route
-router.post("/user/aptitude-test", accessmentControllers.aptitudeTest);
-router.post("/user/survey", accessmentControllers.survey)
+//Assessment (test and survey) route
+router.post("/user/aptitude-test", assessmentControllers.aptitudeTest);
+router.post("/user/survey", assessmentControllers.survey);
+
+//create assessment questions
+router.post("/create-assessment", assessmentControllers.createAssessmentQuestions);
+// fetch assessment questions
+router.get("/get-assessment-questions", assessmentControllers.getAssessmentQuestions);
+
+
+// for submitting user's assessment answers
+router.post("/submit-assessment", assessmentControllers.submitAssessment);
 
 
 
