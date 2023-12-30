@@ -1,44 +1,21 @@
 import express from 'express';
 const router = express.Router();
-import { student, tutor, admin, superAdmin } from '../controllers/authControllers.js';
+import authControllers from '../controllers/authController.js';
+import userControllers from '../controllers/userController.js';
+import accessmentControllers from '../controllers/accessmentRoute.js';
 import courseController from '../controllers/courseController.js';
 
 router.get("/", (req, res)=>{
   res.status(200).json({message:"Welcome to ExpertHub"})
 });
 
-router.get("/logout", function(req, res){
-    req.logout((err)=>{
-      if(err){
-        console.log(err);
-      }else{
-        res.redirect("/");
-      }
-    });
-    
-  });
+router.get("/auth/logout", authControllers.logout);
+router.post('/auth/register', authControllers.register);
+router.post('/auth/login', authControllers.login);
+router.post('/auth/verify', authControllers.verify);
 
-// Authcontroller routes
-//student registration and login routes
-router.post('/student/register', student.register);
-router.post('/student/login', student.login);
-router.post('/student/verify', student.verify);
-router.post('/student/survey', student.survey);
-router.post('/student/aptitude-test', student.aptitudeTest);
-router.put("/student/profile", student.profile);
-//tutor registration and login routes
-router.post('/tutor/register', tutor.register);
-router.post('/tutor/login', tutor.login);
-router.post('/tutor/verify', student.verify);
-router.post('/tutor/survey', tutor.survey);
-router.post('/tutor/aptitude-test', tutor.aptitudeTest);
-router.put("/tutor/profile", tutor.profile);
-//admin registeration and login routes
-router.post('/admin/register', admin.register);
-router.post('/admin/login', admin.login);
-//superAdmin registeration and login routes
-router.post('/super-admin/register', superAdmin.register);
-router.post('/super-admin/login', superAdmin.login);
+//User controllers routes
+router.put("/user/profile", userControllers.profile);
 
 
 //COURSE
@@ -47,6 +24,10 @@ router.get("/courses/all", courseController.getAllCourses);
 router.post("/add-course", courseController.addCourse);
 //course enroll route
 router.post('/enroll/:courseId', courseController.enrollCourse);
+
+//Accessment (test and survey) route
+router.post("/user/aptitude-test", accessmentControllers.aptitudeTest);
+router.post("/user/survey", accessmentControllers.survey)
 
 
 

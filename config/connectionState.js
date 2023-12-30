@@ -9,7 +9,8 @@ const connectionState = {
 const connect = async () => {
   connectionState.connecting = true;
 
-//
+//'mongodb://127.0.0.1:27017/expertHub'
+
 
   try {
     await mongoose.connect(`mongodb+srv://${process.env.DB_USERNAME}:${process.env.DB_PASSWORD}@theplaint.u7pbgty.mongodb.net/?retryWrites=true&w=majority`)
