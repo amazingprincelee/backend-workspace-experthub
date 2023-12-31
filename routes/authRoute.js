@@ -24,6 +24,7 @@ router.put("/user/update-profile", userControllers.upDateprofile);
 router.get("/courses/category/:category", courseController.getCourseByCategory);
 router.get("/courses/all", courseController.getAllCourses);
 router.post("/add-course", courseController.addCourse);
+router.post("/addCourseResources/:courseId", courseController.addCourseResources);
 //course enroll route
 router.post("/enroll/:courseId", courseController.enrollCourse);
 //get roundom courses
