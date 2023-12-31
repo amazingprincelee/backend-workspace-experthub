@@ -10,6 +10,8 @@ const assessmentControllers = {
   createAssessmentQuestions: async (req, res) => {
     try {
       const assessmentsData = req.body; // Array of assessments
+
+      console.log('Assessments Data:', assessmentsData);
   
       const assessments = assessmentsData.map(({ question, answer1, answer2, answer3, correctAnswerIndex }) => {
         const answers = [answer1, answer2, answer3];
