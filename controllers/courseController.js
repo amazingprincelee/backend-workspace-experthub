@@ -27,7 +27,7 @@ const courseController = {
     },
 
     addCourse: async (req, res) => {
-        const { title,author, about, duration, type, startDate, endDate, startTime, endTime, category, privacy, fee, strikedFee, scholarship } = req.body;
+        const { title,thumbnailImage, author, about, duration, type, startDate, endDate, startTime, endTime, category, privacy, fee, strikedFee, scholarship } = req.body;
 
         // Check if the user is logged in
         if (!req.user || !req.user.fullname) {
@@ -44,6 +44,7 @@ const courseController = {
         const newCourse = {
             instructor: req.user.fullname,
             title,
+            thumbnailImage,
             author,
             about,
             duration,
