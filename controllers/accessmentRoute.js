@@ -11,17 +11,17 @@ const assessmentControllers = {
     try {
       const { question, answer1, answer2, answer3, correctAnswerIndex } = req.body;
 
-      const answers = [answer1, answer2, answer3]
+      const answers = [answer1, answer2, answer3];
 
       if (correctAnswerIndex < 0 || correctAnswerIndex >= answers.length) {
         return res.status(400).json({ message: 'Correct answer index is invalid.' });
       }
 
-      const newAssessment = new Assessment({
+      const newAssessment = new Assessment([
         question,
         answers,
         correctAnswerIndex,
-      });
+      ]);
 
       // Save the assessment to the database
       await newAssessment.save();
@@ -51,11 +51,7 @@ const assessmentControllers = {
       console.log(answer);
   
       // Assuming req.user is available and contains the authenticated user's information
-      const userId = await req.user._id;
-    console.log(userId);
-          // Check if the user exists
-          const foundUser = await User.findById(userId);
-     
+      const foundUser = await User.findById(req.user.id);
   
       if (foundUser) {
         // Save user's assessment answers directly on the User model

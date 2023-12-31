@@ -25,7 +25,9 @@ router.get("/courses/category/:category", courseController.getCourseByCategory);
 router.get("/courses/all", courseController.getAllCourses);
 router.post("/add-course", courseController.addCourse);
 //course enroll route
-router.post('/enroll/:courseId', courseController.enrollCourse);
+router.post("/enroll/:courseId", courseController.enrollCourse);
+//get roundom courses
+router.get("/recommended-courses", courseController.getRecommendedCourses);
 
 //Assessment (test and survey) route
 router.post("/user/aptitude-test", assessmentControllers.aptitudeTest);

@@ -3,6 +3,7 @@ import mongoose from "mongoose";
 
 const courseSchema = new mongoose.Schema({
     title: String,
+    author: String,
     file: String,
     category: String,
     privacy: {

@@ -3,7 +3,7 @@ import mongoose from "mongoose";
 
 const assessmentSchema = new mongoose.Schema({
   question: {
-    type: String,
+    type: [String],
     required: true,
   },
   answers: {

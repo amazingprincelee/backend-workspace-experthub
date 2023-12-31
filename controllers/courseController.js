@@ -27,7 +27,7 @@ const courseController = {
     },
 
     addCourse: async (req, res) => {
-        const { title, about, duration, type, startDate, endDate, startTime, endTime, category, privacy, fee, strikedFee, scholarship } = req.body;
+        const { title,author, about, duration, type, startDate, endDate, startTime, endTime, category, privacy, fee, strikedFee, scholarship } = req.body;
 
         // Check if the user is logged in
         if (!req.user || !req.user.fullname) {
@@ -44,6 +44,7 @@ const courseController = {
         const newCourse = {
             instructor: req.user.fullname,
             title,
+            author,
             about,
             duration,
             type,
@@ -96,6 +97,24 @@ const courseController = {
             return res.status(500).json({ message: 'Unexpected error during enrollment' });
         }
     },
+        // fetch roundom courses
+    getRecommendedCourses: async (req, res) => {
+        try {
+          const count = await Course.countDocuments();
+          const randomIndex = Math.floor(Math.random() * count);
+    
+          const randomCourse = await Course.findOne().skip(randomIndex);
+    
+          if (!randomCourse) {
+            return res.status(404).json({ message: 'No courses available' });
+          }
+    
+          return res.status(200).json({ course: randomCourse });
+        } catch (error) {
+          console.error(error);
+          return res.status(500).json({ message: 'Unexpected error while fetching a recommended course' });
+        }
+      },
 
 };
 
@@ -103,22 +122,3 @@ const courseController = {
 
 export default courseController;
 
-
-//ThIS CODE BELOW IS USED TO POPULATE ENROLLED STUDENTS
-
-// import Course from './courseModel'; // Import the Course model
-
-// // Example code to fetch a course and populate enrolled students
-// const courseId = 'some_course_id';
-
-// Course.findById(courseId)
-//     .populate('enrolledStudents') // Populate the enrolledStudents field
-//     .exec((err, course) => {
-//         if (err) {
-//             console.error(err);
-//             // Handle the error
-//         } else {
-//             // Now the course.enrolledStudents will contain detailed information about users
-//             console.log(course.enrolledStudents);
-//         }
-//     });
