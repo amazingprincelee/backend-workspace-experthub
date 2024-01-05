@@ -65,7 +65,68 @@ const userControllers = {
           console.error(error);
           return res.status(500).json({ message: 'Unexpected error during profile update' });
         }
+      },
+
+      getInstructors: async (req, res) => {
+        try {
+            // Find all users with the role 'instructor'
+            const instructors = await User.find({ role: 'tutor' });
+
+            if (!instructors || instructors.length === 0) {
+                return res.status(404).json({ message: 'No instructors found' });
+            }
+
+            // Extract relevant instructor information
+            const instructorProfiles = instructors.map(instructor => ({
+                fullname: instructor.fullname,
+                email: instructor.email,
+                phone: instructor.phone,
+                gender: instructor.gender,
+                age: instructor.age,
+                skillLevel: instructor.skillLevel,
+                country: instructor.country,
+                state: instructor.state,
+                address: instructor.address,
+            }));
+
+            return res.status(200).json({ message: 'Instructors retrieved successfully', instructors: instructorProfiles });
+        } catch (error) {
+            console.error(error);
+            return res.status(500).json({ message: 'Unexpected error during instructor retrieval' });
+        }
+    },
+
+    getStudents: async (req, res) => {
+      try {
+          // Find all users with the role 'student'
+          const students = await User.find({ role: 'student' });
+
+          if (!students || students.length === 0) {
+              return res.status(404).json({ message: 'No students found' });
+          }
+
+          // Extract relevant student information
+          const studentProfiles = students.map(student => ({
+              fullname: student.fullname,
+              email: student.email,
+              phone: student.phone,
+              gender: student.gender,
+              age: student.age,
+              skillLevel: student.skillLevel,
+              country: student.country,
+              state: student.state,
+              address: student.address,
+          }));
+
+          return res.status(200).json({ message: 'Students retrieved successfully', students: studentProfiles });
+      } catch (error) {
+          console.error(error);
+          return res.status(500).json({ message: 'Unexpected error during student retrieval' });
       }
+  },
+
+    
+
 };
 
 
