@@ -1,4 +1,5 @@
 import Course from "../models/courses.js";
+import User from "../models/user.js"
 
 const courseController = {
 
@@ -27,25 +28,25 @@ const courseController = {
     },
 
     addCourse: async (req, res) => {
-        const { title,thumbnailImage, author, about, duration, type, startDate, endDate, startTime, endTime, category, privacy, fee, strikedFee, scholarship } = req.body;
+        const { title,thumbnailImage, instructorName, about, duration, type, startDate, endDate, startTime, endTime, category, privacy, fee, strikedFee, scholarship } = req.body;
 
-        // Check if the user is logged in
-        if (!req.user || !req.user.fullname) {
-            return res.status(401).json({ message: 'Please log in to add a course' });
-        }
+    
+        // Get user ID from the request headers
+        const userId = req.headers.authorization; 
 
+        // Query the user database to get the user's role
+        const user = await User.findById(userId);
+       
         // Check if the user has the necessary role to add a course
         const allowedRoles = ['tutor', 'admin', 'super admin'];
-        if (!req.user || !allowedRoles.includes(req.user.role)) {
+        if (!user || !allowedRoles.includes(user.role)) {
             return res.status(403).json({ message: 'Permission denied. Only tutors and admins can add courses' });
         }
 
-
         const newCourse = {
-            instructor: req.user.fullname,
+            instructorName,
             title,
             thumbnailImage,
-            author,
             about,
             duration,
             type,
