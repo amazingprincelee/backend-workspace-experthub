@@ -134,6 +134,47 @@ const courseController = {
             return res.status(500).json({ message: 'Unexpected error during enrollment' });
         }
     },
+
+
+    getEnrolledStudents: async (req, res) => {
+        const courseId = req.params.courseId;
+
+        try {
+            const course = await Course.findById(courseId);
+
+            if (!course) {
+                return res.status(404).json({ message: 'Course not found' });
+            }
+
+            // Fetch details of enrolled students
+            const enrolledStudents = await User.find({ _id: { $in: course.enrolledStudents } });
+
+            if (!enrolledStudents || enrolledStudents.length === 0) {
+                return res.status(404).json({ message: 'No enrolled students found for this course' });
+            }
+
+            // Extract relevant student information
+            const enrolledStudentsProfiles = enrolledStudents.map(student => ({
+                fullname: student.fullname,
+                email: student.email,
+                phone: student.phone,
+                gender: student.gender,
+                age: student.age,
+                skillLevel: student.skillLevel,
+                country: student.country,
+                state: student.state,
+                address: student.address,
+            }));
+
+            return res.status(200).json({ message: 'Enrolled students retrieved successfully', enrolledStudents: enrolledStudentsProfiles });
+        } catch (error) {
+            console.error(error);
+            return res.status(500).json({ message: 'Unexpected error during enrolled students retrieval' });
+        }
+    },
+
+
+
         // fetch roundom courses
     getRecommendedCourses: async (req, res) => {
         try {
