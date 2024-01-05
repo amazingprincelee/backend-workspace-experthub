@@ -25,7 +25,7 @@ router.put("/user/update-profile", userControllers.upDateprofile);
 //COURSE
 router.get("/courses/category/:category", courseController.getCourseByCategory);
 router.get("/courses/all", courseController.getAllCourses);
-router.post("/add-course", courseController.addCourse);
+router.post("/add-course/:userId", courseController.addCourse);
 router.post("/addCourseResources/:courseId", courseController.addCourseResources);
 //course enroll route
 router.get("/admissions/:courseId", courseController.getEnrolledStudents);

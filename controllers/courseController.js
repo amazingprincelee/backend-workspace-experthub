@@ -32,7 +32,7 @@ const courseController = {
 
     
         // Get user ID from the request headers
-        const userId = req.headers.authorization; 
+        const userId = req.params.userId; 
 
         // Query the user database to get the user's role
         const user = await User.findById(userId);
