@@ -4,6 +4,9 @@ import session from 'express-session';
 import passport from 'passport';
 import cors from 'cors'; 
 import authRoute from './routes/authRoute.js';
+import userRouter from './routes/userRoute.js';
+import courseRouter from './routes/courseRoute.js';
+import accessmentRouter from './routes/assessments.js';
 import bodyParser from 'body-parser';
 import { connect } from './config/connectionState.js'
 
@@ -33,7 +36,12 @@ app.use(passport.session());
 connect();
 
 
-app.use('/', authRoute);
+app.use('/auth', authRoute);
+app.use('/user', userRouter);
+app.use('/courses', courseRouter);
+app.use('/assessment', accessmentRouter);
+
+
 
 
 
