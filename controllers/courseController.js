@@ -1,5 +1,11 @@
+import multer from "multer";
 import Course from "../models/courses.js";
 import User from "../models/user.js"
+
+
+// Multer configuration
+const storage = multer.memoryStorage(); // Store the file data in memory as a Buffer
+const upload = multer({ storage: storage });
 
 const courseController = {
 
@@ -27,49 +33,58 @@ const courseController = {
         }
     },
 
-    addCourse: async (req, res) => {
-        const { title,thumbnailImage, instructorName, about, duration, type, startDate, endDate, startTime, endTime, category, privacy, fee, strikedFee, scholarship } = req.body;
+    addCourse: [
+        // Use the upload.single middleware to handle file uploads for the "thumbnailImage" field
+        upload.single("thumbnailImage"),
+        async (req, res) => {
+            const { title, instructorName, about, duration, type, startDate, endDate, startTime, endTime, category, privacy, fee, strikedFee, scholarship } = req.body;
 
-    
-        // Get user ID from the request headers
-        const userId = req.params.userId; 
+            // Get user ID from the request headers
+            const userId = req.params.userId;
 
-        // Query the user database to get the user's role
-        const user = await User.findById(userId);
-       
-        // Check if the user has the necessary role to add a course
-        const allowedRoles = ['tutor', 'admin', 'super admin'];
-        if (!user || !allowedRoles.includes(user.role)) {
-            return res.status(403).json({ message: 'Permission denied. Only tutors and admins can add courses' });
+            // Query the user database to get the user's role
+            const user = await User.findById(userId);
+
+            // Check if the user has the necessary role to add a course
+            const allowedRoles = ['tutor', 'admin', 'super admin'];
+            if (!user || !allowedRoles.includes(user.role)) {
+                return res.status(403).json({ message: 'Permission denied. Only tutors and admins can add courses' });
+            }
+
+            const newCourse = {
+                instructorName,
+                title,
+                about,
+                duration,
+                type,
+                startDate,
+                endDate,
+                startTime,
+                endTime,
+                category,
+                privacy,
+                fee,
+                strikedFee,
+                scholarship,
+            };
+
+            try {
+                // Check if a file was uploaded
+                if (req.file) {
+                    newCourse.thumbnailImage = {
+                        data: req.file.buffer,
+                        contentType: req.file.mimetype,
+                    };
+                }
+
+                const course = await Course.create(newCourse);
+                return res.status(201).json({ message: 'Course added successfully', course });
+            } catch (error) {
+                console.error(error);
+                return res.status(500).json({ message: 'Unexpected error during course creation' });
+            }
         }
-
-        const newCourse = {
-            instructorName,
-            title,
-            thumbnailImage,
-            about,
-            duration,
-            type,
-            startDate,
-            endDate,
-            startTime,
-            endTime,
-            category,
-            privacy,
-            fee,
-            strikedFee,
-            scholarship,
-        }
-
-        try {
-
-            const course = await Course.create(newCourse);
-            return res.status(201).json({ message: 'Course added successfully', course });
-        } catch (error) {
-            console.error(error);
-            return res.status(500).json({ message: 'Unexpected error during course creation' });
-        }
-    },
+    ],
 
     addCourseResources: async (req, res) => {
         const courseId = req.params.courseId;
