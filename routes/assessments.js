@@ -1,13 +1,13 @@
 import express from 'express';
 const accessmentRouter = express.Router();
-import assessmentControllers from '../controllers/accessmentRoute.js';
+import assessmentControllers from '../controllers/accessmentController.js';
 
 
 
 
 //Assessment (test and survey) route
-accessmentRouter.post("/aptitude-test", assessmentControllers.aptitudeTest);
-accessmentRouter.post("/survey", assessmentControllers.survey);
+accessmentRouter.post("/aptitude-test/:userId", assessmentControllers.aptitudeTest);
+accessmentRouter.post("/survey/:userId", assessmentControllers.survey);
 
 //create assessment questions
 accessmentRouter.post("/create-assessment", assessmentControllers.createAssessmentQuestions);
@@ -16,7 +16,7 @@ accessmentRouter.get("/get-assessment-questions", assessmentControllers.getAsses
 
 
 // for submitting user's assessment answers
-accessmentRouter.post("/submit-assessment", assessmentControllers.submitAssessment);
+accessmentRouter.post("/submit-assessment/:userId", assessmentControllers.submitAssessment);
 
 
 

@@ -53,9 +53,11 @@ const assessmentControllers = {
       const answer = req.body.answer; // Extract answers from the request body
       console.log(answer);
 
-      // Assuming req.user is available and contains the authenticated user's information
-      const foundUser = await User.findById(req.user.id);
+      // Get user ID from the request headers
+      const userId = req.params.userId; 
 
+      // Query the user database to get the user's role
+      const foundUser = await User.findById(userId);
       if (foundUser) {
         // Save user's assessment answers directly on the User model
         foundUser.assessmentAnswers = answer;
@@ -89,7 +91,11 @@ const assessmentControllers = {
         joiningAccomplishment,
       } = req.body;
 
-      const foundUser = await User.findById(req.user.id);
+      // Get user ID from the request headers
+      const userId = req.params.userId; 
+
+      // Query the user database to get the user's role
+      const foundUser = await User.findById(userId);
 
       if (foundUser) {
         // Check if the user has already submitted a survey
@@ -134,7 +140,12 @@ const assessmentControllers = {
         doForFun,
       } = req.body;
 
-      const foundUser = await User.findById(req.user.id);
+      // Get user ID from the request headers
+      const userId = req.params.userId; 
+
+      // Query the user database to get the user's role
+      const foundUser = await User.findById(userId);
+
       if (foundUser) {
         // Update the aptitudeTest data in the user document
         foundUser.aptitudeTest = {
