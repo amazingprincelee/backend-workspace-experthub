@@ -33,10 +33,7 @@ const courseController = {
         }
     },
 
-    addCourse: [
-        // Use the upload.single middleware to handle file uploads for the "thumbnailImage" field
-        upload.single("thumbnailImage"),
-        async (req, res) => {
+    addCourse: async (req, res) => {
             const { title, instructorName, about, duration, type, startDate, endDate, startTime, endTime, category, privacy, fee, strikedFee, scholarship } = req.body;
 
             // Get user ID from the request headers
@@ -83,8 +80,7 @@ const courseController = {
                 console.error(error);
                 return res.status(500).json({ message: 'Unexpected error during course creation' });
             }
-        }
-    ],
+        },
 
     addCourseResources: async (req, res) => {
         const courseId = req.params.courseId;
