@@ -110,7 +110,7 @@ const authControllers = {
       if(err){
         console.log(err);
       }else{
-        res.redirect("/");
+        res.status(200).json({message: "successfully signed out"});
       }
     });
     
