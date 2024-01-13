@@ -17,49 +17,7 @@ courseRouter.get("/", (req, res)=>{
 //COURSE
 
 //upload thumbnail
-courseRouter.post("/upload/:courseId", async (req, res) => {
-  const courseId = req.params.courseId;
-  const thumbnail = req.body.thumbnail;
-
-  try {
-      // Find the course by ID
-      const existingCourse = await Course.findById(courseId);
-
-      if (!existingCourse) {
-          return res.status(404).json({ message: "Course not found" });
-      }
-
-      // Update the thumbnail field
-      existingCourse.thumbnail = thumbnail;
-
-      // Save the changes
-      await existingCourse.save();
-
-      res.status(201).json({ msg: "Thumbnail uploaded" });
-  } catch (error) {
-      res.status(500).json({ message: error.message });
-  }
-});
-
-
-courseRouter.get("/thumbnails/:courseId", async (req, res) => {
-  const courseId = req.params.courseId;
-
-  try {
-      const course = await Course.findById(courseId);
-
-      if (!course) {
-          return res.status(404).json({ message: "Course not found" });
-      }
-
-      console.log("Thumbnail:", course.thumbnail); // Add this line for debugging
-
-      res.status(200).json({ msg: "successful", thumbnail: course.thumbnail });
-  } catch (error) {
-      console.error("Error:", error); // Add this line for debugging
-      res.status(500).json({ message: error.message });
-  }
-});
+courseRouter.post('/uploadThumbnail/:courseId', courseController.updateThumbnail);
 
 
 

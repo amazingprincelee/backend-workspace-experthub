@@ -3,12 +3,13 @@ import express from 'express';
 import session from 'express-session';
 import passport from 'passport';
 import cors from 'cors'; 
+import fileUpload from "express-fileupload";
 import authRoute from './routes/authRoute.js';
 import userRouter from './routes/userRoute.js';
 import courseRouter from './routes/courseRoute.js';
 import accessmentRouter from './routes/assessments.js';
 import bodyParser from 'body-parser';
-import { connect } from './config/connectionState.js'
+import { connect } from './config/connectionState.js';
 
 
 
@@ -31,6 +32,13 @@ app.use(session({
 
 app.use(passport.initialize());
 app.use(passport.session());
+
+//cloudinary upload ie
+app.use(
+  fileUpload({
+    useTempFiles: true
+  })
+);
 
 //connect database
 connect();
