@@ -77,7 +77,7 @@ const courseController = {
     
             const { image } = req.files;
             const fileTypes = ['image/jpeg', 'image/png', 'image/jpg'];
-            const imageSize = 1024;
+            const imageSize = 50024;
     
             if (!fileTypes.includes(image.mimetype)) return res.send('Image formats supported: JPG, PNG, JPEG');
     
