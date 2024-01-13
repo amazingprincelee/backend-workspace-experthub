@@ -15,10 +15,9 @@ courseRouter.get("/", (req, res)=>{
 
 
 //COURSE
-courseRouter.post("/add-course/:userId", courseController.addCourse);
 courseRouter.get("/category/:category", courseController.getCourseByCategory);
-courseRouter.get("/:courseId", courseController.getCourseById);
 courseRouter.get("/all", courseController.getAllCourses);
+courseRouter.post("/add-course/:userId", courseController.addCourse);
 courseRouter.post("/addCourseResources/:courseId", courseController.addCourseResources);
 //course enroll route
 courseRouter.get("/admissions/:courseId", courseController.getEnrolledStudents);
