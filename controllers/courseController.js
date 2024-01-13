@@ -6,45 +6,7 @@ import upload from "../config/cloudinary.js";
 
 const courseController = {
 
-    //update provide credentials, receives there documents as image
-    updateThumbnail: async (req, res) => {
-
-        try {
-
-            if (!req.files || !req.files.image) {
-                return res.status(400).json({ success: false, error: 'Please upload an image' });
-            }
-
-            const { image } = req.files;
-            const fileTypes = ['image/jpeg', 'image/png', 'image/jpg'];
-            const imageSize = 1024;
-
-            if (!fileTypes.includes(image.mimetype)) return res.send('Image formats supported: JPG, PNG, JPEG');
-
-            if (image.size / 1024 > imageSize) return res.send(`Image size should be less than ${imageSize}kb`);
-
-            // Upload image to Cloudinary
-            const cloudFile = await upload(image.tempFilePath);
-
-
-            // Update course model with the Cloudinary URL
-            const updateQuery = { $set: { thumbnail: cloudFile.url } };
-            const updatedCourse = await Course.findByIdAndUpdate(req.params.courseId, updateQuery, { new: true });
-
-
-            res.status(201).json({
-                success: true,
-                message: "updated successfully",
-                imageUrl: cloudFile.url,
-                updatedCourse,
-            });
-        } catch (error) {
-            console.error("Error updating thumbnail:", error);
-            res.status(500).json({ success: false, error: "Error updating thumbnail" });
-        }
-    },
-
-
+   
     getCourseByCategory: async (req, res) => {
         const category = req.params.category;
 
@@ -57,6 +19,24 @@ const courseController = {
             return res.status(500).json({ message: 'Unexpected error while fetching courses by category' });
         }
     },
+
+    getCourseById: async (req, res) => {
+        const courseId = req.params.courseId;
+    
+        try {
+            const course = await Course.findById(courseId);
+    
+            if (!course) {
+                return res.status(404).json({ message: 'Course not found' });
+            }
+    
+            return res.status(200).json({ course });
+        } catch (error) {
+            console.error(error);
+            return res.status(500).json({ message: 'Unexpected error while fetching the course' });
+        }
+    },
+    
 
     getAllCourses: async (req, res) => {
         try {
@@ -71,52 +51,71 @@ const courseController = {
 
     addCourse: async (req, res) => {
         const { title, instructorName, about, duration, type, startDate, endDate, startTime, endTime, category, privacy, fee, strikedFee, scholarship } = req.body;
-
+    
         // Get user ID from the request headers
         const userId = req.params.userId;
-
+    
         // Query the user database to get the user's role
         const user = await User.findById(userId);
-
+    
         // Check if the user has the necessary role to add a course
         const allowedRoles = ['tutor', 'admin', 'super admin'];
         if (!user || !allowedRoles.includes(user.role)) {
             return res.status(403).json({ message: 'Permission denied. Only tutors and admins can add courses' });
         }
-
-        const newCourse = {
-            instructorName,
-            title,
-            about,
-            duration,
-            type,
-            startDate,
-            endDate,
-            startTime,
-            endTime,
-            category,
-            privacy,
-            fee,
-            strikedFee,
-            scholarship,
-        };
-
+    
         try {
             // Check if a file was uploaded
-            if (req.file) {
-                newCourse.thumbnailImage = {
-                    data: req.file.buffer,
-                    contentType: req.file.mimetype,
-                };
+            if (!req.files || !req.files.image) {
+                return res.status(400).json({ success: false, error: 'Please upload an image' });
             }
-
+    
+            const { image } = req.files;
+            const fileTypes = ['image/jpeg', 'image/png', 'image/jpg'];
+            const imageSize = 1024;
+    
+            if (!fileTypes.includes(image.mimetype)) return res.send('Image formats supported: JPG, PNG, JPEG');
+    
+            if (image.size / 1024 > imageSize) return res.send(`Image size should be less than ${imageSize}kb`);
+    
+            // Upload image to Cloudinary
+            const cloudFile = await upload(image.tempFilePath);
+    
+            // Create a new course object
+            const newCourse = {
+                instructorName,
+                title,
+                about,
+                duration,
+                type,
+                startDate,
+                endDate,
+                startTime,
+                endTime,
+                category,
+                privacy,
+                fee,
+                strikedFee,
+                scholarship,
+                thumbnail: cloudFile.url,  // Set the thumbnail field with the Cloudinary URL
+            };
+    
+            // Save the new course
             const course = await Course.create(newCourse);
-            return res.status(201).json({ message: 'Course added successfully', course });
+    
+            return res.status(201).json({
+                success: true,
+                message: 'Course added successfully',
+                imageUrl: cloudFile.url,
+                course,
+            });
         } catch (error) {
             console.error(error);
             return res.status(500).json({ message: 'Unexpected error during course creation' });
         }
     },
+    
+    
 
     addCourseResources: async (req, res) => {
         const courseId = req.params.courseId;
