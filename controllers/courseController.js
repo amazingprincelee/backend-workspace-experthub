@@ -229,19 +229,29 @@ const courseController = {
     // fetch roundom courses
     getRecommendedCourses: async (req, res) => {
         try {
+            const numberOfCourses = 4; // Set the number of recommended courses you want
             const count = await Course.countDocuments();
-            const randomIndex = Math.floor(Math.random() * count);
-
-            const randomCourse = await Course.findOne().skip(randomIndex);
-
-            if (!randomCourse) {
+    
+            // Generate an array of unique random indices
+            const randomIndices = [];
+            while (randomIndices.length < numberOfCourses) {
+                const randomIndex = Math.floor(Math.random() * count);
+                if (!randomIndices.includes(randomIndex)) {
+                    randomIndices.push(randomIndex);
+                }
+            }
+    
+            // Fetch the recommended courses based on random indices
+            const recommendedCourses = await Course.find().skip(randomIndices[0]).limit(numberOfCourses);
+    
+            if (!recommendedCourses || recommendedCourses.length === 0) {
                 return res.status(404).json({ message: 'No courses available' });
             }
-
-            return res.status(200).json({ course: randomCourse });
+    
+            return res.status(200).json({ courses: recommendedCourses });
         } catch (error) {
             console.error(error);
-            return res.status(500).json({ message: 'Unexpected error while fetching a recommended course' });
+            return res.status(500).json({ message: 'Unexpected error while fetching recommended courses' });
         }
     },
 

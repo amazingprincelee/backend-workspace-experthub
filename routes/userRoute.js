@@ -10,10 +10,10 @@ userRouter.get("/", (req, res)=>{
 
 
 //User controllers routes
-userRouter.get("/profile", userControllers.getProfile);
+userRouter.get("/profile/:userId", userControllers.getProfile);
 userRouter.get("/instructors", userControllers.getInstructors);
 userRouter.get("/students", userControllers.getStudents);
-userRouter.put("/update-profile", userControllers.upDateprofile);
+userRouter.put("/updateProfile/:userId", userControllers.upDateprofile);
 
 
 
