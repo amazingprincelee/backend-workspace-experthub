@@ -107,6 +107,7 @@ const userControllers = {
 
           // Extract relevant student information
           const studentProfiles = students.map(student => ({
+              studentId: student._id,
               fullname: student.fullname,
               email: student.email,
               phone: student.phone,
