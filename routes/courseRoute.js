@@ -22,6 +22,7 @@ courseRouter.post("/addCourseResources/:courseId", courseController.addCourseRes
 //course enroll route
 courseRouter.get("/admissions/:courseId", courseController.getEnrolledStudents);
 courseRouter.post("/enroll/:courseId", courseController.enrollCourse);
+courseRouter.get("/enrolled-courses/:userId", courseController.getEnrolledCourses);
 //get roundom courses
 courseRouter.get("/recommended-courses", courseController.getRecommendedCourses);
 
