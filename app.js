@@ -18,13 +18,12 @@ const PORT = process.env.PORT || 3000;
 
 // Middleware
 app.use((req, res, next) => {
-  res.setHeader("Access-Control-Allow-Origin", "*");
+  res.setHeader("Access-Control-Allow-Origin", "http://localhost:3000");
   res.setHeader(
     "Access-Control-Allow-Methods",
     "OPTIONS, GET, POST, DELETE, PUT"
   );
   res.setHeader("Access-Control-Allow-Headers", "content-type");
-  res.setHeader("Access-Control-Allow-Headers", "access-control-allow-origin");
   if (req.method === "OPTIONS") {
     return res.sendStatus(200);
   }
