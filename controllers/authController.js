@@ -58,33 +58,22 @@ const authControllers = {
   },
 
   login: async (req, res) => {
-    const { email, password } = req.body
+    passport.authenticate("local", (err, user, info) => {
+      if (!user) {
+        return res.status(401).json({ message: 'Authenticaation failed' });
+      }     
+        res.status(201).json({
+          message: 'Successfully logged in',
+          user: {
+            fullName: user.fullname,
+            id: user._id,
+            email: user.email,
+            role: user.role,
+            emailVerification: user.isVerified
+          },
+        });
 
-    const user = await User.findOne({ email });
-
-    if (!user) {
-      return res.status(401).json({ message: 'Authentication failed' });
-    }
-
- 
-    // passport.authenticate("local", (err, user, info) => {
-    //   if (err) {
-    //     console.log(err);
-    //     return res.status(500).json({ message: 'Internal Server Error' });
-    //   }
-    //     console.log(user);
-    //     res.status(201).json({
-    //       message: 'Successfully logged in',
-    //       user: {
-    //         fullName: user.fullname,
-    //         id: user._id,
-    //         email: user.email,
-    //         role: user.role,
-    //         emailVerification: user.isVerified
-    //       },
-    //     });
-
-    // })(req, res);
+    })(req, res);
 
   },
 
