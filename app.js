@@ -15,14 +15,18 @@ import { connect } from './config/connectionState.js';
 
 const app = express();
 const PORT = process.env.PORT || 3000;
+var whitelist = ['http://localhost:3000', 'http://localhost:3001', 'https://trainings.experthubllc.com', 'https://trainings.experthubllc.com']
 
 // Middleware
 app.use(cors({
     origin: (_origin, callback) => {
-      callback(null, true);
-    },
-    credentials: true,
-  }),); 
+     if (whitelist.indexOf(origin) !== -1) {
+      callback(null, true)
+    } else {
+      callback(new Error('Not allowed by CORS'))
+    }},
+  }),
+); 
 
 app.use(express.urlencoded({ extended: false }));
 app.use(bodyParser.urlencoded({extended: false}));
