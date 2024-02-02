@@ -13,12 +13,12 @@ const authControllers = {
 
   register: async (req, res) => {
     try {
-      const {userType, fullname, email, phone, country, state, address, password } = req.body;
+      const { userType, fullname, email, phone, country, state, address, password } = req.body;
 
       const lowercasedUserType = userType.toLowerCase();
       const role = determineRole(lowercasedUserType);
 
-      const newUser = User ({
+      const newUser = User({
         username: email,
         email,
         fullname,
@@ -58,64 +58,47 @@ const authControllers = {
   },
 
   login: async (req, res) => {
-    const user = new User({
-      username: req.body.email,
-      password: req.body.password
-    });
+    const { email, password } = req.body
 
-    req.login(user, async (err) => {
+    const user = await User.findOne({ email });
+
+    if (!user) {
+      return res.status(401).json({ message: 'Authentication failed' });
+    }
+
+
+    // passport.authenticate("local", (err, user, info) => {
+    //   if (err) {
+    //     console.log(err);
+    //     return res.status(500).json({ message: 'Internal Server Error' });
+    //   }
+    //     console.log(user);
+    //     res.status(201).json({
+    //       message: 'Successfully logged in',
+    //       user: {
+    //         fullName: user.fullname,
+    //         id: user._id,
+    //         email: user.email,
+    //         role: user.role,
+    //         emailVerification: user.isVerified
+    //       },
+    //     });
+
+    // })(req, res);
+
+  },
+
+  logout: (req, res) => {
+    req.logout((err) => {
       if (err) {
         console.log(err);
       } else {
-        passport.authenticate("local", (err, user, info) => {
-          if (err) {
-            console.log(err);
-            return res.status(500).json({ message: 'Internal Server Error' });
-          }
-
-          if (!user) {
-            // User authentication failed
-            return res.status(401).json({ message: 'Authentication failed' });
-          }
-
-
-
-          // Manually log in the user
-          req.logIn(user, (err) => {
-            if (err) {
-              console.log(err);
-              return res.status(500).json({ message: 'Internal Server Error' });
-            }
-
-
-            res.status(201).json({
-              message: 'Successfully logged in',
-              user: {
-                fullName: user.fullname,
-                id: user._id,
-                email: user.email,
-                role: user.role,
-                emailVerification: user.isVerified
-              },
-            });
-          });
-        })(req, res);
+        res.status(200).json({ message: "successfully signed out" });
       }
     });
+
   },
 
-
-  logout: (req, res)=>{
-    req.logout((err)=>{
-      if(err){
-        console.log(err);
-      }else{
-        res.status(200).json({message: "successfully signed out"});
-      }
-    });
-    
-  },
-  
   // Verify 
   verify: async (req, res) => {
     try {
@@ -154,7 +137,7 @@ const authControllers = {
     }
   },
 
-  
+
 };
 
 
