@@ -82,7 +82,7 @@ experthub-institute
 # parcel-bundler cache (https://parceljs.org/)
 .cache
 .parcel-cache
-
+tmp
 # Next.js build output
 .next
 out

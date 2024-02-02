@@ -66,7 +66,7 @@ const authControllers = {
       return res.status(401).json({ message: 'Authentication failed' });
     }
 
-
+ 
     // passport.authenticate("local", (err, user, info) => {
     //   if (err) {
     //     console.log(err);
