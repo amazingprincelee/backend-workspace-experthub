@@ -78,11 +78,11 @@ web_modules/
 .env.test.local
 .env.production.local
 .env.local
-
+experthub-institute
 # parcel-bundler cache (https://parceljs.org/)
 .cache
 .parcel-cache
-
+tmp
 # Next.js build output
 .next
 out
