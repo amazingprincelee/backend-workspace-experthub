@@ -12,13 +12,12 @@ import bodyParser from 'body-parser';
 import { connect } from './config/connectionState.js';
 
 
-
 const app = express();
 const PORT = process.env.PORT || 3000;
 
 // Middleware
 app.use((req, res, next) => {
-  res.setHeader("Access-Control-Allow-Origin", "*");
+  res.setHeader("Access-Control-Allow-Origin", "*", "http://localhost:3000", "https://trainings.experthubllc.com");
   res.setHeader(
     "Access-Control-Allow-Methods",
     "OPTIONS, GET, POST, DELETE, PUT"
@@ -61,11 +60,6 @@ app.use('/auth', authRoute);
 app.use('/user', userRouter);
 app.use('/courses', courseRouter);
 app.use('/assessment', accessmentRouter);
-
-
-
-
-
 
 
 
