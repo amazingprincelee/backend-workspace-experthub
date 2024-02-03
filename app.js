@@ -36,9 +36,7 @@ app.use(passport.session());
 
 app.use(
   cors({
-    origin: (_origin, callback) => {
-      callback(null, true);
-    },
+    origin:"https://trainings.experthubllc.com",
     credentials: true,
   }),
 );
