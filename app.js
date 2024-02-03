@@ -2,7 +2,7 @@ import 'dotenv/config.js';
 import express from 'express';
 import session from 'express-session';
 import passport from 'passport';
-import cors from 'cors'; 
+import cors from 'cors';
 import fileUpload from "express-fileupload";
 import authRoute from './routes/authRoute.js';
 import userRouter from './routes/userRoute.js';
@@ -16,22 +16,10 @@ const app = express();
 const PORT = process.env.PORT || 3000;
 
 // Middleware
-app.use((req, res, next) => {
-  res.setHeader("Access-Control-Allow-Origin", "*", "http://localhost:3000", "https://trainings.experthubllc.com");
-  res.setHeader(
-    "Access-Control-Allow-Methods",
-    "OPTIONS, GET, POST, DELETE, PUT"
-  );
-  res.setHeader("Access-Control-Allow-Credentials", "true");
-  res.setHeader("Access-Control-Allow-Headers", "content-type");
-  if (req.method === "OPTIONS") {
-    return res.sendStatus(200);
-  }
-  next();
-});
+
 
 app.use(express.urlencoded({ extended: false }));
-app.use(bodyParser.urlencoded({extended: false}));
+app.use(bodyParser.urlencoded({ extended: false }));
 app.use(express.static('public'))
 app.set('view engine', 'ejs');
 app.use(express.json());
@@ -44,6 +32,16 @@ app.use(session({
 
 app.use(passport.initialize());
 app.use(passport.session());
+
+
+app.use(
+  cors({
+    origin: (_origin, callback) => {
+      callback(null, true);
+    },
+    credentials: true,
+  }),
+);
 
 //cloudinary upload ie
 app.use(
