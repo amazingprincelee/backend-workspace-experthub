@@ -159,8 +159,7 @@ const courseController = {
     // course admission
     enrollCourse: async (req, res) => {
         const courseId = req.params.courseId;
-        const studentId = req.user.id;
-
+        const studentId = req.body.id;
         try {
 
             const course = await Course.findById(courseId);
@@ -199,7 +198,8 @@ const courseController = {
 
             // Get the enrolled courses using the user's enrolledCourses array
             const enrolledCourses = await Course.find({ _id: { $in: user.enrolledCourses } });
-
+            console.log(enrolledCourses)
+            
             if (!enrolledCourses || enrolledCourses.length === 0) {
                 return res.status(404).json({ message: 'No enrolled courses found for this user' });
             }
@@ -256,7 +256,10 @@ const courseController = {
         try {
             const numberOfCourses = 4; // Set the number of recommended courses you want
             const count = await Course.countDocuments();
-    
+
+            if (count === 0) {
+                return res.status(404).json({ message: 'No courses available' });
+            }
             // Generate an array of unique random indices
             const randomIndices = [];
             while (randomIndices.length < numberOfCourses) {
