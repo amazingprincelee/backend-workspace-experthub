@@ -6,7 +6,7 @@ import upload from "../config/cloudinary.js";
 
 const courseController = {
 
-   
+
     getCourseByCategory: async (req, res) => {
         const category = req.params.category;
 
@@ -22,26 +22,26 @@ const courseController = {
 
     getCourseById: async (req, res) => {
         const courseId = req.params.courseId;
-    
+
         // Validate if courseId is a valid ObjectId
         if (!ObjectId.isValid(courseId)) {
             return res.status(400).json({ message: 'Invalid course ID' });
         }
-    
+
         try {
             const course = await Course.findById(courseId);
-    
+
             if (!course) {
                 return res.status(404).json({ message: 'Course not found' });
             }
-    
+
             return res.status(200).json({ course });
         } catch (error) {
             console.error(error);
             return res.status(500).json({ message: 'Unexpected error while fetching the course' });
         }
     },
-    
+
 
     getAllCourses: async (req, res) => {
         try {
@@ -56,36 +56,36 @@ const courseController = {
 
     addCourse: async (req, res) => {
         const { title, instructorName, about, duration, type, startDate, endDate, startTime, endTime, category, privacy, fee, strikedFee, scholarship } = req.body;
-    
+
         // Get user ID from the request headers
         const userId = req.params.userId;
-    
+
         // Query the user database to get the user's role
         const user = await User.findById(userId);
-    
+
         // Check if the user has the necessary role to add a course
         const allowedRoles = ['tutor', 'admin', 'super admin'];
         if (!user || !allowedRoles.includes(user.role)) {
             return res.status(403).json({ message: 'Permission denied. Only tutors and admins can add courses' });
         }
-    
+
         try {
             // Check if a file was uploaded
             if (!req.files || !req.files.image) {
                 return res.status(400).json({ success: false, error: 'Please upload an image' });
             }
-    
+
             const { image } = req.files;
             const fileTypes = ['image/jpeg', 'image/png', 'image/jpg'];
             const imageSize = 50024;
-    
+
             if (!fileTypes.includes(image.mimetype)) return res.send('Image formats supported: JPG, PNG, JPEG');
-    
+
             if (image.size / 1024 > imageSize) return res.send(`Image size should be less than ${imageSize}kb`);
-    
+
             // Upload image to Cloudinary
             const cloudFile = await upload(image.tempFilePath);
-    
+
             // Create a new course object
             const newCourse = {
                 instructorName,
@@ -104,10 +104,10 @@ const courseController = {
                 scholarship,
                 thumbnail: cloudFile.url,  // Set the thumbnail field with the Cloudinary URL
             };
-    
+
             // Save the new course
             const course = await Course.create(newCourse);
-    
+
             return res.status(201).json({
                 success: true,
                 message: 'Course added successfully',
@@ -119,8 +119,8 @@ const courseController = {
             return res.status(500).json({ message: 'Unexpected error during course creation' });
         }
     },
-    
-    
+
+
 
     addCourseResources: async (req, res) => {
         const courseId = req.params.courseId;
@@ -190,16 +190,16 @@ const courseController = {
 
         try {
             // Find the user by ID
-            const user = await User.findById(userId);
+            // const user = await User.findById(userId);
 
-            if (!user) {
-                return res.status(404).json({ message: 'User not found' });
-            }
+            // if (!user) {
+            //     return res.status(404).json({ message: 'User not found' });
+            // }
 
             // Get the enrolled courses using the user's enrolledCourses array
-            const enrolledCourses = await Course.find({ _id: { $in: user.enrolledCourses } });
-            console.log(enrolledCourses)
-            
+            const enrolledCourses = await Course.find({ enrolledStudents: { _id: userId } });
+            // console.log(enrolledCourses)
+
             if (!enrolledCourses || enrolledCourses.length === 0) {
                 return res.status(404).json({ message: 'No enrolled courses found for this user' });
             }
@@ -268,14 +268,14 @@ const courseController = {
                     randomIndices.push(randomIndex);
                 }
             }
-    
+
             // Fetch the recommended courses based on random indices
             const recommendedCourses = await Course.find().skip(randomIndices[0]).limit(numberOfCourses);
-    
+
             if (!recommendedCourses || recommendedCourses.length === 0) {
                 return res.status(404).json({ message: 'No courses available' });
             }
-    
+
             return res.status(200).json({ courses: recommendedCourses });
         } catch (error) {
             console.error(error);
