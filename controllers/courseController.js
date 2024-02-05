@@ -1,6 +1,7 @@
 import Course from "../models/courses.js";
 import User from "../models/user.js"
 import upload from "../config/cloudinary.js";
+import createZoomMeeting from "../utils/createZoomMeeting.js";
 
 
 
@@ -55,7 +56,7 @@ const courseController = {
     },
 
     addCourse: async (req, res) => {
-        const { title, instructorName, about, duration, type, startDate, endDate, startTime, endTime, category, privacy, fee, strikedFee, scholarship } = req.body;
+        const { title, instructorName, about, duration, type, startDate, endDate, startTime, endTime, category, privacy, fee, strikedFee, scholarship,meetingPassword } = req.body;
 
         // Get user ID from the request headers
         const userId = req.params.userId;
@@ -107,6 +108,19 @@ const courseController = {
 
             // Save the new course
             const course = await Course.create(newCourse);
+
+
+            //Creating a live course 
+            if (course.type==="live") {
+                //....Args -- course topic, course duration, scheduled date of the course, zoom password for course,
+                const meetingData=await createZoomMeeting(course.title,parseInt(course.duration),new Date(startDate),meetingPassword)
+                if (meetingData.success) {
+                  course.startMeetingUrl=meetingData.startMeetingUrl // This will be visible to only the course instructor
+                  course.joinMeetingUrl=meetingData.joinMeetingUrl
+                  course.meetingPassword=meetingData.password // When user enrolls email them meeting password
+                  await course.save()
+                }
+            }
 
             return res.status(201).json({
                 success: true,

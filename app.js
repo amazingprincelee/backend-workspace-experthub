@@ -10,9 +10,12 @@ import courseRouter from './routes/courseRoute.js';
 import accessmentRouter from './routes/assessments.js';
 import bodyParser from 'body-parser';
 import { connect } from './config/connectionState.js';
+import createZoomMeeting from './utils/createZoomMeeting.js';
 
 
 const app = express();
+
+
 const PORT = process.env.PORT || 3000;
 
 // Middleware
@@ -54,6 +57,7 @@ app.use(
 connect();
 
 
+
 app.use('/auth', authRoute);
 app.use('/user', userRouter);
 app.use('/courses', courseRouter);
@@ -62,5 +66,6 @@ app.use('/assessment', accessmentRouter);
 
 
 app.listen(PORT, () => {
+  // createZoomMeeting()
   console.log(`Server is running on port ${PORT}`);
 });
