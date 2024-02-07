@@ -44,7 +44,7 @@ const createZoomMeeting = async (topic, duration, startTime,meetingPassword) => 
         const response_data = meetingResponse.data;
 
         const content = {
-            startMeetingUrl: response_data.join_url, //For instructors
+            startMeetingUrl: response_data.start_url, //For instructors
             joinMeetingUrl: response_data.join_url, //For Students
             password: response_data.password,
             success:true,

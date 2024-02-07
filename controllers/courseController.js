@@ -93,7 +93,7 @@ const courseController = {
                 title,
                 about,
                 duration,
-                type,
+                type, //online, pdf, offline, video
                 startDate,
                 endDate,
                 startTime,
@@ -110,8 +110,8 @@ const courseController = {
             const course = await Course.create(newCourse);
 
 
-            //Creating a live course 
-            if (course.type==="live") {
+            //Creating an online course 
+            if (course.type==="online") {
                 //....Args -- course topic, course duration, scheduled date of the course, zoom password for course,
                 const meetingData=await createZoomMeeting(course.title,parseInt(course.duration),new Date(startDate),meetingPassword)
                 if (meetingData.success) {
