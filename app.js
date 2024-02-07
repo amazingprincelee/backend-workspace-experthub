@@ -13,6 +13,8 @@ import { connect } from './config/connectionState.js';
 
 
 const app = express();
+
+
 const PORT = process.env.PORT || 3000;
 
 // Middleware
@@ -52,6 +54,7 @@ app.use(
 
 //connect database
 connect();
+
 
 
 app.use('/auth', authRoute);

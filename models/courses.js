@@ -7,6 +7,9 @@ const courseSchema = new mongoose.Schema({
     file: String,
     thumbnail: String,
     category: String,
+    meetingPassword: String,
+    startMeetingUrl: String,
+    joinMeetingUrl: String,
     privacy: {
         student: String,
     },
