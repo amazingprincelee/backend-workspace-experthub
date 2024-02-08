@@ -64,11 +64,11 @@ const courseController = {
         // Query the user database to get the user's role
         const user = await User.findById(userId);
 
-        // Check if the user has the necessary role to add a course
-        const allowedRoles = ['tutor', 'admin', 'super admin'];
-        if (!user || !allowedRoles.includes(user.role)) {
-            return res.status(403).json({ message: 'Permission denied. Only tutors and admins can add courses' });
-        }
+        // // Check if the user has the necessary role to add a course
+        // const allowedRoles = ['tutor', 'admin', 'super admin'];
+        // if (!user || !allowedRoles.includes(user.role)) {
+        //     return res.status(403).json({ message: 'Permission denied. Only tutors and admins can add courses' });
+        // }
 
         try {
             // Check if a file was uploaded
@@ -111,7 +111,7 @@ const courseController = {
 
 
             //Creating an online course 
-            if (course.type==="online") {
+            if (newCourse.type==="online") {
                 //....Args -- course topic, course duration, scheduled date of the course, zoom password for course,
                 const meetingData=await createZoomMeeting(course.title,parseInt(course.duration),new Date(startDate),meetingPassword)
                 if (meetingData.success) {
