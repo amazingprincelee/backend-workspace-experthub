@@ -14,6 +14,8 @@ userRouter.get("/profile/:userId", userControllers.getProfile);
 userRouter.get("/instructors", userControllers.getInstructors);
 userRouter.get("/students", userControllers.getStudents);
 userRouter.put("/updateProfile/:userId", userControllers.upDateprofile);
+userRouter.put("/updateProfilePicture/:userId", userControllers.updateProfilePhote);
+
 
 
 
