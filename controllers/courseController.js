@@ -3,9 +3,31 @@ import User from "../models/user.js"
 import upload from "../config/cloudinary.js";
 import createZoomMeeting from "../utils/createZoomMeeting.js";
 
+const categories = ["Virtual Assistant", "Product Management", "Cybersecurity", "Software Development", "AI / Machine Learning", "Data Analysis & Visualisation", "Story Telling", "Animation", "Cloud Computing", "Dev Ops", "UI/UX Design", "Journalism", "Game development", "Data Science", "Digital Marketing", "Advocacy"]
 
 
 const courseController = {
+
+    getAllCategory: async (req, res) => {
+        try {
+            const allCourse = []
+
+            await Promise.all(categories.map(async (category) => {
+                const courses = await Course.find({ category });
+                if (courses.length !== 0) {
+                    allCourse.push({
+                        category,
+                        courses
+                    })
+                }
+            }))
+            return res.status(200).json({ allCourse });
+
+        } catch (error) {
+            console.error(error);
+            return res.status(500).json({ message: 'Unexpected error while fetching courses category' });
+        }
+    },
 
     getCourseByCategory: async (req, res) => {
         const category = req.params.category;

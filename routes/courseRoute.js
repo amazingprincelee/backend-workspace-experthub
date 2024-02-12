@@ -6,8 +6,8 @@ const courseRouter = express.Router();
 
 
 
-courseRouter.get("/", (req, res)=>{
-  res.status(200).json({message:"Welcome to ExpertHub Course route"})
+courseRouter.get("/", (req, res) => {
+  res.status(200).json({ message: "Welcome to ExpertHub Course route" })
 });
 
 
@@ -26,7 +26,9 @@ courseRouter.get("/enrolled-courses/:userId", courseController.getEnrolledCourse
 //get roundom courses
 courseRouter.get("/recommended-courses", courseController.getRecommendedCourses);
 
+// get all courses with category
 
+courseRouter.get("/all/category", courseController.getAllCategory);
 
 
 
