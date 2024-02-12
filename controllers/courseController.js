@@ -7,7 +7,6 @@ import createZoomMeeting from "../utils/createZoomMeeting.js";
 
 const courseController = {
 
-
     getCourseByCategory: async (req, res) => {
         const category = req.params.category;
 
@@ -56,7 +55,7 @@ const courseController = {
     },
 
     addCourse: async (req, res) => {
-        const { title, instructorName, about, duration, type, startDate, endDate, startTime, endTime, category, privacy, fee, strikedFee, scholarship,meetingPassword } = req.body;
+        const { title, instructorName, about, duration, type, startDate, endDate, startTime, endTime, category, privacy, fee, strikedFee, scholarship, meetingPassword } = req.body;
 
         // Get user ID from the request headers
         const userId = req.params.userId;
@@ -111,14 +110,14 @@ const courseController = {
 
 
             //Creating an online course 
-            if (newCourse.type==="online") {
+            if (newCourse.type === "online") {
                 //....Args -- course topic, course duration, scheduled date of the course, zoom password for course,
-                const meetingData=await createZoomMeeting(course.title,parseInt(course.duration),new Date(startDate),meetingPassword)
+                const meetingData = await createZoomMeeting(course.title, parseInt(course.duration), new Date(startDate), meetingPassword)
                 if (meetingData.success) {
-                  course.startMeetingUrl=meetingData.startMeetingUrl // This will be visible to only the course instructor
-                  course.joinMeetingUrl=meetingData.joinMeetingUrl
-                  course.meetingPassword=meetingData.password // When user enrolls email them meeting password
-                  await course.save()
+                    course.startMeetingUrl = meetingData.startMeetingUrl // This will be visible to only the course instructor
+                    course.joinMeetingUrl = meetingData.joinMeetingUrl
+                    course.meetingPassword = meetingData.password // When user enrolls email them meeting password
+                    await course.save()
                 }
             }
 
@@ -133,7 +132,6 @@ const courseController = {
             return res.status(500).json({ message: 'Unexpected error during course creation' });
         }
     },
-
 
 
     addCourseResources: async (req, res) => {
@@ -167,8 +165,6 @@ const courseController = {
             return res.status(500).json({ message: 'Unexpected error during resource addition' });
         }
     },
-
-
 
     // course admission
     enrollCourse: async (req, res) => {
@@ -262,8 +258,6 @@ const courseController = {
             return res.status(500).json({ message: 'Unexpected error during enrolled students retrieval' });
         }
     },
-
-
 
     // fetch roundom courses
     getRecommendedCourses: async (req, res) => {

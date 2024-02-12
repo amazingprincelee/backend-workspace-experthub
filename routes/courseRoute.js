@@ -38,5 +38,4 @@ courseRouter.get("/recommended-courses", courseController.getRecommendedCourses)
 
 
 
-
 export default courseRouter;

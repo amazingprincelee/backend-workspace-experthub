@@ -56,6 +56,8 @@ const userControllers = {
       existingUser.country = req.body.country || existingUser.country;
       existingUser.state = req.body.state || existingUser.state;
       existingUser.address = req.body.address || existingUser.address;
+      existingUser.assignedCourse = req.body.course || existingUser.assignedCourse
+
 
       // Save the updated user profile
       await existingUser.save();
@@ -83,6 +85,7 @@ const userControllers = {
         phone: instructor.phone,
         gender: instructor.gender,
         age: instructor.age,
+        course: student.assignedCourse,
         skillLevel: instructor.skillLevel,
         country: instructor.country,
         state: instructor.state,
@@ -117,6 +120,7 @@ const userControllers = {
         country: student.country,
         state: student.state,
         address: student.address,
+        course: student.assignedCourse
       }));
 
       return res.status(200).json({ message: 'Students retrieved successfully', students: studentProfiles });
