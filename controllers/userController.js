@@ -80,6 +80,7 @@ const userControllers = {
 
       // Extract relevant instructor information
       const instructorProfiles = instructors.map(instructor => ({
+        id: instructor._id,
         fullname: instructor.fullname,
         email: instructor.email,
         phone: instructor.phone,
@@ -175,6 +176,7 @@ const userControllers = {
 
       // Extract relevant instructor information
       const instructorProfiles = instructors.map(instructor => ({
+        id: instructor._id,
         fullname: instructor.fullname,
         email: instructor.email,
         phone: instructor.phone,
