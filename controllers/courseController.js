@@ -286,25 +286,36 @@ const courseController = {
         try {
             const userId = req.params.userId
 
-            const user = await User.find({ _id: userId })
-
-            const numberOfCourses = 4; // Set the number of recommended courses you want
+            const user = await User.findOne({ _id: userId })
+            const category = user.assignedCourse
+            // const numberOfCourses = 4; // Set the number of recommended courses you want
             const count = await Course.countDocuments();
 
             if (count === 0) {
                 return res.status(404).json({ message: 'No courses available' });
             }
+
             // Generate an array of unique random indices
-            const randomIndices = [];
-            while (randomIndices.length < numberOfCourses) {
-                const randomIndex = Math.floor(Math.random() * count);
-                if (!randomIndices.includes(randomIndex)) {
-                    randomIndices.push(randomIndex);
+            // const randomIndices = [];
+            // while (randomIndices.length < numberOfCourses) {
+            //     const randomIndex = Math.floor(Math.random() * count);
+            //     if (!randomIndices.includes(randomIndex)) {
+            //         randomIndices.push(randomIndex);
+            //     }
+            // }
+
+            const courses = await Course.find({ category })
+            const recommendedCourses = await courses.map((course) => {
+                if (course.enrolledStudents.includes(userId)) {
+                    return
+                } else {
+                    return course
                 }
-            }
+            }).filter(item => item !== null)
+            // console.log(recommendedCourses)
 
             // Fetch the recommended courses based on random indices
-            const recommendedCourses = await Course.find({ category: user.assignedCourse }).skip(randomIndices[0]).limit(numberOfCourses);
+            // const recommendedCourses = await Course.find({ category: user.assignedCourse }).skip(randomIndices[0]).limit(numberOfCourses);
 
             if (!recommendedCourses || recommendedCourses.length === 0) {
                 return res.status(404).json({ message: 'No courses available' });
