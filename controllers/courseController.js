@@ -284,6 +284,10 @@ const courseController = {
     // fetch roundom courses
     getRecommendedCourses: async (req, res) => {
         try {
+            const userId = req.params.userId
+
+            const user = await User.find({ _id: userId })
+
             const numberOfCourses = 4; // Set the number of recommended courses you want
             const count = await Course.countDocuments();
 
@@ -300,7 +304,7 @@ const courseController = {
             }
 
             // Fetch the recommended courses based on random indices
-            const recommendedCourses = await Course.find().skip(randomIndices[0]).limit(numberOfCourses);
+            const recommendedCourses = await Course.find({ category: user.assignedCourse }).skip(randomIndices[0]).limit(numberOfCourses);
 
             if (!recommendedCourses || recommendedCourses.length === 0) {
                 return res.status(404).json({ message: 'No courses available' });
