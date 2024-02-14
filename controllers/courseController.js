@@ -307,7 +307,7 @@ const courseController = {
             const courses = await Course.find({ category })
             const recommendedCourses = await courses.map((course) => {
                 if (course.enrolledStudents.includes(userId)) {
-                    return
+                    return null
                 } else {
                     return course
                 }
