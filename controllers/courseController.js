@@ -2,8 +2,9 @@ import Course from "../models/courses.js";
 import User from "../models/user.js"
 import upload from "../config/cloudinary.js";
 import createZoomMeeting from "../utils/createZoomMeeting.js";
-
+import KJUR from "jsrsasign"
 const categories = ["Virtual Assistant", "Product Management", "Cybersecurity", "Software Development", "AI / Machine Learning", "Data Analysis & Visualisation", "Story Telling", "Animation", "Cloud Computing", "Dev Ops", "UI/UX Design", "Journalism", "Game development", "Data Science", "Digital Marketing", "Advocacy"]
+
 
 
 const courseController = {
@@ -76,6 +77,33 @@ const courseController = {
         }
     },
 
+    getZoomSignature: async (req, res) => {
+
+        const iat = Math.round(new Date().getTime() / 1000) - 30;
+        const exp = iat + 60 * 60 * 2
+
+        const oHeader = { alg: 'HS256', typ: 'JWT' }
+
+        const oPayload = {
+            sdkKey: process.env.SDK_CLIENT_ID,
+            mn: req.body.meetingNumber,
+            role: 0,
+            iat: iat,
+            exp: exp,
+            appKey: process.env.SDK_CLIENT_ID,
+            tokenExp: iat + 60 * 60 * 2
+        }
+
+        const sHeader = JSON.stringify(oHeader)
+        const sPayload = JSON.stringify(oPayload)
+        const signature = KJUR.jws.JWS.sign('HS256', sHeader, sPayload, process.env.SDK_CLIENT_SECRET)
+
+        res.json({
+            signature: signature
+        })
+
+    },
+
     addCourse: async (req, res) => {
         const { title, instructorName, about, duration, type, startDate, endDate, startTime, endTime, category, privacy, fee, strikedFee, scholarship, meetingPassword } = req.body;
 
@@ -85,11 +113,11 @@ const courseController = {
         // Query the user database to get the user's role
         const user = await User.findById(userId);
 
-        // // Check if the user has the necessary role to add a course
-        // const allowedRoles = ['tutor', 'admin', 'super admin'];
-        // if (!user || !allowedRoles.includes(user.role)) {
-        //     return res.status(403).json({ message: 'Permission denied. Only tutors and admins can add courses' });
-        // }
+        // Check if the user has the necessary role to add a course
+        const allowedRoles = ['tutor', 'admin', 'super admin'];
+        if (!user || !allowedRoles.includes(user.role)) {
+            return res.status(403).json({ message: 'Permission denied. Only tutors and admins can add courses' });
+        }
 
         try {
             // Check if a file was uploaded
@@ -136,9 +164,9 @@ const courseController = {
                 //....Args -- course topic, course duration, scheduled date of the course, zoom password for course,
                 const meetingData = await createZoomMeeting(course.title, parseInt(course.duration), new Date(startDate), meetingPassword)
                 if (meetingData.success) {
-                    course.startMeetingUrl = meetingData.startMeetingUrl // This will be visible to only the course instructor
-                    course.joinMeetingUrl = meetingData.joinMeetingUrl
-                    course.meetingPassword = meetingData.password // When user enrolls email them meeting password
+                    course.meetingId = meetingData.meetingId 
+                    course.meetingPassword = meetingData.meetingPassword
+                    course.zakToken = meetingData.zakToken 
                     await course.save()
                 }
             }
@@ -150,7 +178,7 @@ const courseController = {
                 course,
             });
         } catch (error) {
-            console.error(error);
+            console.log(error);
             return res.status(500).json({ message: 'Unexpected error during course creation' });
         }
     },
@@ -333,4 +361,5 @@ const courseController = {
 
 
 export default courseController;
+
 

@@ -10,6 +10,7 @@ import courseRouter from './routes/courseRoute.js';
 import accessmentRouter from './routes/assessments.js';
 import bodyParser from 'body-parser';
 import { connect } from './config/connectionState.js';
+import createZoomMeeting from './utils/createZoomMeeting.js';
 
 
 const app = express();
