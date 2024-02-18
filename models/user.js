@@ -22,6 +22,7 @@ const userSchema = new mongoose.Schema({
   role: String,
   googleId: String,
   profilePicture: String,
+  assignedCourse: String,
   assessmentAnswers: {
     type: [String], // Array to store user's assessment answers
   },

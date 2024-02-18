@@ -16,7 +16,7 @@ import createZoomMeeting from './utils/createZoomMeeting.js';
 const app = express();
 
 
-const PORT = process.env.PORT || 3000;
+const PORT = process.env.PORT || 3001;
 
 // Middleware
 

@@ -3,10 +3,32 @@ import User from "../models/user.js"
 import upload from "../config/cloudinary.js";
 import createZoomMeeting from "../utils/createZoomMeeting.js";
 import KJUR from "jsrsasign"
+const categories = ["Virtual Assistant", "Product Management", "Cybersecurity", "Software Development", "AI / Machine Learning", "Data Analysis & Visualisation", "Story Telling", "Animation", "Cloud Computing", "Dev Ops", "UI/UX Design", "Journalism", "Game development", "Data Science", "Digital Marketing", "Advocacy"]
+
 
 
 const courseController = {
 
+    getAllCategory: async (req, res) => {
+        try {
+            const allCourse = []
+
+            await Promise.all(categories.map(async (category) => {
+                const courses = await Course.find({ category });
+                if (courses.length !== 0) {
+                    allCourse.push({
+                        category,
+                        courses
+                    })
+                }
+            }))
+            return res.status(200).json({ allCourse });
+
+        } catch (error) {
+            console.error(error);
+            return res.status(500).json({ message: 'Unexpected error while fetching courses category' });
+        }
+    },
 
     getCourseByCategory: async (req, res) => {
         const category = req.params.category;
@@ -138,7 +160,6 @@ const courseController = {
 
 
             //Creating an online course 
-
             if (newCourse.type === "online") {
                 //....Args -- course topic, course duration, scheduled date of the course, zoom password for course,
                 const meetingData = await createZoomMeeting(course.title, parseInt(course.duration), new Date(startDate), meetingPassword)
@@ -161,7 +182,6 @@ const courseController = {
             return res.status(500).json({ message: 'Unexpected error during course creation' });
         }
     },
-
 
 
     addCourseResources: async (req, res) => {
@@ -195,8 +215,6 @@ const courseController = {
             return res.status(500).json({ message: 'Unexpected error during resource addition' });
         }
     },
-
-
 
     // course admission
     enrollCourse: async (req, res) => {
@@ -291,28 +309,41 @@ const courseController = {
         }
     },
 
-
-
     // fetch roundom courses
     getRecommendedCourses: async (req, res) => {
         try {
-            const numberOfCourses = 4; // Set the number of recommended courses you want
+            const userId = req.params.userId
+
+            const user = await User.findOne({ _id: userId })
+            const category = user.assignedCourse
+            // const numberOfCourses = 4; // Set the number of recommended courses you want
             const count = await Course.countDocuments();
 
             if (count === 0) {
                 return res.status(404).json({ message: 'No courses available' });
             }
+
             // Generate an array of unique random indices
-            const randomIndices = [];
-            while (randomIndices.length < numberOfCourses) {
-                const randomIndex = Math.floor(Math.random() * count);
-                if (!randomIndices.includes(randomIndex)) {
-                    randomIndices.push(randomIndex);
+            // const randomIndices = [];
+            // while (randomIndices.length < numberOfCourses) {
+            //     const randomIndex = Math.floor(Math.random() * count);
+            //     if (!randomIndices.includes(randomIndex)) {
+            //         randomIndices.push(randomIndex);
+            //     }
+            // }
+
+            const courses = await Course.find({ category })
+            const recommendedCourses = await courses.map((course) => {
+                if (course.enrolledStudents.includes(userId)) {
+                    return null
+                } else {
+                    return course
                 }
-            }
+            }).filter(item => item !== null)
+            // console.log(recommendedCourses)
 
             // Fetch the recommended courses based on random indices
-            const recommendedCourses = await Course.find().skip(randomIndices[0]).limit(numberOfCourses);
+            // const recommendedCourses = await Course.find({ category: user.assignedCourse }).skip(randomIndices[0]).limit(numberOfCourses);
 
             if (!recommendedCourses || recommendedCourses.length === 0) {
                 return res.status(404).json({ message: 'No courses available' });
@@ -330,4 +361,5 @@ const courseController = {
 
 
 export default courseController;
+
 

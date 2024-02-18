@@ -61,17 +61,18 @@ const authControllers = {
     passport.authenticate("local", (err, user, info) => {
       if (!user) {
         return res.status(401).json({ message: 'Authenticaation failed' });
-      }     
-        res.status(201).json({
-          message: 'Successfully logged in',
-          user: {
-            fullName: user.fullname,
-            id: user._id,
-            email: user.email,
-            role: user.role,
-            emailVerification: user.isVerified
-          },
-        });
+      }
+      res.status(201).json({
+        message: 'Successfully logged in',
+        user: {
+          fullName: user.fullname,
+          id: user._id,
+          email: user.email,
+          role: user.role,
+          emailVerification: user.isVerified,
+          assignedCourse: user.assignedCourse
+        },
+      });
 
     })(req, res);
 
