@@ -20,7 +20,7 @@ const resourceController = {
 
       const resource = await Resource.create(newResource);
 
-      return res.status(201).json({ message: 'Resource added successfully', course });
+      return res.status(201).json({ message: 'Resource added successfully', resource });
     } catch (error) {
       console.error(error);
       return res.status(500).json({ message: 'Unexpected error during resource addition' });
