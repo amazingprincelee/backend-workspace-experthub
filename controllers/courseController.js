@@ -158,15 +158,21 @@ const courseController = {
             // Save the new course
             const course = await Course.create(newCourse);
 
+            if(newCourse.type === "pdf"){
+                const { pdf } = req.files;
+                const cloudFile = await upload(pdf.tempFilePath);
+                course.file = cloudFile.secure_url
+                await course.save()
+            }
 
             //Creating an online course 
             if (newCourse.type === "online") {
                 //....Args -- course topic, course duration, scheduled date of the course, zoom password for course,
                 const meetingData = await createZoomMeeting(course.title, parseInt(course.duration), new Date(startDate), meetingPassword)
                 if (meetingData.success) {
-                    course.meetingId = meetingData.meetingId 
+                    course.meetingId = meetingData.meetingId
                     course.meetingPassword = meetingData.meetingPassword
-                    course.zakToken = meetingData.zakToken 
+                    course.zakToken = meetingData.zakToken
                     await course.save()
                 }
             }
