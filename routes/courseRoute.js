@@ -19,7 +19,7 @@ courseRouter.get("/category/:category", courseController.getCourseByCategory);
 courseRouter.get("/all", courseController.getAllCourses);
 courseRouter.post("/get-zoom-signature", courseController.getZoomSignature);
 courseRouter.post("/add-course/:userId", courseController.addCourse);
-courseRouter.post("/addCourseResources/:courseId", courseController.addCourseResources);
+// courseRouter.post("/addCourseResources/:courseId", courseController.addCourseResources);
 //course enroll route
 courseRouter.get("/admissions/:courseId", courseController.getEnrolledStudents);
 courseRouter.post("/enroll/:courseId", courseController.enrollCourse);

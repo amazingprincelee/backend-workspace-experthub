@@ -23,12 +23,6 @@ const courseSchema = new mongoose.Schema({
     endTime: String,
     fee: Number,
     strikedFee: Number,
-    resources: [{
-        title: String,
-        privacy: String,
-        websiteUrl: String,
-        aboutCourse: String
-    }],
     scholarship: {
         student: String,
         courses: String,

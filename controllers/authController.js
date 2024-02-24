@@ -70,7 +70,8 @@ const authControllers = {
           email: user.email,
           role: user.role,
           emailVerification: user.isVerified,
-          assignedCourse: user.assignedCourse
+          assignedCourse: user.assignedCourse,
+          profilePicture: user.profilePicture
         },
       });
 

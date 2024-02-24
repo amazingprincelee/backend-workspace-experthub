@@ -190,38 +190,6 @@ const courseController = {
     },
 
 
-    addCourseResources: async (req, res) => {
-        const courseId = req.params.courseId;
-        const { title, privacy, websiteUrl, aboutCourse } = req.body;
-
-        try {
-            const course = await Course.findById(courseId);
-
-            if (!course) {
-                return res.status(404).json({ message: 'Course not found' });
-            }
-
-            // Create a new resource
-            const newResource = {
-                title,
-                privacy,
-                websiteUrl,
-                aboutCourse,
-            };
-
-            // Add the resource to the course's resources array
-            course.resources.push(newResource);
-
-            // Save the updated course
-            await course.save();
-
-            return res.status(201).json({ message: 'Resource added successfully', course });
-        } catch (error) {
-            console.error(error);
-            return res.status(500).json({ message: 'Unexpected error during resource addition' });
-        }
-    },
-
     // course admission
     enrollCourse: async (req, res) => {
         const courseId = req.params.courseId;

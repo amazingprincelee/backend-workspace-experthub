@@ -18,12 +18,4 @@ router.post('/verify', authControllers.verify);
 
 
 
-
-
-
-
-
-
-
-
 export default router;
