@@ -158,7 +158,7 @@ const courseController = {
             // Save the new course
             const course = await Course.create(newCourse);
 
-            if(newCourse.type === "pdf"){
+            if (newCourse.type === "pdf") {
                 const { pdf } = req.files;
                 const cloudFile = await upload(pdf.tempFilePath);
                 course.file = cloudFile.secure_url
@@ -362,6 +362,33 @@ const courseController = {
         }
     },
 
+    editCourse: async (req, res) => {
+        try {
+            const course = await Course.updateOne({
+                _id: req.params.id
+            }, {
+                ...req.body
+            }, {
+                new: true
+            })
+            res.json(course);
+        } catch (error) {
+            console.error(error);
+            res.status(400).json(error);
+        }
+    },
+
+    deleteCourse: async (req, res) => {
+        try {
+            const course = await Course.deleteOne({
+                _id: req.params.id
+            })
+            res.json(course);
+        } catch (error) {
+            console.error(error);
+            res.status(400).json(error);
+        }
+    }
 };
 
 

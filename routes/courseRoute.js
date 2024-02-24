@@ -30,7 +30,8 @@ courseRouter.get("/recommended-courses/:userId", courseController.getRecommended
 // get all courses with category
 
 courseRouter.get("/all/category", courseController.getAllCategory);
-
+courseRouter.delete("/delete/:id", courseController.deleteCourse)
+courseRouter.put("/edit/:id", courseController.editCourse)
 
 
 
