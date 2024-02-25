@@ -138,7 +138,7 @@ const courseController = {
 
             // Create a new course object
             const newCourse = {
-                instructorName,
+                instructorName: user.fullname,
                 title,
                 about,
                 duration,
