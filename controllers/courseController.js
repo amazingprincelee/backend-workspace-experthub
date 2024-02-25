@@ -47,9 +47,9 @@ const courseController = {
         const courseId = req.params.courseId;
 
         // Validate if courseId is a valid ObjectId
-        if (!ObjectId.isValid(courseId)) {
-            return res.status(400).json({ message: 'Invalid course ID' });
-        }
+        // if (!ObjectId.isValid(courseId)) {
+        //     return res.status(400).json({ message: 'Invalid course ID' });
+        // }
 
         try {
             const course = await Course.findById(courseId);
