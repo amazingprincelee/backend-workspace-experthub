@@ -6,45 +6,75 @@ import Assessment from "../models/assessment.js";
 
 const assessmentControllers = {
 
-
   createAssessmentQuestions: async (req, res) => {
     try {
       const assessmentsData = req.body; // Array of assessments
 
-  
-      const assessments = assessmentsData.map(({ question, answer1, answer2, answer3, correctAnswerIndex }) => {
-        const answers = [answer1, answer2, answer3];
-  
-        if (correctAnswerIndex < 0 || correctAnswerIndex >= answers.length) {
-          return res.status(400).json({ message: 'Correct answer index is invalid.' });
-        }
-  
-        return {
-          question,
-          answers,
-          correctAnswerIndex,
-        };
-      });
-  
-      const newAssessments = await Assessment.create(assessments);
-  
+      // const assessments = assessmentsData.map(({ question, answer1, answer2, answer3, correctAnswerIndex }) => {
+      //   const answers = [answer1, answer2, answer3];
+
+      //   if (correctAnswerIndex < 0 || correctAnswerIndex >= answers.length) {
+      //     return res.status(400).json({ message: 'Correct answer index is invalid.' });
+      //   }
+
+      //   return {
+      //     question,
+      //     answers,
+      //     correctAnswerIndex,
+      //   };
+      // });
+
+      const newAssessments = await Assessment.create(assessmentsData);
+
       return res.status(200).json({ message: 'Assessment data saved successfully', assessments: newAssessments });
     } catch (error) {
       console.error(error);
       return res.status(500).json({ message: 'Unexpected error during assessment processing' });
     }
   },
-  
 
   //Get route to fetch questions
   getAssessmentQuestions: async (req, res) => {
     try {
-      const assessmentQuestions = await Assessment.find({}, 'question answers');
+      const assessmentQuestions = await Assessment.find();
 
       return res.status(200).json({ assessmentQuestions });
     } catch (error) {
       console.error(error);
       return res.status(500).json({ message: 'Unexpected error during assessment questions retrieval' });
+    }
+  },
+
+  getAssignedAssesment: async (req, res) => {
+    try {
+      const userId = req.params.id
+
+      const myAssesment = await Assessment.find({ assignedStudents: { _id: userId } });
+
+      return res.status(200).json({ message: 'User assesment retrieved successfully', myAssesment });
+
+    } catch (error) {
+      console.error(error);
+      return res.status(500).json(error);
+    }
+  },
+
+  assignAssesment: async (req, res) => {
+    try {
+      const id = req.params.id
+      const studentId = req.body.studentId
+
+      const myAssesment = await Assessment.find({ _id: id });
+
+      myAssesment.assignedStudents.push(studentId);
+      await myAssesment.save();
+
+
+      return res.status(200).json({ message: 'User assesment retrieved successfully', myAssesment });
+
+    } catch (error) {
+      console.error(error);
+      return res.status(500).json(error);
     }
   },
 
@@ -54,7 +84,7 @@ const assessmentControllers = {
       console.log(answer);
 
       // Get user ID from the request headers
-      const userId = req.params.userId; 
+      const userId = req.params.userId;
 
       // Query the user database to get the user's role
       const foundUser = await User.findById(userId);
@@ -75,7 +105,6 @@ const assessmentControllers = {
     }
   },
 
-
   survey: async (req, res) => {
     try {
       const {
@@ -92,7 +121,7 @@ const assessmentControllers = {
       } = req.body;
 
       // Get user ID from the request headers
-      const userId = req.params.userId; 
+      const userId = req.params.userId;
 
       // Query the user database to get the user's role
       const foundUser = await User.findById(userId);
@@ -130,7 +159,6 @@ const assessmentControllers = {
     }
   },
 
-
   aptitudeTest: async (req, res) => {
     try {
       const {
@@ -141,7 +169,7 @@ const assessmentControllers = {
       } = req.body;
 
       // Get user ID from the request headers
-      const userId = req.params.userId; 
+      const userId = req.params.userId;
 
       // Query the user database to get the user's role
       const foundUser = await User.findById(userId);
@@ -167,8 +195,6 @@ const assessmentControllers = {
       return res.status(500).json({ message: 'Unexpected error during Aptitude Test processing' });
     }
   },
-
-
 
 
 };
