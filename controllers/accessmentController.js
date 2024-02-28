@@ -11,8 +11,8 @@ const assessmentControllers = {
     try {
       const assessmentsData = req.body; // Array of assessments
 
-      const { image } = req.files;
-      const cloudFile = await upload(image.tempFilePath);
+      // const { image } = req.files;
+      const cloudFile = await upload(req.body.image);
       assessmentsData.image = cloudFile.url
 
       // const assessments = assessmentsData.map(({ question, answer1, answer2, answer3, correctAnswerIndex }) => {

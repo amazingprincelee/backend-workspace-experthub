@@ -24,7 +24,10 @@ const PORT = process.env.PORT || 3001;
 
 
 app.use(express.urlencoded({ extended: false }));
-app.use(bodyParser.urlencoded({ extended: false }));
+app.use(bodyParser.json({ limit: '35mb' }));
+app.use(bodyParser.urlencoded({
+  extended: false
+}));
 app.use(express.static('public'))
 app.set('view engine', 'ejs');
 app.use(express.json());

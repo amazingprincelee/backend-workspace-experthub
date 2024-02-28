@@ -40,7 +40,7 @@ const assessmentSchema = new mongoose.Schema(
           required: true,
           validate: {
             validator: function (value) {
-              return value >= 0 && value < this.answers.length;
+              return value >= 0 && value <= 2;
             },
             message: 'Correct answer index must be a valid index within the answers array.',
           },
