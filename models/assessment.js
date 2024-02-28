@@ -23,8 +23,16 @@ const assessmentSchema = new mongoose.Schema(
           type: String,
           required: true,
         },
-        answers: {
-          type: [String],
+        answerA: {
+          type: String,
+          required: true,
+        },
+        answerB: {
+          type: String,
+          required: true,
+        },
+        answerC: {
+          type: String,
           required: true,
         },
         correctAnswerIndex: {
