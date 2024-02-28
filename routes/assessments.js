@@ -17,6 +17,7 @@ accessmentRouter.get("/get-assessment-questions", assessmentControllers.getAsses
 accessmentRouter.put("/assign/:id", assessmentControllers.assignAssesment)
 accessmentRouter.get("/my-assessment/:id", assessmentControllers.getAssignedAssesment)
 accessmentRouter.put("/edit/:id", assessmentControllers.editAssesment)
+accessmentRouter.get("/single/:id", assessmentControllers.getSingleAssesment)
 // for submitting user's assessment answers
 accessmentRouter.post("/submit-assessment/:userId", assessmentControllers.submitAssessment);
 

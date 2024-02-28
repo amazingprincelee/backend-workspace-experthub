@@ -52,6 +52,20 @@ const assessmentControllers = {
     }
   },
 
+  getSingleAssesment: async (req, res) => {
+    try {
+      const id = req.params.id
+
+      const myAssesment = await Assessment.find({ _id: id });
+
+      return res.status(200).json({ message: 'Assesment retrieved successfully', myAssesment });
+
+    } catch (error) {
+      console.error(error);
+      return res.status(500).json(error);
+    }
+  },
+
   getAssignedAssesment: async (req, res) => {
     try {
       const userId = req.params.id
