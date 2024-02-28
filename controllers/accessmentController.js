@@ -85,13 +85,12 @@ const assessmentControllers = {
       const id = req.params.id
       const studentId = req.body.studentId
 
-      const myAssesment = await Assessment.find({ _id: id });
-
+      const myAssesment = await Assessment.findById(id);
+      console.log(studentId)
       myAssesment.assignedStudents.push(studentId);
       await myAssesment.save();
 
-
-      return res.status(200).json({ message: 'User assesment retrieved successfully', myAssesment });
+      return res.status(200).json({ message: 'User assesment Assigned successfully', myAssesment });
 
     } catch (error) {
       console.error(error);
