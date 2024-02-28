@@ -1,5 +1,6 @@
 import User from "../models/user.js";
 import Assessment from "../models/assessment.js";
+import upload from "../config/cloudinary.js";
 
 
 
@@ -9,6 +10,10 @@ const assessmentControllers = {
   createAssessmentQuestions: async (req, res) => {
     try {
       const assessmentsData = req.body; // Array of assessments
+
+      const { image } = req.files;
+      const cloudFile = await upload(image.tempFilePath);
+      assessmentsData.image = cloudFile.url
 
       // const assessments = assessmentsData.map(({ question, answer1, answer2, answer3, correctAnswerIndex }) => {
       //   const answers = [answer1, answer2, answer3];
@@ -25,6 +30,8 @@ const assessmentControllers = {
       // });
 
       const newAssessments = await Assessment.create(assessmentsData);
+      // await newAssessments.save()
+
 
       return res.status(200).json({ message: 'Assessment data saved successfully', assessments: newAssessments });
     } catch (error) {
