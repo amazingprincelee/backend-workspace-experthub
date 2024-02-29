@@ -173,16 +173,25 @@ const courseController = {
                 await course.save()
             }
 
+            const videoUpload = async (video) => {
+                const cloudFile = await upload(video.videoUrl)
+                return cloudFile.secure_url
+            }
+
             if (newCourse.type === 'video') {
                 let newVideos = []
                 const videos = req.body.videos
-                videos.map(async video => {
-                    const cloudFile = await upload(video.videoUrl)
-                    newVideos.push({
+                console.log(videos)
+                videos.map(video => {
+                    // const cloudFile = await upload(video.videoUrl)
+                    const videoUrl = videoUpload(video)
+                    newVideos = [...newVideos, {
                         title: video.title,
-                        videoUrl: cloudFile.secure_url
-                    })
+                        videoUrl: videoUrl
+                    }]
                 })
+
+                console.log(newVideos)
 
                 course.videos = newVideos
                 await course.save()
