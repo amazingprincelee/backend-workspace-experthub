@@ -121,9 +121,9 @@ const courseController = {
 
         try {
             // Check if a file was uploaded
-            if (!req.files || !req.files.image) {
-                return res.status(400).json({ success: false, error: 'Please upload an image' });
-            }
+            // if (!req.files || !req.files.image) {
+            //     return res.status(400).json({ success: false, error: 'Please upload an image' });
+            // }
 
             const { image } = req.files;
             const fileTypes = ['image/jpeg', 'image/png', 'image/jpg'];
