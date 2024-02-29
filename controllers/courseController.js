@@ -125,13 +125,13 @@ const courseController = {
             //     return res.status(400).json({ success: false, error: 'Please upload an image' });
             // }
 
-            const { image } = req.files;
-            const fileTypes = ['image/jpeg', 'image/png', 'image/jpg'];
-            const imageSize = 50024;
+            // const { image } = req.files;
+            // const fileTypes = ['image/jpeg', 'image/png', 'image/jpg'];
+            // const imageSize = 50024;
 
-            if (!fileTypes.includes(image.mimetype)) return res.send('Image formats supported: JPG, PNG, JPEG');
+            // if (!fileTypes.includes(image.mimetype)) return res.send('Image formats supported: JPG, PNG, JPEG');
 
-            if (image.size / 1024 > imageSize) return res.send(`Image size should be less than ${imageSize}kb`);
+            // if (image.size / 1024 > imageSize) return res.send(`Image size should be less than ${imageSize}kb`);
 
             // Upload image to Cloudinary
             // const cloudFile = await upload(image.tempFilePath);
