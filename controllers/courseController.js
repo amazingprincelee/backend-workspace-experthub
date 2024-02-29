@@ -184,7 +184,7 @@ const courseController = {
                     })
                 })
 
-                course.video = newVideos
+                course.videos = newVideos
                 await course.save()
             }
 
