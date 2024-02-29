@@ -105,7 +105,7 @@ const courseController = {
     },
 
     addCourse: async (req, res) => {
-        const { title, instructorName, about, duration, type, startDate, endDate, startTime, endTime, category, privacy, fee, strikedFee, scholarship, meetingPassword } = req.body;
+        const { title, about, duration, type, startDate, endDate, startTime, endTime, category, privacy, fee, strikedFee, scholarship, meetingPassword } = req.body;
 
         // Get user ID from the request headers
         const userId = req.params.userId;
