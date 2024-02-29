@@ -134,7 +134,8 @@ const courseController = {
             if (image.size / 1024 > imageSize) return res.send(`Image size should be less than ${imageSize}kb`);
 
             // Upload image to Cloudinary
-            const cloudFile = await upload(image.tempFilePath);
+            // const cloudFile = await upload(image.tempFilePath);
+            const cloudFile = await upload(req.body.image);
 
             // Create a new course object
             const newCourse = {
@@ -159,9 +160,31 @@ const courseController = {
             const course = await Course.create(newCourse);
 
             if (newCourse.type === "pdf") {
-                const { pdf } = req.files;
-                const cloudFile = await upload(pdf.tempFilePath);
+                // const { pdf } = req.files;
+                const cloudFile = await upload(req.body.pdf);
+                // const cloudFile = await upload(pdf.tempFilePath);
                 course.file = cloudFile.secure_url
+                await course.save()
+            }
+
+            if (newCourse.type === "offline") {
+                course.room = req.body.room
+                course.location = req.body.location
+                await course.save()
+            }
+
+            if (newCourse.type === 'video') {
+                let newVideos = []
+                const videos = req.body.videos
+                videos.map(async video => {
+                    const cloudFile = await upload(video.videoUrl)
+                    newVideos.push({
+                        title: video.title,
+                        videoUrl: cloudFile.secure_url
+                    })
+                })
+
+                course.video = newVideos
                 await course.save()
             }
 
