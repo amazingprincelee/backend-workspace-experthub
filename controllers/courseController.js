@@ -1,6 +1,7 @@
 import Course from "../models/courses.js";
 import User from "../models/user.js"
 import upload from "../config/cloudinary.js";
+import { cloudinaryVidUpload } from "../config/cloudinary.js"
 import createZoomMeeting from "../utils/createZoomMeeting.js";
 import KJUR from "jsrsasign"
 const categories = ["Virtual Assistant", "Product Management", "Cybersecurity", "Software Development", "AI / Machine Learning", "Data Analysis & Visualisation", "Story Telling", "Animation", "Cloud Computing", "Dev Ops", "UI/UX Design", "Journalism", "Game development", "Data Science", "Digital Marketing", "Advocacy"]
@@ -120,21 +121,6 @@ const courseController = {
         }
 
         try {
-            // Check if a file was uploaded
-            // if (!req.files || !req.files.image) {
-            //     return res.status(400).json({ success: false, error: 'Please upload an image' });
-            // }
-
-            // const { image } = req.files;
-            // const fileTypes = ['image/jpeg', 'image/png', 'image/jpg'];
-            // const imageSize = 50024;
-
-            // if (!fileTypes.includes(image.mimetype)) return res.send('Image formats supported: JPG, PNG, JPEG');
-
-            // if (image.size / 1024 > imageSize) return res.send(`Image size should be less than ${imageSize}kb`);
-
-            // Upload image to Cloudinary
-            // const cloudFile = await upload(image.tempFilePath);
             const cloudFile = await upload(req.body.image);
 
             // Create a new course object
@@ -173,27 +159,22 @@ const courseController = {
                 await course.save()
             }
 
-            const videoUpload = async (video) => {
-                const cloudFile = await upload(video.videoUrl)
-                return cloudFile.secure_url
-            }
+
 
             if (newCourse.type === 'video') {
-                let newVideos = []
                 const videos = req.body.videos
-                console.log(videos)
-                videos.map(video => {
-                    // const cloudFile = await upload(video.videoUrl)
-                    const videoUrl = videoUpload(video)
-                    newVideos = [...newVideos, {
-                        title: video.title,
-                        videoUrl: videoUrl
-                    }]
-                })
+                await Promise.all(videos.map(async video => {
+                    try {
+                        const cloudFile = await cloudinaryVidUpload(video.videoUrl)
+                        course.videos = [...course.videos, {
+                            title: video.title,
+                            videoUrl: cloudFile
+                        }]
+                    } catch (error) {
+                        console.error(`Error uploading image ${error}`);
+                    }
+                }))
 
-                console.log(newVideos)
-
-                course.videos = newVideos
                 await course.save()
             }
 
