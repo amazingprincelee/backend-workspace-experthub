@@ -57,6 +57,7 @@ const userControllers = {
       existingUser.state = req.body.state || existingUser.state;
       existingUser.address = req.body.address || existingUser.address;
       existingUser.assignedCourse = req.body.course || existingUser.assignedCourse
+      existingUser.graduate = req.body.graduate || existingUser.graduate
 
 
       // Save the updated user profile
