@@ -155,7 +155,8 @@ const userControllers = {
         state: student.state,
         address: student.address,
         course: student.assignedCourse,
-        profilePicture: student.profilePicture
+        profilePicture: student.profilePicture,
+        graduate: student.graduate
       }));
 
       return res.status(200).json({ message: 'Students retrieved successfully', students: studentProfiles });
