@@ -39,7 +39,10 @@ const courseSchema = new mongoose.Schema({
         title: String,
         videoUrl: String,
     }],
-
+    approved: {
+        type: Boolean,
+        default: false,
+    },
 });
 
 

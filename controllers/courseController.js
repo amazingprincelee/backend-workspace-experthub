@@ -35,7 +35,7 @@ const courseController = {
         const category = req.params.category;
 
         try {
-            const courses = await Course.find({ category });
+            const courses = await Course.find({ category, approved: true });
 
             return res.status(200).json({ courses });
         } catch (error) {
@@ -69,7 +69,7 @@ const courseController = {
 
     getAllCourses: async (req, res) => {
         try {
-            const courses = await Course.find();
+            const courses = await Course.find({ approved: true });
 
             return res.status(200).json({ courses });
         } catch (error) {
@@ -202,6 +202,37 @@ const courseController = {
         }
     },
 
+    getUnaproved: async (req, res) => {
+        try {
+            const courses = await Course.find({ approved: false });
+
+            return res.status(200).json({ courses });
+        } catch (error) {
+            console.error(error);
+            return res.status(500).json({ message: 'Unexpected error while fetching courses by category' });
+        }
+    },
+
+    approveCourse: async (req, res) => {
+        const courseId = req.params.courseId;
+        try {
+
+            const course = await Course.findById(courseId);
+
+            if (!course) {
+                return res.status(404).json({ message: 'Course not found' });
+            }
+
+            // Approve the course
+            course.approved = true;
+            await course.save();
+
+            return res.status(200).json({ message: 'Approved successfully' });
+        } catch (error) {
+            console.error(error);
+            return res.status(500).json({ message: 'Unexpected error during enrollment' });
+        }
+    },
 
     // course admission
     enrollCourse: async (req, res) => {
@@ -319,7 +350,7 @@ const courseController = {
             //     }
             // }
 
-            const courses = await Course.find({ category })
+            const courses = await Course.find({ category, approved: true })
             const recommendedCourses = await courses.map((course) => {
                 if (course.enrolledStudents.includes(userId)) {
                     return null
