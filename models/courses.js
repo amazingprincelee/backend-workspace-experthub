@@ -4,6 +4,7 @@ import mongoose from "mongoose";
 const courseSchema = new mongoose.Schema({
     title: String,
     instructorName: String,
+    instructorImage: String,
     file: String,
     thumbnail: String,
     category: String,

@@ -126,6 +126,7 @@ const courseController = {
             // Create a new course object
             const newCourse = {
                 instructorName: user.fullname,
+                instructorImage: user.profilePicture,
                 title,
                 about,
                 duration,
