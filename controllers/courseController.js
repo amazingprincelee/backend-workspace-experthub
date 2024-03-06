@@ -15,7 +15,7 @@ const courseController = {
             const allCourse = []
 
             await Promise.all(categories.map(async (category) => {
-                const courses = await Course.find({ category });
+                const courses = await Course.find({ category, approved: true });
                 if (courses.length !== 0) {
                     allCourse.push({
                         category,
