@@ -60,7 +60,7 @@ const authControllers = {
   login: async (req, res) => {
     passport.authenticate("local", (err, user, info) => {
       if (!user) {
-        return res.status(401).json({ message: 'Authenticaation failed' });
+        return res.status(401).json({ message: 'Incorrect Email or Password!' });
       }
       res.status(201).json({
         message: 'Successfully logged in',

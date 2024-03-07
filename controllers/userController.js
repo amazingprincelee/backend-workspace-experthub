@@ -124,7 +124,8 @@ const userControllers = {
         state: student.state,
         address: student.address,
         course: student.assignedCourse,
-        profilePicture: student.profilePicture
+        profilePicture: student.profilePicture,
+        graduate: student.graduate
       }));
 
       return res.status(200).json({ message: 'Students retrieved successfully', students: studentProfiles });
@@ -138,6 +139,40 @@ const userControllers = {
     try {
       // Find all users with the role 'student'
       const students = await User.find({ role: 'student', assignedCourse: req.body.course });
+
+      if (!students || students.length === 0) {
+        return res.status(404).json({ message: 'No students found' });
+      }
+
+      // Extract relevant student information
+      const studentProfiles = students.map(student => ({
+        studentId: student._id,
+        fullname: student.fullname,
+        email: student.email,
+        phone: student.phone,
+        gender: student.gender,
+        age: student.age,
+        skillLevel: student.skillLevel,
+        country: student.country,
+        state: student.state,
+        address: student.address,
+        course: student.assignedCourse,
+        profilePicture: student.profilePicture,
+        graduate: student.graduate,
+        isVerified: student.isVerified
+      }));
+
+      return res.status(200).json({ message: 'Students retrieved successfully', students: studentProfiles });
+    } catch (error) {
+      console.error(error);
+      return res.status(500).json({ message: 'Unexpected error during student retrieval' });
+    }
+  },
+
+  getMyGraduates: async (req, res) => {
+    try {
+      // Find all users with the role 'student'
+      const students = await User.find({ role: 'student', assignedCourse: req.body.course, graduate: true });
 
       if (!students || students.length === 0) {
         return res.status(404).json({ message: 'No students found' });
@@ -201,6 +236,40 @@ const userControllers = {
     }
   },
 
+  getGraduates: async (req, res) => {
+    try {
+      // Find all users with the role 'student'
+      const students = await User.find({ role: 'student', graduate: true });
+
+      if (!students || students.length === 0) {
+        return res.status(404).json({ message: 'No students found' });
+      }
+
+      // Extract relevant student information
+      const studentProfiles = students.map(student => ({
+        studentId: student._id,
+        fullname: student.fullname,
+        email: student.email,
+        phone: student.phone,
+        gender: student.gender,
+        age: student.age,
+        skillLevel: student.skillLevel,
+        country: student.country,
+        state: student.state,
+        address: student.address,
+        course: student.assignedCourse,
+        profilePicture: student.profilePicture,
+        graduate: student.graduate,
+        isVerified: student.isVerified
+      }));
+
+      return res.status(200).json({ message: 'Students retrieved successfully', students: studentProfiles });
+    } catch (error) {
+      console.error(error);
+      return res.status(500).json({ message: 'Unexpected error during student retrieval' });
+    }
+
+  },
 
   updateProfilePhote: async (req, res) => {
     try {

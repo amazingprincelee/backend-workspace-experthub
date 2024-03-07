@@ -3,8 +3,8 @@ import userControllers from '../controllers/userController.js';
 const userRouter = express.Router();
 
 
-userRouter.get("/", (req, res)=>{
-  res.status(200).json({message:"Welcome to ExpertHub user route"})
+userRouter.get("/", (req, res) => {
+  res.status(200).json({ message: "Welcome to ExpertHub user route" })
 });
 
 
@@ -19,6 +19,8 @@ userRouter.put("/updateProfilePicture/:userId", userControllers.updateProfilePho
 // get course student and instructors
 userRouter.put("/myinstructors", userControllers.getMyInstructors);
 userRouter.put("/mystudents", userControllers.getMyStudents);
+userRouter.put("/graduate", userControllers.getGraduates);
+userRouter.put("/mygraduate", userControllers.getMyGraduates);
 
 
 
