@@ -127,7 +127,7 @@ const userControllers = {
         course: student.assignedCourse,
         profilePicture: student.profilePicture,
         graduate: student.graduate,
-        blocked: instructor.blocked
+        blocked: student.blocked
       }));
 
       return res.status(200).json({ message: 'Students retrieved successfully', students: studentProfiles });
