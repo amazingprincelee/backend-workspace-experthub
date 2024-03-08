@@ -196,7 +196,7 @@ const userControllers = {
         isVerified: student.isVerified
       }));
 
-      return res.status(200).json({ message: 'Students retrieved successfully', students: studentProfiles });
+      return res.status(200).json({ message: 'Graduates retrieved successfully', students: studentProfiles });
     } catch (error) {
       console.error(error);
       return res.status(500).json({ message: 'Unexpected error during student retrieval' });
@@ -263,7 +263,7 @@ const userControllers = {
         isVerified: student.isVerified
       }));
 
-      return res.status(200).json({ message: 'Students retrieved successfully', students: studentProfiles });
+      return res.status(200).json({ message: 'Graduates retrieved successfully', students: studentProfiles });
     } catch (error) {
       console.error(error);
       return res.status(500).json({ message: 'Unexpected error during student retrieval' });
@@ -293,8 +293,25 @@ const userControllers = {
       console.error(error);
       return res.status(500).json({ message: 'Unexpected error' });
     }
-  }
+  },
 
+  block: async (req, res) => {
+    const userId = req.params.userId;
+    try {
+      const user = await User.findById(userId);
+      if (!user) {
+        return res.status(404).json({ message: 'User not found' });
+      }
+
+      user.blocked = true;
+      await user.save();
+      return res.status(200).json({ message: 'User Blocked successfully' });
+
+    } catch (error) {
+      console.error(error);
+      return res.status(500).json({ message: 'Unexpected error during user retrieval' });
+    }
+  }
 };
 
 

@@ -62,6 +62,10 @@ const authControllers = {
       if (!user) {
         return res.status(401).json({ message: 'Incorrect Email or Password!' });
       }
+      if (user.bloked) {
+        return res.status(401).json({ message: 'User Blocked!' });
+      }
+
       res.status(201).json({
         message: 'Successfully logged in',
         user: {
@@ -128,7 +132,7 @@ const authControllers = {
     }
   },
 
-
+  
 };
 
 

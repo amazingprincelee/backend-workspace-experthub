@@ -54,7 +54,10 @@ const userSchema = new mongoose.Schema({
     type: Boolean,
     default: false,
   },
-
+  blockes: {
+    type: Boolean,
+    default: false
+  },
   verificationCode: String,
 
 });
