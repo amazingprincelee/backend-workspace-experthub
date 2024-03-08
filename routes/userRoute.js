@@ -22,6 +22,6 @@ userRouter.put("/mystudents", userControllers.getMyStudents);
 userRouter.put("/graduate", userControllers.getGraduates);
 userRouter.put("/mygraduate", userControllers.getMyGraduates);
 
-
+userRouter.put("/block:userId", userControllers.block)
 
 export default userRouter;

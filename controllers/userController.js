@@ -92,7 +92,8 @@ const userControllers = {
         country: instructor.country,
         state: instructor.state,
         address: instructor.address,
-        profilePicture: instructor.profilePicture
+        profilePicture: instructor.profilePicture,
+        blocked: instructor.blocked
       }));
 
       return res.status(200).json({ message: 'Instructors retrieved successfully', instructors: instructorProfiles });
@@ -125,7 +126,8 @@ const userControllers = {
         address: student.address,
         course: student.assignedCourse,
         profilePicture: student.profilePicture,
-        graduate: student.graduate
+        graduate: student.graduate,
+        blocked: instructor.blocked
       }));
 
       return res.status(200).json({ message: 'Students retrieved successfully', students: studentProfiles });
@@ -303,7 +305,7 @@ const userControllers = {
         return res.status(404).json({ message: 'User not found' });
       }
 
-      user.blocked = true;
+      user.blocked = !user.blocked;
       await user.save();
       return res.status(200).json({ message: 'User Blocked successfully' });
 
