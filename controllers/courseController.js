@@ -15,7 +15,7 @@ const courseController = {
             const allCourse = []
 
             await Promise.all(categories.map(async (category) => {
-                const courses = await Course.find({ category, approved: true });
+                const courses = await Course.find({ category, approved: true }).populate({ path: 'enrolledStudents', select: "profilePicture fullname _id" }).lean();;
                 if (courses.length !== 0) {
                     allCourse.push({
                         category,
@@ -35,7 +35,7 @@ const courseController = {
         const category = req.params.category;
 
         try {
-            const courses = await Course.find({ category, approved: true });
+            const courses = await Course.find({ category, approved: true }).populate({ path: 'enrolledStudents', select: "profilePicture fullname _id" }).lean();;
 
             return res.status(200).json({ courses });
         } catch (error) {
@@ -69,7 +69,7 @@ const courseController = {
 
     getAllCourses: async (req, res) => {
         try {
-            const courses = await Course.find({ approved: true });
+            const courses = await Course.find({ approved: true }).populate({ path: 'enrolledStudents', select: "profilePicture fullname _id" }).lean();
 
             return res.status(200).json({ courses });
         } catch (error) {
