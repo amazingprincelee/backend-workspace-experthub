@@ -401,6 +401,35 @@ const courseController = {
             console.error(error);
             res.status(400).json(error);
         }
+    },
+
+    videoUpload: async (req, res) => {
+        const courseId = req.params.courseId;
+
+        try {
+            const course = await Course.findById(courseId);
+            const videos = req.body.videos
+            await Promise.all(videos.map(async video => {
+                try {
+                    const cloudFile = await cloudinaryVidUpload(video.videoUrl)
+                    course.videos = [...course.videos, {
+                        title: video.title,
+                        videoUrl: cloudFile
+                    }]
+                } catch (error) {
+                    console.error(`Error uploading image ${error}`);
+                }
+            }))
+            await course.save()
+            return res.status(201).json({
+                success: true,
+                message: 'Videos added successfully',
+                course,
+            });
+        } catch (error) {
+            console.log(error);
+            return res.status(500).json({ message: 'Unexpected error during video upload' });
+        }
     }
 };
 

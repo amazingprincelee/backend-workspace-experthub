@@ -37,6 +37,8 @@ courseRouter.put("/edit/:id", courseController.editCourse)
 courseRouter.get("/unapproved", courseController.getUnaproved)
 courseRouter.put("/approve/:courseId", courseController.approveCourse)
 
+// uplaod video
+courseRouter.post("/upload/:courseId", courseController.videoUpload)
 
 
 export default courseRouter;
