@@ -139,7 +139,7 @@ const courseController = {
                 privacy,
                 fee,
                 strikedFee,
-                scholarship,
+                enrolledStudents: req.body.scholarship,
                 thumbnail: cloudFile.url,  // Set the thumbnail field with the Cloudinary URL
             };
 
