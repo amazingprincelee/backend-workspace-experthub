@@ -9,10 +9,7 @@ const eventSchema = new mongoose.Schema({
   meetingPassword: String,
   zakToken: String,
   about: String,
-  author: {
-    type: mongoose.Schema.Types.ObjectId,
-    ref: 'User',
-  },
+  author: String,
   duration: Number,
   mode: String,
   type: String,

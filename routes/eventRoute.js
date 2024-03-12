@@ -13,7 +13,7 @@ eventRouter.put("/enroll/:eventId", eventsController.enrollEvent)
 
 eventRouter.put("/edit/:id", eventsController.editEvent)
 
-eventRouter.get("/:id", eventsController.getAuthorEvent)
+// eventRouter.get("/:id", eventsController.getAuthorEvent)
 
 
 eventRouter.delete("/delete/:id", eventsController.deleteEvent)

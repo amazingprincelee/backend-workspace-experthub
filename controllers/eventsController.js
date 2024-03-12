@@ -19,7 +19,7 @@ const eventsController = {
     try {
       const cloudFile = await upload(req.body.image);
       const newEvent = {
-        author: userId,
+        author: user.fullname,
         title,
         about,
         duration,
@@ -57,7 +57,7 @@ const eventsController = {
       return res.status(201).json({
         success: true,
         message: 'Event added successfully',
-        course,
+        event,
       });
     } catch (error) {
       console.log(error);
