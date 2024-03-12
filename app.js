@@ -9,6 +9,7 @@ import userRouter from './routes/userRoute.js';
 import courseRouter from './routes/courseRoute.js';
 import accessmentRouter from './routes/assessments.js';
 import resourceRoute from './routes/resourceRouter.js';
+import eventRouter from "./routes/eventRoute.js"
 
 import bodyParser from 'body-parser';
 import { connect } from './config/connectionState.js';
@@ -66,6 +67,7 @@ connect();
 app.use('/auth', authRoute);
 app.use('/user', userRouter);
 app.use('/courses', courseRouter);
+app.use('/events', eventRouter);
 app.use('/resources', resourceRoute);
 app.use('/assessment', accessmentRouter);
 
