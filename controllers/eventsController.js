@@ -38,6 +38,12 @@ const eventsController = {
 
       const event = await LearningEvent.create(newEvent);
 
+      if (newEvent.type === "offline") {
+        event.room = req.body.room
+        event.location = req.body.location
+        await event.save()
+    }
+
       if (newEvent.type === "online") {
         //....Args -- course topic, course duration, scheduled date of the course, zoom password for course,
         const meetingData = await createZoomMeeting(event.title, parseInt(event.duration), new Date(startDate), meetingPassword)
