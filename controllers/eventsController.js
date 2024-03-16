@@ -66,7 +66,7 @@ const eventsController = {
   },
 
   getEventByCategory: async (req, res) => {
-    const category = req.params.category;
+    const category = req.body.category;
 
     try {
       const events = await LearningEvent.find({ category })

@@ -32,7 +32,7 @@ const courseController = {
     },
 
     getCourseByCategory: async (req, res) => {
-        const category = req.params.category;
+        const category = req.body.category;
 
         try {
             const courses = await Course.find({ category, approved: true }).populate({ path: 'enrolledStudents', select: "profilePicture fullname _id" }).lean();;

@@ -5,7 +5,7 @@ const eventRouter = express.Router();
 
 eventRouter.post("/add-event/:userId", eventsController.createEvent);
 
-eventRouter.put("/category/:category", eventsController.getEventByCategory)
+eventRouter.put("/category", eventsController.getEventByCategory)
 
 eventRouter.get("/all", eventsController.getAllEvents)
 
