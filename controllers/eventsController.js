@@ -103,17 +103,17 @@ const eventsController = {
 
       // Check if the student is already enrolled
       if (event.enrolledStudents.includes(studentId)) {
-        return res.status(400).json({ message: 'Student is already enrolled in the course' });
+        return res.status(400).json({ message: 'Student is already booked event' });
       }
 
       // Enroll the student in the course
       event.enrolledStudents.push(studentId);
       await event.save();
 
-      return res.status(200).json({ message: 'Enrolled successfully' });
+      return res.status(200).json({ message: 'Booked successfully' });
     } catch (error) {
       console.error(error);
-      return res.status(500).json({ message: 'Unexpected error during enrollment' });
+      return res.status(500).json({ message: 'Unexpected error during booking' });
     }
   },
 
