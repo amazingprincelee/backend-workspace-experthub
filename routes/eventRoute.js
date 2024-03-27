@@ -13,7 +13,9 @@ eventRouter.put("/enroll/:eventId", eventsController.enrollEvent)
 
 eventRouter.put("/edit/:id", eventsController.editEvent)
 
-// eventRouter.get("/:id", eventsController.getAuthorEvent)
+eventRouter.get("/enrolled/:courseId", eventsController.getEnrolledStudents);
+
+eventRouter.get("/:eventId", eventsController.getEventById)
 
 
 eventRouter.delete("/delete/:id", eventsController.deleteEvent)

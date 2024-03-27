@@ -5,7 +5,7 @@ import LearningEvent from "../models/event.js";
 
 const eventsController = {
   createEvent: async (req, res) => {
-    const { title, about, duration, type, startDate, endDate, startTime, endTime, category, mode, fee, strikedFee, scholarship, meetingPassword } = req.body;
+    const { title, about, duration, type, startDate, endDate, startTime, endTime, category, mode, fee, strikedFee, scholarship, meetingPassword, target } = req.body;
 
     const userId = req.params.userId;
     // Query the user database to get the user's role
@@ -31,6 +31,7 @@ const eventsController = {
         category,
         mode,
         fee,
+        target,
         strikedFee,
         enrolledStudents: scholarship,
         thumbnail: cloudFile.url,  // Set the thumbnail field with the Cloudinary URL
@@ -42,7 +43,7 @@ const eventsController = {
         event.room = req.body.room
         event.location = req.body.location
         await event.save()
-    }
+      }
 
       if (newEvent.type === "online") {
         //....Args -- course topic, course duration, scheduled date of the course, zoom password for course,
@@ -69,7 +70,7 @@ const eventsController = {
     const category = req.body.category;
 
     try {
-      const events = await LearningEvent.find({ category })
+      const events = await LearningEvent.find({ category }).populate({ path: 'enrolledStudents', select: "profilePicture fullname _id" }).lean();
 
       return res.status(200).json({ events });
     } catch (error) {
@@ -80,8 +81,7 @@ const eventsController = {
 
   getAllEvents: async (req, res) => {
     try {
-      const events = await LearningEvent.find();
-
+      const events = await LearningEvent.find().populate({ path: 'enrolledStudents', select: "profilePicture fullname _id" }).lean();
       return res.status(200).json({ events });
     } catch (error) {
       console.error(error);
@@ -117,6 +117,28 @@ const eventsController = {
     }
   },
 
+  getEventById: async (req, res) => {
+    const eventId = req.params.eventId;
+
+    // Validate if courseId is a valid ObjectId
+    // if (!ObjectId.isValid(courseId)) {
+    //     return res.status(400).json({ message: 'Invalid course ID' });
+    // }
+
+    try {
+        const course = await LearningEvent.findById(eventId);
+
+        if (!course) {
+            return res.status(404).json({ message: 'Event not found' });
+        }
+
+        return res.status(200).json({ course });
+    } catch (error) {
+        console.error(error);
+        return res.status(500).json({ message: 'Unexpected error while fetching the event' });
+    }
+},
+
   getAuthorEvent: async (req, res) => {
     const author = req.params.id;
 
@@ -127,6 +149,43 @@ const eventsController = {
     } catch (error) {
       console.error(error);
       return res.status(500).json({ message: 'Unexpected error while fetching author events' });
+    }
+  },
+
+  getEnrolledStudents: async (req, res) => {
+    const courseId = req.params.courseId;
+
+    try {
+      const course = await Event.findById(courseId);
+
+      if (!course) {
+        return res.status(404).json({ message: 'Course not found' });
+      }
+
+      // Fetch details of enrolled students
+      const enrolledStudents = await User.find({ _id: { $in: course.enrolledStudents } });
+
+      if (!enrolledStudents || enrolledStudents.length === 0) {
+        return res.status(404).json({ message: 'No enrolled students found for this event' });
+      }
+
+      // Extract relevant student information
+      const enrolledStudentsProfiles = enrolledStudents.map(student => ({
+        fullname: student.fullname,
+        email: student.email,
+        phone: student.phone,
+        gender: student.gender,
+        age: student.age,
+        skillLevel: student.skillLevel,
+        country: student.country,
+        state: student.state,
+        address: student.address,
+      }));
+
+      return res.status(200).json({ message: 'Enrolled students retrieved successfully', enrolledStudents: enrolledStudentsProfiles });
+    } catch (error) {
+      console.error(error);
+      return res.status(500).json({ message: 'Unexpected error during enrolled students retrieval' });
     }
   },
 
