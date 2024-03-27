@@ -15,7 +15,7 @@ const courseSchema = new mongoose.Schema({
         student: String,
     },
     about: String,
-    instructorId: String,
+    instructorId: String, 
     duration: Number,
     type: String,
     startDate: String,
@@ -24,7 +24,8 @@ const courseSchema = new mongoose.Schema({
     endTime: String,
     fee: Number,
     strikedFee: Number,
-    
+    target: Number,
+
     enrolledStudents: [{
         type: mongoose.Schema.Types.ObjectId,
         ref: 'User',

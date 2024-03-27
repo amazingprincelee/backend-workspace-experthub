@@ -20,6 +20,7 @@ const eventSchema = new mongoose.Schema({
   endTime: String,
   fee: Number,
   strikedFee: Number,
+  target: Number,
 
   enrolledStudents: [{
     type: mongoose.Schema.Types.ObjectId,
