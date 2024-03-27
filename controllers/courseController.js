@@ -4,6 +4,7 @@ import upload from "../config/cloudinary.js";
 import { cloudinaryVidUpload } from "../config/cloudinary.js"
 import createZoomMeeting from "../utils/createZoomMeeting.js";
 import KJUR from "jsrsasign"
+import Notification from "../models/notifications.js";
 const categories = ["Virtual Assistant", "Product Management", "Cybersecurity", "Software Development", "AI / Machine Learning", "Data Analysis & Visualisation", "Story Telling", "Animation", "Cloud Computing", "Dev Ops", "UI/UX Design", "Journalism", "Game development", "Data Science", "Digital Marketing", "Advocacy"]
 
 
@@ -125,6 +126,7 @@ const courseController = {
 
             // Create a new course object
             const newCourse = {
+                instructorId: user._id,
                 instructorName: user.fullname,
                 instructorImage: user.profilePicture,
                 title,
@@ -192,6 +194,19 @@ const courseController = {
                 }
             }
 
+            const adminUsers = await User.find({ role: { $in: ["admin", "super-admin"] } });
+            adminUsers.forEach(async (adminUser) => {
+                try {
+                    await Notification.create({
+                        title: "Course created",
+                        content: `${user.fullname} just created a new course on ${course.title}`,
+                        contentId: course._id,
+                        userId: adminUser._id,
+                    });
+                } catch (error) {
+                    console.error("Error creating notification:", error);
+                }
+            });
             return res.status(201).json({
                 success: true,
                 message: 'Course added successfully',
@@ -239,10 +254,13 @@ const courseController = {
     // course admission
     enrollCourse: async (req, res) => {
         const courseId = req.params.courseId;
-        const studentId = req.body.id;
+
+        const {id}=req.body
+ 
         try {
 
             const course = await Course.findById(courseId);
+            const user = await User.findById(id);
 
 
             if (!course) {
@@ -250,13 +268,20 @@ const courseController = {
             }
 
             // Check if the student is already enrolled
-            if (course.enrolledStudents.includes(studentId)) {
+            if (course.enrolledStudents.includes(id)) {
                 return res.status(400).json({ message: 'Student is already enrolled in the course' });
             }
 
             // Enroll the student in the course
-            course.enrolledStudents.push(studentId);
+            course.enrolledStudents.push(id);
             await course.save();
+
+            await Notification.create({
+                title: "Course enrolled",
+                content: `${user.fullname} Just enrolled for your Course ${course.title}`,
+                contentId: course._id,
+                userId: course.instructorId,
+            });
 
             return res.status(200).json({ message: 'Enrolled successfully' });
         } catch (error) {
@@ -386,6 +411,30 @@ const courseController = {
                 new: true
             })
             res.json(course);
+        } catch (error) {
+            console.error(error);
+            res.status(400).json(error);
+        }
+    },
+    notifyLive: async (req, res) => {
+        const courseId = req.params.id;
+
+        try {
+            const course = await Course.findById(courseId);
+
+            if (!course) {
+                return res.status(404).json({ message: 'Course not found' });
+            }
+
+            course.enrolledStudents.map(async userId=>{
+                await Notification.create({
+                    title: "Course live",
+                    content: `${course.instructorName} just went Live Now’ on the course ${course.title}`,
+                    contentId: course._id,
+                    userId,
+                });
+            })
+            return res.status(200).json({ message: 'Notifed students '});
         } catch (error) {
             console.error(error);
             res.status(400).json(error);

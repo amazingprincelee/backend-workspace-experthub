@@ -33,6 +33,7 @@ courseRouter.get("/recommended-courses/:userId", courseController.getRecommended
 courseRouter.get("/all/category", courseController.getAllCategory);
 courseRouter.delete("/delete/:id", courseController.deleteCourse)
 courseRouter.put("/edit/:id", courseController.editCourse)
+courseRouter.get("/notify-live/:id", courseController.notifyLive)
 
 courseRouter.get("/unapproved", courseController.getUnaproved)
 courseRouter.put("/approve/:courseId", courseController.approveCourse)

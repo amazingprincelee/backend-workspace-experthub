@@ -10,6 +10,7 @@ const eventSchema = new mongoose.Schema({
   zakToken: String,
   about: String,
   author: String,
+  authorId: String,
   duration: Number,
   mode: String,
   type: String,

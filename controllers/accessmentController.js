@@ -1,6 +1,7 @@
 import User from "../models/user.js";
 import Assessment from "../models/assessment.js";
 import upload from "../config/cloudinary.js";
+import Notification from "../models/notifications.js";
 
 
 
@@ -83,13 +84,25 @@ const assessmentControllers = {
   assignAssesment: async (req, res) => {
     try {
       const id = req.params.id
-      const studentId = req.body.studentId
+
+      const {studentId,userId}=req.body
+  
 
       const myAssesment = await Assessment.findById(id);
+      const user = await User.findById(userId);
+
+
       console.log(studentId)
       myAssesment.assignedStudents.push(studentId);
-      await myAssesment.save();
 
+
+      await myAssesment.save();
+      await Notification.create({
+        title:"Assesmet assigned",
+        content:`${user.fullname} sent you an Assessment`,
+        contentId:myAssesment.id,
+        userId:studentId,
+      });
       return res.status(200).json({ message: 'User assesment Assigned successfully', myAssesment });
 
     } catch (error) {
