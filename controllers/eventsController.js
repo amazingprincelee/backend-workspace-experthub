@@ -231,6 +231,37 @@ const eventsController = {
       return res.status(500).json({ message: 'Unexpected error during enrolled students retrieval' });
     }
   },
+<<<<<<< HEAD
+=======
+
+  getEnrolledEvents: async (req, res) => {
+    const userId = req.params.userId;
+
+    try {
+        // Find the user by ID
+        // const user = await User.findById(userId);
+
+        // if (!user) {
+        //     return res.status(404).json({ message: 'User not found' });
+        // }
+
+        // Get the enrolled courses using the user's enrolledCourses array
+        const enrolledCourses = await LearningEvent.find({ enrolledStudents: { _id: userId } }).populate({ path: 'enrolledStudents', select: "profilePicture fullname _id" }).lean();
+        // console.log(enrolledCourses)
+
+        if (!enrolledCourses || enrolledCourses.length === 0) {
+            return res.status(404).json({ message: 'No enrolled courses found for this user' });
+        }
+
+        return res.status(200).json({ message: 'Enrolled courses retrieved successfully', enrolledCourses });
+    } catch (error) {
+        console.error(error);
+        return res.status(500).json({ message: 'Unexpected error during enrolled courses retrieval' });
+    }
+},
+
+
+>>>>>>> fb7e5836288ac044c62765f5133f13ca49ed0e24
   editEvent: async (req, res) => {
     try {
       const event = await LearningEvent.updateOne({
