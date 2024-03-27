@@ -147,18 +147,18 @@ const eventsController = {
     // }
 
     try {
-        const course = await LearningEvent.findById(eventId);
+      const course = await LearningEvent.findById(eventId);
 
-        if (!course) {
-            return res.status(404).json({ message: 'Event not found' });
-        }
+      if (!course) {
+        return res.status(404).json({ message: 'Event not found' });
+      }
 
-        return res.status(200).json({ course });
+      return res.status(200).json({ course });
     } catch (error) {
-        console.error(error);
-        return res.status(500).json({ message: 'Unexpected error while fetching the event' });
+      console.error(error);
+      return res.status(500).json({ message: 'Unexpected error while fetching the event' });
     }
-},
+  },
 
   getAuthorEvent: async (req, res) => {
     const author = req.params.id;
@@ -173,11 +173,9 @@ const eventsController = {
     }
   },
   notifyLive: async (req, res) => {
-    const courseId = req.params.courseId;
-
-<<<<<<< HEAD
+    const eventId = req.params.id;
     try {
-      const event = await LearningEvent.findById(courseId);
+      const event = await LearningEvent.findById(eventId);
 
       if (!event) {
         return res.status(404).json({ message: 'Event not found' });
@@ -197,7 +195,6 @@ const eventsController = {
       res.status(400).json(error);
     }
   },
-=======
   getEnrolledStudents: async (req, res) => {
     const courseId = req.params.courseId;
 
@@ -234,8 +231,6 @@ const eventsController = {
       return res.status(500).json({ message: 'Unexpected error during enrolled students retrieval' });
     }
   },
-
->>>>>>> 7b22d2c8ca65d4fe4b433372d07ff769958e500d
   editEvent: async (req, res) => {
     try {
       const event = await LearningEvent.updateOne({

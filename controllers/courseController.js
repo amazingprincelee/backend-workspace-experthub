@@ -417,7 +417,7 @@ const courseController = {
         }
     },
     notifyLive: async (req, res) => {
-        const courseId = req.params.courseId;
+        const courseId = req.params.id;
 
         try {
             const course = await Course.findById(courseId);
