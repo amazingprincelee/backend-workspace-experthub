@@ -2,6 +2,7 @@ import User from "../models/user.js"
 import upload from "../config/cloudinary.js";
 import createZoomMeeting from "../utils/createZoomMeeting.js";
 import LearningEvent from "../models/event.js";
+import Notification from "../models/notifications.js";
 
 const eventsController = {
   createEvent: async (req, res) => {
@@ -20,6 +21,7 @@ const eventsController = {
       const cloudFile = await upload(req.body.image);
       const newEvent = {
         author: user.fullname,
+        authorId: user._id,
         title,
         about,
         duration,
@@ -42,7 +44,7 @@ const eventsController = {
         event.room = req.body.room
         event.location = req.body.location
         await event.save()
-    }
+      }
 
       if (newEvent.type === "online") {
         //....Args -- course topic, course duration, scheduled date of the course, zoom password for course,
@@ -54,6 +56,19 @@ const eventsController = {
           await event.save()
         }
       }
+      const adminUsers = await User.find({ role: { $in: ["admin", "super-admin"] } });
+      adminUsers.forEach(async (adminUser) => {
+        try {
+          await Notification.create({
+            title: "Event created",
+            content: `${user.fullname} just created a new event on ${event.title}`,
+            contentId: event._id,
+            userId: adminUser._id,
+          });
+        } catch (error) {
+          console.error("Error creating notification:", error);
+        }
+      });
       return res.status(201).json({
         success: true,
         message: 'Event added successfully',
@@ -91,10 +106,11 @@ const eventsController = {
 
   enrollEvent: async (req, res) => {
     const eventId = req.params.eventId;
-    const studentId = req.body.id;
+    const { id } = req.body
     try {
 
       const event = await LearningEvent.findById(eventId);
+      const user = await User.findById(id);
 
 
       if (!event) {
@@ -102,14 +118,19 @@ const eventsController = {
       }
 
       // Check if the student is already enrolled
-      if (event.enrolledStudents.includes(studentId)) {
+      if (event.enrolledStudents.includes(id)) {
         return res.status(400).json({ message: 'Student is already booked event' });
       }
 
       // Enroll the student in the course
-      event.enrolledStudents.push(studentId);
+      event.enrolledStudents.push(id);
       await event.save();
-
+      await Notification.create({
+        title: "Course enrolled",
+        content: `${user.fullname} Just registered for your Event ${event.title}`,
+        contentId: event._id,
+        userId: event.authorId,
+      });
       return res.status(200).json({ message: 'Booked successfully' });
     } catch (error) {
       console.error(error);
@@ -129,7 +150,30 @@ const eventsController = {
       return res.status(500).json({ message: 'Unexpected error while fetching author events' });
     }
   },
+  notifyLive: async (req, res) => {
+    const courseId = req.params.courseId;
 
+    try {
+      const event = await LearningEvent.findById(courseId);
+
+      if (!event) {
+        return res.status(404).json({ message: 'Event not found' });
+      }
+
+      event.enrolledStudents.map(async userId => {
+        await Notification.create({
+          title: "Course live",
+          content: `${event.author} just went Live Now’ on the course ${event.title}`,
+          contentId: event._id,
+          userId,
+        });
+      })
+      return res.status(200).json({ message: 'Notifed students ' });
+    } catch (error) {
+      console.error(error);
+      res.status(400).json(error);
+    }
+  },
   editEvent: async (req, res) => {
     try {
       const event = await LearningEvent.updateOne({
