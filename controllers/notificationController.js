@@ -3,11 +3,9 @@ import Notification from "../models/notifications.js";
 
 const notificationController = {
   getUserNotificatins: async (req, res) => {
-
     try {
       const {id} = req.params;
-      const notifications = await Notification.find({ userId:id });
-
+      const notifications = await Notification.find({ userId: id }).sort({ createdAt: -1 });
       return res.status(201).json(notifications);
     } catch (error) {
       console.error(error);

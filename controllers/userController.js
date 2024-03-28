@@ -1,5 +1,6 @@
 import User from "../models/user.js";
 import upload from "../config/cloudinary.js";
+import Notification from "../models/notifications.js";
 
 
 const userControllers = {
@@ -47,11 +48,11 @@ const userControllers = {
       if (!existingUser) {
         return res.status(404).json({ message: 'User not found' });
       }
-
+      
       if (existingUser.assignedCourse !== req.body.course) {
         await Notification.create({
           title: "Course assigned",
-          content: `${assigner.fullname} just assigned a course to ${req.body.course}`,
+          content: `${assigner.fullname} just assigned a course to you on ${req.body.course}`,
           userId: existingUser.id,
         });
 
