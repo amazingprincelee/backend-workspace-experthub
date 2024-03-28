@@ -10,6 +10,7 @@ import courseRouter from './routes/courseRoute.js';
 import accessmentRouter from './routes/assessments.js';
 import resourceRoute from './routes/resourceRouter.js';
 import eventRouter from "./routes/eventRoute.js"
+import categoryRoute from './routes/categoryRoute.js'
 
 import bodyParser from 'body-parser';
 import { connect } from './config/connectionState.js';
@@ -70,6 +71,7 @@ app.use('/courses', courseRouter);
 app.use('/events', eventRouter);
 app.use('/resources', resourceRoute);
 app.use('/assessment', accessmentRouter);
+app.use('/category', categoryRoute)
 
 
 
