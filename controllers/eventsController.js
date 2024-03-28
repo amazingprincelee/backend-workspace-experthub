@@ -21,7 +21,7 @@ const eventsController = {
       const cloudFile = await upload(req.body.image);
       const newEvent = {
         author: user.fullname,
-        authorId: user._id,
+        authorId: userId,
         title,
         about,
         duration,
@@ -184,7 +184,7 @@ const eventsController = {
       event.enrolledStudents.map(async userId => {
         await Notification.create({
           title: "Course live",
-          content: `${event.author} just went Live Now’ on the course ${event.title}`,
+          content: `${event.author} just went "Live" now on the event ${event.title}`,
           contentId: event._id,
           userId,
         });
@@ -231,8 +231,6 @@ const eventsController = {
       return res.status(500).json({ message: 'Unexpected error during enrolled students retrieval' });
     }
   },
-<<<<<<< HEAD
-=======
 
   getEnrolledEvents: async (req, res) => {
     const userId = req.params.userId;
@@ -261,7 +259,6 @@ const eventsController = {
 },
 
 
->>>>>>> fb7e5836288ac044c62765f5133f13ca49ed0e24
   editEvent: async (req, res) => {
     try {
       const event = await LearningEvent.updateOne({

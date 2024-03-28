@@ -126,7 +126,7 @@ const courseController = {
 
             // Create a new course object
             const newCourse = {
-                instructorId: user._id,
+                instructorId: userId,
                 instructorName: user.fullname,
                 instructorImage: user.profilePicture,
                 title,
@@ -148,7 +148,7 @@ const courseController = {
 
             // Save the new course
             const course = await Course.create(newCourse);
-
+            console.log("creting");
             if (newCourse.type === "pdf") {
                 // const { pdf } = req.files;
                 const cloudFile = await upload(req.body.pdf);
@@ -193,7 +193,6 @@ const courseController = {
                     await course.save()
                 }
             }
-
             const adminUsers = await User.find({ role: { $in: ["admin", "super-admin"] } });
             adminUsers.forEach(async (adminUser) => {
                 try {
@@ -255,18 +254,18 @@ const courseController = {
     enrollCourse: async (req, res) => {
         const courseId = req.params.courseId;
 
-        const {id}=req.body
- 
+        const { id } = req.body
+
         try {
 
             const course = await Course.findById(courseId);
             const user = await User.findById(id);
 
-
+            console.log(user);
             if (!course) {
                 return res.status(404).json({ message: 'Course not found' });
             }
-
+            console.log(course);
             // Check if the student is already enrolled
             if (course.enrolledStudents.includes(id)) {
                 return res.status(400).json({ message: 'Student is already enrolled in the course' });
@@ -425,16 +424,15 @@ const courseController = {
             if (!course) {
                 return res.status(404).json({ message: 'Course not found' });
             }
-
-            course.enrolledStudents.map(async userId=>{
+            course.enrolledStudents.map(async userId => {
                 await Notification.create({
                     title: "Course live",
-                    content: `${course.instructorName} just went Live Now’ on the course ${course.title}`,
+                    content: `${course.instructorName} just went "Live" now on the course ${course.title}`,
                     contentId: course._id,
                     userId,
                 });
             })
-            return res.status(200).json({ message: 'Notifed students '});
+            return res.status(200).json({ message: 'Notifed students ' });
         } catch (error) {
             console.error(error);
             res.status(400).json(error);
