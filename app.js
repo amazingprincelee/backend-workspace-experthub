@@ -8,13 +8,13 @@ import authRoute from './routes/authRoute.js';
 import userRouter from './routes/userRoute.js';
 import courseRouter from './routes/courseRoute.js';
 import accessmentRouter from './routes/assessments.js';
+import notificationRouter from './routes/notification.js';
 import resourceRoute from './routes/resourceRouter.js';
 import eventRouter from "./routes/eventRoute.js"
 import categoryRoute from './routes/categoryRoute.js'
 
 import bodyParser from 'body-parser';
 import { connect } from './config/connectionState.js';
-import createZoomMeeting from './utils/createZoomMeeting.js';
 
 
 const app = express();
@@ -71,6 +71,7 @@ app.use('/courses', courseRouter);
 app.use('/events', eventRouter);
 app.use('/resources', resourceRoute);
 app.use('/assessment', accessmentRouter);
+app.use('/notifications', notificationRouter);
 app.use('/category', categoryRoute)
 
 

@@ -1,5 +1,6 @@
 import User from "../models/user.js";
 import upload from "../config/cloudinary.js";
+import Notification from "../models/notifications.js";
 
 
 const userControllers = {
@@ -42,9 +43,19 @@ const userControllers = {
 
       // Check if the user exists
       const existingUser = await User.findById(userId);
+      const assigner = await User.findById(req.body.assignerId);
 
       if (!existingUser) {
         return res.status(404).json({ message: 'User not found' });
+      }
+      
+      if (existingUser.assignedCourse !== req.body.course) {
+        await Notification.create({
+          title: "Course assigned",
+          content: `${assigner.fullname} just assigned a course to you on ${req.body.course}`,
+          userId: existingUser.id,
+        });
+
       }
 
       // Update user profile information
@@ -59,9 +70,9 @@ const userControllers = {
       existingUser.assignedCourse = req.body.course || existingUser.assignedCourse
       existingUser.graduate = req.body.graduate || existingUser.graduate
 
-
       // Save the updated user profile
       await existingUser.save();
+
 
       return res.status(200).json({ message: 'Profile information updated successfully', user: existingUser });
     } catch (error) {

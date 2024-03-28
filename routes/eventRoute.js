@@ -14,6 +14,7 @@ eventRouter.get("/all", eventsController.getAllEvents)
 eventRouter.put("/enroll/:eventId", eventsController.enrollEvent)
 
 eventRouter.put("/edit/:id", eventsController.editEvent)
+eventRouter.get("/notify-live/:id", eventsController.notifyLive)
 
 eventRouter.get("/enrolled/:courseId", eventsController.getEnrolledStudents);
 
