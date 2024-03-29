@@ -5,7 +5,10 @@ const notificationSchema = new mongoose.Schema({
     title: String,
     content: String,
     contentId:String,
-    userId: mongoose.Schema.Types.ObjectId,
+    userId: {
+        type: mongoose.Schema.Types.ObjectId,
+        ref: 'User' 
+    },
     createdAt: { 
         type: Date, 
         default: Date.now 
