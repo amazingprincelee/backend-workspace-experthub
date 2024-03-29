@@ -44,10 +44,8 @@ const authControllers = {
           await sendVerificationEmail(user.email, verificationCode);
 
           passport.authenticate('local')(req, res, () => {
-
             // Redirect to verify route 
             res.status(200).json({ message: "Verification code sent to email", redirectTo: "/student/verify" })
-
           });
         }
       });
@@ -132,7 +130,54 @@ const authControllers = {
     }
   },
 
-  
+  forgotPassword: async (req, res) => {
+    const user = await User.findOne({ email: req.body.email });
+    if (!user)
+      return res.status(400).send({
+        message: "An account with " + req.body.email + " does not exist!",
+      });
+
+    try {
+      await sendVerificationEmail(user.email, verificationCode);
+
+      user.verificationCode = verificationCode
+      await user.save()
+
+      res.json({
+        message: "Code sent to " + req.body.email
+      });
+
+    } catch (error) {
+      console.error(error);
+      return res.status(500).json({ message: 'Unexpected error during verification' });
+    }
+  },
+
+  resetPassword: async (req, res) => {
+    const user = await User.findOne({ verificationCode: req.body.verificationCode });
+
+    if (!user)
+      return res.status(400).send({
+        message: "Invalid OTP code ",
+      });
+
+    try {
+
+      await user.setPassword(req.body.password)
+      await user.save()
+
+      user.verificationCode = null
+      await user.save()
+
+      res.json({
+        message: "Password reset successfully"
+      });
+
+    } catch (error) {
+      console.error(error);
+      return res.status(500).json({ message: 'Unexpected error during verification' });
+    }
+  }
 };
 
 
