@@ -5,6 +5,26 @@ import Notification from "../models/notifications.js";
 
 
 const notificationController = {
+    markAsRead: async (req, res) => {
+        try { 
+            const { id } = req.params;
+            const notification = await Notification.findById(id)
+
+            if (!notification) {
+                return res.status(404).json({ message: 'Notification not found' });
+            }
+            if (notification.read) {
+                return res.status(200).json({ message: 'Already Read' });
+            }
+            notification.read=true
+            await notification.save()
+            return res.status(200).json({ message: 'Marked as read' });
+        }
+        catch (error) {
+            console.error(error);
+            return res.status(500).json({ message: 'Unexpected error during resource addition' });
+        }
+    },
     getUserNotificatins: async (req, res) => {
         try {
             const { id } = req.params;
@@ -32,7 +52,7 @@ const notificationController = {
 
                 return acc;
             }, Promise.resolve([]));
-        
+
             return res.status(201).json(notificationsWithContent);
         } catch (error) {
             console.error(error);
