@@ -94,6 +94,26 @@ const eventsController = {
     }
   },
 
+  recommend: async (req, res) => {
+    const category = req.body.category;
+    const userId = req.params.id;
+
+    try {
+      const events = await LearningEvent.find({ category })
+      const recommendedEvent = await events.map((event) => {
+        if (event.enrolledStudents.includes(userId)) {
+          return null
+        } else {
+          return event
+        }
+      }).filter(item => item !== null)
+      return res.status(200).json({ recommendedEvent });
+    } catch (error) {
+      console.error(error);
+      return res.status(500).json({ message: 'Unexpected error while fetching all events' });
+    }
+  },
+
   getAllEvents: async (req, res) => {
     try {
       const events = await LearningEvent.find().populate({ path: 'enrolledStudents', select: "profilePicture fullname _id" }).lean();
@@ -236,27 +256,27 @@ const eventsController = {
     const userId = req.params.userId;
 
     try {
-        // Find the user by ID
-        // const user = await User.findById(userId);
+      // Find the user by ID
+      // const user = await User.findById(userId);
 
-        // if (!user) {
-        //     return res.status(404).json({ message: 'User not found' });
-        // }
+      // if (!user) {
+      //     return res.status(404).json({ message: 'User not found' });
+      // }
 
-        // Get the enrolled courses using the user's enrolledCourses array
-        const enrolledCourses = await LearningEvent.find({ enrolledStudents: { _id: userId } }).populate({ path: 'enrolledStudents', select: "profilePicture fullname _id" }).lean();
-        // console.log(enrolledCourses)
+      // Get the enrolled courses using the user's enrolledCourses array
+      const enrolledCourses = await LearningEvent.find({ enrolledStudents: { _id: userId } }).populate({ path: 'enrolledStudents', select: "profilePicture fullname _id" }).lean();
+      // console.log(enrolledCourses)
 
-        if (!enrolledCourses || enrolledCourses.length === 0) {
-            return res.status(404).json({ message: 'No enrolled courses found for this user' });
-        }
+      if (!enrolledCourses || enrolledCourses.length === 0) {
+        return res.status(404).json({ message: 'No enrolled courses found for this user' });
+      }
 
-        return res.status(200).json({ message: 'Enrolled courses retrieved successfully', enrolledCourses });
+      return res.status(200).json({ message: 'Enrolled courses retrieved successfully', enrolledCourses });
     } catch (error) {
-        console.error(error);
-        return res.status(500).json({ message: 'Unexpected error during enrolled courses retrieval' });
+      console.error(error);
+      return res.status(500).json({ message: 'Unexpected error during enrolled courses retrieval' });
     }
-},
+  },
 
 
   editEvent: async (req, res) => {
