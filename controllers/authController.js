@@ -45,7 +45,7 @@ const authControllers = {
 
           passport.authenticate('local')(req, res, () => {
             // Redirect to verify route 
-            res.status(200).json({ message: "Verification code sent to email", redirectTo: "/student/verify" })
+            res.status(200).json({ message: "Verification code sent to email", id: user._id })
           });
         }
       });
@@ -97,30 +97,34 @@ const authControllers = {
     try {
       const { verifyCode } = req.body;
 
+      const userId = (req.params.userId);
+
+      // Query the user database to get the user's role
+      const user = await User.findById(userId);
       // Check if the user is authenticated
-      if (!req.isAuthenticated()) {
-        return res.status(401).json({ message: 'Unauthorized' });
-      }
+      // if (!req.isAuthenticated()) {
+      //   return res.status(401).json({ message: 'Unauthorized' });
+      // }
 
       // Check if the verification code matches the one in the database
-      if (req.user.verificationCode !== verifyCode) {
+      if (user.verificationCode !== verifyCode) {
         return res.status(400).json({ message: 'Invalid verification code' });
       }
 
       // Update user's verification status
-      req.user.isVerified = true;
-      req.user.verificationCode = null; //clear the code after successful verification
-      await req.user.save();
+      user.isVerified = true;
+      user.verificationCode = null; //clear the code after successful verification
+      await user.save();
 
       // Return information to populate dashboard
       return res.status(201).json({
         message: 'Successfully Registered a Student',
         user: {
-          fullName: req.user.fullname,
-          id: req.user._id,
-          username: req.user.username,
-          email: req.user.email,
-          role: req.user.role,
+          fullName: user.fullname,
+          id: user._id,
+          username: user.username,
+          email: user.email,
+          role: user.role,
         },
       });
 
