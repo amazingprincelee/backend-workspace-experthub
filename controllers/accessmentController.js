@@ -177,9 +177,9 @@ const assessmentControllers = {
 
       if (foundUser) {
         // Check if the user has already submitted a survey
-        if (foundUser.survey) {
-          return res.status(400).json({ message: 'Survey already submitted' });
-        }
+        // if (foundUser.survey) {
+        //   return res.status(400).json({ message: 'Survey already submitted' });
+        // }
 
         // Update the survey data in the user document
         foundUser.survey = {
