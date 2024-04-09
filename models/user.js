@@ -22,6 +22,7 @@ const userSchema = new mongoose.Schema({
   role: String,
   googleId: String,
   profilePicture: String,
+  assignedCourse: String,
   assessmentAnswers: {
     type: [String], // Array to store user's assessment answers
   },
@@ -47,9 +48,16 @@ const userSchema = new mongoose.Schema({
 
   isVerified: {
     type: Boolean,
-    default: false, 
+    default: false,
   },
-
+  graduate: {
+    type: Boolean,
+    default: false,
+  },
+  blocked: {
+    type: Boolean,
+    default: false
+  },
   verificationCode: String,
 
 });

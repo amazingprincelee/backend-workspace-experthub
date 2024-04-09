@@ -4,14 +4,18 @@ import mongoose from "mongoose";
 const courseSchema = new mongoose.Schema({
     title: String,
     instructorName: String,
+    instructorImage: String,
     file: String,
     thumbnail: String,
     category: String,
+    meetingId: String,
+    meetingPassword: String,
+    zakToken: String,
     privacy: {
         student: String,
     },
     about: String,
-    instructor: String,
+    instructorId: String, 
     duration: Number,
     type: String,
     startDate: String,
@@ -20,28 +24,22 @@ const courseSchema = new mongoose.Schema({
     endTime: String,
     fee: Number,
     strikedFee: Number,
-    resources: [{
-        title: String,
-        privacy: String,
-        websiteUrl: String,
-        aboutCourse: String
-    }],
-    scholarship: {
-        student: String,
-        courses: String,
-        courseCategory: String,
-    },
+    target: Number,
 
     enrolledStudents: [{
         type: mongoose.Schema.Types.ObjectId,
         ref: 'User',
     }],
-
+    location: String,
+    room: String,
     videos: [{
         title: String,
         videoUrl: String,
     }],
-
+    approved: {
+        type: Boolean,
+        default: false,
+    },
 });
 
 

@@ -6,11 +6,12 @@
   "type": "module",
   "scripts": {
     "test": "echo \"Error: no test specified\" && exit 1",
-    "server":"nodemon app.js"
+    "server": "nodemon app.js"
   },
   "author": "",
   "license": "ISC",
   "dependencies": {
+    "axios": "^1.6.7",
     "body-parser": "^1.20.2",
     "cloudinary": "^1.41.2",
     "cors": "^2.8.5",
@@ -21,6 +22,7 @@
     "express-session": "^1.17.3",
     "express-validator": "^7.0.1",
     "jsonwebtoken": "^9.0.2",
+    "jsrsasign": "^11.1.0",
     "mongoose": "^8.0.2",
     "mongoose-findorcreate": "^4.0.0",
     "multer": "^1.4.5-lts.1",

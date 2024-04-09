@@ -1,50 +1,129 @@
 import User from "../models/user.js";
 import Assessment from "../models/assessment.js";
+import upload from "../config/cloudinary.js";
+import Notification from "../models/notifications.js";
 
 
 
 
 const assessmentControllers = {
 
-
   createAssessmentQuestions: async (req, res) => {
     try {
       const assessmentsData = req.body; // Array of assessments
 
-  
-      const assessments = assessmentsData.map(({ question, answer1, answer2, answer3, correctAnswerIndex }) => {
-        const answers = [answer1, answer2, answer3];
-  
-        if (correctAnswerIndex < 0 || correctAnswerIndex >= answers.length) {
-          return res.status(400).json({ message: 'Correct answer index is invalid.' });
-        }
-  
-        return {
-          question,
-          answers,
-          correctAnswerIndex,
-        };
-      });
-  
-      const newAssessments = await Assessment.create(assessments);
-  
+      // const { image } = req.files;
+      const cloudFile = await upload(req.body.image);
+      assessmentsData.image = cloudFile.url
+
+      // const assessments = assessmentsData.map(({ question, answer1, answer2, answer3, correctAnswerIndex }) => {
+      //   const answers = [answer1, answer2, answer3];
+
+      //   if (correctAnswerIndex < 0 || correctAnswerIndex >= answers.length) {
+      //     return res.status(400).json({ message: 'Correct answer index is invalid.' });
+      //   }
+
+      //   return {
+      //     question,
+      //     answers,
+      //     correctAnswerIndex,
+      //   };
+      // });
+
+      const newAssessments = await Assessment.create(assessmentsData);
+      // await newAssessments.save()
+
+
       return res.status(200).json({ message: 'Assessment data saved successfully', assessments: newAssessments });
     } catch (error) {
       console.error(error);
       return res.status(500).json({ message: 'Unexpected error during assessment processing' });
     }
   },
-  
 
   //Get route to fetch questions
   getAssessmentQuestions: async (req, res) => {
     try {
-      const assessmentQuestions = await Assessment.find({}, 'question answers');
+      const assessmentQuestions = await Assessment.find();
 
       return res.status(200).json({ assessmentQuestions });
     } catch (error) {
       console.error(error);
       return res.status(500).json({ message: 'Unexpected error during assessment questions retrieval' });
+    }
+  },
+
+  getSingleAssesment: async (req, res) => {
+    try {
+      const id = req.params.id
+
+      const myAssesment = await Assessment.find({ _id: id });
+
+      return res.status(200).json({ message: 'Assesment retrieved successfully', myAssesment });
+
+    } catch (error) {
+      console.error(error);
+      return res.status(500).json(error);
+    }
+  },
+
+  getAssignedAssesment: async (req, res) => {
+    try {
+      const userId = req.params.id
+
+      const myAssesment = await Assessment.find({ assignedStudents: { _id: userId } });
+
+      return res.status(200).json({ message: 'User assesment retrieved successfully', myAssesment });
+
+    } catch (error) {
+      console.error(error);
+      return res.status(500).json(error);
+    }
+  },
+
+  assignAssesment: async (req, res) => {
+    try {
+      const id = req.params.id
+
+      const {studentId,userId}=req.body
+  
+
+      const myAssesment = await Assessment.findById(id);
+      const user = await User.findById(userId);
+
+
+      console.log(studentId)
+      myAssesment.assignedStudents.push(studentId);
+
+
+      await myAssesment.save();
+      await Notification.create({
+        title:"Assesmet assigned",
+        content:`${user.fullname} sent you an Assessment`,
+        contentId:myAssesment.id,
+        userId:studentId,
+      });
+      return res.status(200).json({ message: 'User assesment Assigned successfully', myAssesment });
+
+    } catch (error) {
+      console.error(error);
+      return res.status(500).json(error);
+    }
+  },
+
+  editAssesment: async (req, res) => {
+    try {
+      const assesment = await Assessment.updateOne({
+        _id: req.params.id
+      }, {
+        ...req.body
+      }, {
+        new: true
+      })
+      res.json(assesment);
+    } catch (error) {
+      console.error(error);
+      res.status(400).json(error);
     }
   },
 
@@ -54,7 +133,7 @@ const assessmentControllers = {
       console.log(answer);
 
       // Get user ID from the request headers
-      const userId = req.params.userId; 
+      const userId = req.params.userId;
 
       // Query the user database to get the user's role
       const foundUser = await User.findById(userId);
@@ -75,7 +154,6 @@ const assessmentControllers = {
     }
   },
 
-
   survey: async (req, res) => {
     try {
       const {
@@ -92,16 +170,16 @@ const assessmentControllers = {
       } = req.body;
 
       // Get user ID from the request headers
-      const userId = req.params.userId; 
+      const userId = req.params.userId;
 
       // Query the user database to get the user's role
       const foundUser = await User.findById(userId);
 
       if (foundUser) {
         // Check if the user has already submitted a survey
-        if (foundUser.survey) {
-          return res.status(400).json({ message: 'Survey already submitted' });
-        }
+        // if (foundUser.survey) {
+        //   return res.status(400).json({ message: 'Survey already submitted' });
+        // }
 
         // Update the survey data in the user document
         foundUser.survey = {
@@ -130,7 +208,6 @@ const assessmentControllers = {
     }
   },
 
-
   aptitudeTest: async (req, res) => {
     try {
       const {
@@ -141,7 +218,7 @@ const assessmentControllers = {
       } = req.body;
 
       // Get user ID from the request headers
-      const userId = req.params.userId; 
+      const userId = req.params.userId;
 
       // Query the user database to get the user's role
       const foundUser = await User.findById(userId);
@@ -167,9 +244,6 @@ const assessmentControllers = {
       return res.status(500).json({ message: 'Unexpected error during Aptitude Test processing' });
     }
   },
-
-
-
 
 };
 

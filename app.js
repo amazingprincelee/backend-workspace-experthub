@@ -8,18 +8,28 @@ import authRoute from './routes/authRoute.js';
 import userRouter from './routes/userRoute.js';
 import courseRouter from './routes/courseRoute.js';
 import accessmentRouter from './routes/assessments.js';
+import notificationRouter from './routes/notification.js';
+import resourceRoute from './routes/resourceRouter.js';
+import eventRouter from "./routes/eventRoute.js"
+import categoryRoute from './routes/categoryRoute.js'
+
 import bodyParser from 'body-parser';
 import { connect } from './config/connectionState.js';
 
 
 const app = express();
-const PORT = process.env.PORT || 3000;
+
+
+const PORT = process.env.PORT || 3001;
 
 // Middleware
 
 
 app.use(express.urlencoded({ extended: false }));
-app.use(bodyParser.urlencoded({ extended: false }));
+app.use(bodyParser.json({ limit: '35mb' }));
+app.use(bodyParser.urlencoded({
+  extended: false
+}));
 app.use(express.static('public'))
 app.set('view engine', 'ejs');
 app.use(express.json());
@@ -52,10 +62,15 @@ app.use(
 connect();
 
 
+
 app.use('/auth', authRoute);
 app.use('/user', userRouter);
 app.use('/courses', courseRouter);
+app.use('/events', eventRouter);
+app.use('/resources', resourceRoute);
 app.use('/assessment', accessmentRouter);
+app.use('/notifications', notificationRouter);
+app.use('/category', categoryRoute)
 
 
 
