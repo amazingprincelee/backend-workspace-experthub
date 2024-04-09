@@ -1,8 +1,8 @@
-import User from "../models/user.js"
-import upload from "../config/cloudinary.js";
-import createZoomMeeting from "../utils/createZoomMeeting.js";
-import LearningEvent from "../models/event.js";
-import Notification from "../models/notifications.js";
+const User = require("../models/user.js");
+const upload = require("../config/cloudinary.js");
+const createZoomMeeting = require("../utils/createZoomMeeting.js");
+const LearningEvent = require("../models/event.js");
+const Notification = require("../models/notifications.js");
 
 const eventsController = {
   createEvent: async (req, res) => {
@@ -309,4 +309,4 @@ const eventsController = {
 
 }
 
-export default eventsController;
+module.exports = eventsController;

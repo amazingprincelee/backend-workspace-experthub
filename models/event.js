@@ -1,4 +1,4 @@
-import mongoose from "mongoose";
+const mongoose = require('mongoose');
 
 
 const eventSchema = new mongoose.Schema({
@@ -35,4 +35,4 @@ const eventSchema = new mongoose.Schema({
 const LearningEvent = new mongoose.model("LearningEvent", eventSchema);
 
 
-export default LearningEvent;
+module.exports = LearningEvent;

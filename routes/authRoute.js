@@ -1,6 +1,6 @@
-import express from 'express';
+const express = require('express');
+const authControllers = require('../controllers/authController.js');
 const router = express.Router();
-import authControllers from '../controllers/authController.js';
 
 
 router.get("/", (req, res)=>{
@@ -20,4 +20,4 @@ router.put('/reset-passowrd', authControllers.resetPassword);
 
 
 
-export default router;
+module.exports = router;

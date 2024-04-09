@@ -1,4 +1,4 @@
-import { v2 as cloudinary } from 'cloudinary';
+const cloudinary = require('cloudinary').v2;
 
 cloudinary.config({
   cloud_name: 'peoples-power-technology',
@@ -16,7 +16,7 @@ const upload = async (file) => {
   return image;
 };
 
-export const cloudinaryVidUpload = async (asset) => {
+const cloudinaryVidUpload = async (asset) => {
   try {
     const res = await cloudinary.uploader.upload(asset, {
       resource_type: "video",
@@ -33,4 +33,5 @@ export const cloudinaryVidUpload = async (asset) => {
   }
 };
 
-export default upload;
+module.exports.cloudinaryVidUpload = cloudinaryVidUpload;
+module.exports = upload;

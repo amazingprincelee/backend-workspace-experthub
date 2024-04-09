@@ -1,9 +1,7 @@
-import User from "../models/user.js";
-import Assessment from "../models/assessment.js";
-import upload from "../config/cloudinary.js";
-import Notification from "../models/notifications.js";
-
-
+const User = require("../models/user.js");
+const Assessment = require("../models/assessment.js");
+const upload = require("../config/cloudinary.js");
+const Notification = require("../models/notifications.js");
 
 
 const assessmentControllers = {
@@ -248,4 +246,4 @@ const assessmentControllers = {
 };
 
 
-export default assessmentControllers;
+module.exports = assessmentControllers;

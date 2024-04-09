@@ -1,6 +1,6 @@
-import express from 'express';
+const express = require('express');
+const assessmentControllers = require('../controllers/accessmentController.js');
 const accessmentRouter = express.Router();
-import assessmentControllers from '../controllers/accessmentController.js';
 
 
 
@@ -32,4 +32,4 @@ accessmentRouter.post("/submit-assessment/:userId", assessmentControllers.submit
 
 
 
-export default accessmentRouter;
+module.exports = accessmentRouter;

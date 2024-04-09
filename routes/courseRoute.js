@@ -1,6 +1,6 @@
-import express from 'express';
-import courseController from '../controllers/courseController.js';
-import Course from '../models/courses.js';
+const express = require('express');
+const courseController = require('../controllers/courseController.js');
+const Course = require('../models/courses.js');
 
 const courseRouter = express.Router();
 
@@ -42,4 +42,4 @@ courseRouter.put("/approve/:courseId", courseController.approveCourse)
 courseRouter.post("/upload/:courseId", courseController.videoUpload)
 
 
-export default courseRouter;
+module.exports = courseRouter;

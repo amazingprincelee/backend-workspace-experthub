@@ -1,5 +1,5 @@
-import upload from "../config/cloudinary.js";
-import Resource from "../models/resources.js";
+const upload = require("../config/cloudinary.js");
+const Resource = require("../models/resources.js");
 
 const resourceController = {
   addCourseResources: async (req, res) => {
@@ -55,4 +55,4 @@ const resourceController = {
   },
 }
 
-export default resourceController;
+module.exports = resourceController;

@@ -1,5 +1,4 @@
-import mongoose from "mongoose";
-
+const mongoose = require('mongoose');
 
 const assessmentSchema = new mongoose.Schema(
   {
@@ -53,4 +52,4 @@ const assessmentSchema = new mongoose.Schema(
 
 const Assessment = mongoose.model('Assessment', assessmentSchema);
 
-export default Assessment;
+module.exports = Assessment;

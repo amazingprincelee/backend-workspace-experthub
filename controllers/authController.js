@@ -1,9 +1,8 @@
-import passport from "passport";
-import User from "../models/user.js";
-import { generateVerificationCode } from "../utils/verficationCodeGenerator.js";
-import { sendVerificationEmail } from '../utils/nodeMailer.js';
-import determineRole from "../utils/determinUserType.js";
-
+const passport = require("passport");
+const User = require("../models/user.js");
+const { generateVerificationCode } = require("../utils/verficationCodeGenerator.js");
+const { sendVerificationEmail } = require('../utils/nodeMailer.js');
+const determineRole = require("../utils/determinUserType.js");
 
 const verificationCode = generateVerificationCode();
 
@@ -185,5 +184,5 @@ const authControllers = {
 };
 
 
-export default authControllers;
+module.exports = authControllers;
 

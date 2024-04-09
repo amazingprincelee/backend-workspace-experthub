@@ -1,9 +1,8 @@
-import passport from "passport";
-import mongoose from "mongoose";
-import passportLocalMongoose from "passport-local-mongoose";
-import findOrCreate from 'mongoose-findorcreate';
-import { Strategy as GoogleStrategy } from 'passport-google-oauth20';
-
+const mongoose = require('mongoose');
+const passport = require("passport");
+const passportLocalMongoose = require("passport-local-mongoose");
+const findOrCreate = require('mongoose-findorcreate');
+const GoogleStrategy = require('passport-google-oauth20').Strategy;
 
 
 
@@ -102,4 +101,4 @@ passport.use(new GoogleStrategy({
   }
 ));
 
-export default User;
+module.exports = User;

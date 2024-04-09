@@ -1,10 +1,10 @@
-import Course from "../models/courses.js";
-import User from "../models/user.js"
-import upload from "../config/cloudinary.js";
-import { cloudinaryVidUpload } from "../config/cloudinary.js"
-import createZoomMeeting from "../utils/createZoomMeeting.js";
-import KJUR from "jsrsasign"
-import Notification from "../models/notifications.js";
+const Course = require("../models/courses.js");
+const User = require("../models/user.js");
+const upload = require("../config/cloudinary.js");
+const { cloudinaryVidUpload } = require("../config/cloudinary.js");
+const createZoomMeeting = require("../utils/createZoomMeeting.js");
+const KJUR = require("jsrsasign");
+const Notification = require("../models/notifications.js");
 const categories = ["Virtual Assistant", "Product Management", "Cybersecurity", "Software Development", "AI / Machine Learning", "Data Analysis & Visualisation", "Story Telling", "Animation", "Cloud Computing", "Dev Ops", "UI/UX Design", "Journalism", "Game development", "Data Science", "Digital Marketing", "Advocacy"]
 
 
@@ -483,6 +483,6 @@ const courseController = {
 
 
 
-export default courseController;
+module.exports = courseController;
 
 

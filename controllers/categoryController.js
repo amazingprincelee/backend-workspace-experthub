@@ -1,4 +1,4 @@
-import Category from "../models/category.js";
+const Category = require("../models/category.js");
 
 const categoryController = {
   createCategory: async (req, res) => {
@@ -27,4 +27,4 @@ const categoryController = {
     }
   }
 }
-export default categoryController;
+module.exports = categoryController;

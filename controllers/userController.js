@@ -1,6 +1,6 @@
-import User from "../models/user.js";
-import upload from "../config/cloudinary.js";
-import Notification from "../models/notifications.js";
+const User = require("../models/user.js");
+const upload = require("../config/cloudinary.js");
+const Notification = require("../models/notifications.js");
 
 
 const userControllers = {
@@ -328,4 +328,4 @@ const userControllers = {
 };
 
 
-export default userControllers
+module.exports = userControllers

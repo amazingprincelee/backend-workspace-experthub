@@ -1,4 +1,4 @@
-import mongoose from 'mongoose';
+const mongoose = require('mongoose');
 
 const connectionState = {
   connected: false,
@@ -29,4 +29,4 @@ const disconnect = async () => {
   connectionState.connected = false;
 };
 
-export { connectionState, connect, disconnect };
+module.exports = { connectionState, connect, disconnect };

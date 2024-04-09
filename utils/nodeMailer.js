@@ -1,4 +1,4 @@
-import nodemailer from 'nodemailer';
+const nodemailer = require('nodemailer');
 
 const transporter = nodemailer.createTransport({
     host: 'mail.privateemail.com',
@@ -9,7 +9,7 @@ const transporter = nodemailer.createTransport({
     },
   });
 
-export const sendVerificationEmail = async (to, code) => {
+const sendVerificationEmail = async (to, code) => {
   const mailOptions = {
     from: 'verify@experthubllc.com',
     to,
@@ -19,3 +19,7 @@ export const sendVerificationEmail = async (to, code) => {
 
   return transporter.sendMail(mailOptions);
 };
+
+module.exports = {
+  sendVerificationEmail,
+}

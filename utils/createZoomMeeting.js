@@ -1,4 +1,4 @@
-import axios from "axios";
+const axios = require("axios");
 
 
 const createZoomMeeting = async (topic, duration, startTime, meetingPassword) => {
@@ -60,4 +60,4 @@ const createZoomMeeting = async (topic, duration, startTime, meetingPassword) =>
     }
 }
 
-export default createZoomMeeting
+module.exports = createZoomMeeting

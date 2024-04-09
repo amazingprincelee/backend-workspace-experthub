@@ -1,7 +1,7 @@
-import Assessment from "../models/assessment.js";
-import Course from "../models/courses.js";
-import LearningEvent from "../models/event.js";
-import Notification from "../models/notifications.js";
+const Assessment = require("../models/assessment.js");
+const Course = require("../models/courses.js");
+const LearningEvent = require("../models/event.js");
+const Notification = require("../models/notifications.js");
 
 
 const notificationController = {
@@ -63,4 +63,4 @@ const notificationController = {
 
 }
 
-export default notificationController;
+module.exports = notificationController;

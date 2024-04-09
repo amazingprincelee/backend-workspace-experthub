@@ -19,4 +19,4 @@ const determineRole = (userType) => {
 }
 
 
-export default determineRole;
+module.exports = determineRole;

@@ -1,20 +1,20 @@
-import 'dotenv/config.js';
-import express from 'express';
-import session from 'express-session';
-import passport from 'passport';
-import cors from 'cors';
-import fileUpload from "express-fileupload";
-import authRoute from './routes/authRoute.js';
-import userRouter from './routes/userRoute.js';
-import courseRouter from './routes/courseRoute.js';
-import accessmentRouter from './routes/assessments.js';
-import notificationRouter from './routes/notification.js';
-import resourceRoute from './routes/resourceRouter.js';
-import eventRouter from "./routes/eventRoute.js"
-import categoryRoute from './routes/categoryRoute.js'
+require('dotenv/config');
+const express = require('express');
+const session = require('express-session');
+const passport = require('passport');
+const cors = require('cors');
+const fileUpload = require('express-fileupload');
+const authRoute = require('./routes/authRoute');
+const userRouter = require('./routes/userRoute');
+const courseRouter = require('./routes/courseRoute');
+const accessmentRouter = require('./routes/assessments');
+const notificationRouter = require('./routes/notification');
+const resourceRoute = require('./routes/resourceRouter');
+const eventRouter = require('./routes/eventRoute');
+const categoryRoute = require('./routes/categoryRoute');
 
-import bodyParser from 'body-parser';
-import { connect } from './config/connectionState.js';
+const bodyParser = require('body-parser');
+const { connect } = require('./config/connectionState');
 
 
 const app = express();
