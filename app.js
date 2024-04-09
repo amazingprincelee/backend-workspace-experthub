@@ -23,7 +23,15 @@ const app = express();
 const PORT = process.env.PORT || 3001;
 
 // Middleware
-
+app.use(
+  cors({
+    // origin:"https://trainings.experthubllc.com",
+    origin: "*",
+    allowedHeaders: ["*"],
+    methods: ["*"],
+    credentials: true,
+  }),
+);
 
 app.use(express.urlencoded({ extended: false }));
 app.use(bodyParser.json({ limit: '35mb' }));
@@ -42,14 +50,6 @@ app.use(session({
 
 app.use(passport.initialize());
 app.use(passport.session());
-
-
-app.use(
-  cors({
-    origin:"https://trainings.experthubllc.com",
-    credentials: true,
-  }),
-);
 
 //cloudinary upload ie
 app.use(
