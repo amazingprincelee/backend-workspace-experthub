@@ -25,6 +25,33 @@ const categoryController = {
       console.log(error);
       return res.status(500).json({ message: 'Unexpected error during category retrival' });
     }
+  },
+
+  editCategory: async (req, res) => {
+    try {
+      const course = await Category.updateOne({
+        _id: req.params.id
+      }, {
+        ...req.body
+      }, {
+        new: true
+      })
+      res.json(course);
+    } catch (error) {
+      console.error(error);
+      res.status(400).json(error);
+    }
+  },
+  deleteCategory: async (req, res) => {
+    try {
+      const course = await Category.deleteOne({
+        _id: req.params.id
+      })
+      res.json(course);
+    } catch (error) {
+      console.error(error);
+      res.status(400).json(error);
+    }
   }
 }
 module.exports = categoryController;
