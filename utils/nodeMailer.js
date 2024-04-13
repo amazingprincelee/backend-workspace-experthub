@@ -1,7 +1,7 @@
 const nodemailer = require('nodemailer');
 
 const transporter = nodemailer.createTransport({
-  host: 'mail.experthubllc.com',
+  host: 'business85.web-hosting.com',
   port: 465,
   auth: {
     user: 'verify@experthubllc.com',
