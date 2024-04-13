@@ -1,13 +1,13 @@
 const nodemailer = require('nodemailer');
 
 const transporter = nodemailer.createTransport({
-    host: 'mail.privateemail.com',
-    port: 465,  
-    auth: {
-      user: 'verify@experthubllc.com',
-      pass: process.env.EMAIL_PASSWORD,
-    },
-  });
+  host: 'mail.experthubllc.com',
+  port: 465,
+  auth: {
+    user: 'verify@experthubllc.com',
+    pass: process.env.EMAIL_PASSWORD,
+  },
+});
 
 const sendVerificationEmail = async (to, code) => {
   const mailOptions = {
