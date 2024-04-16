@@ -163,6 +163,11 @@ const courseController = {
                 await course.save()
             }
 
+            if (newCourse.type === 'offline') {
+                course.days = req.body.days
+
+                await course.save()
+            }
 
 
             if (newCourse.type === 'video') {

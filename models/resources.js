@@ -5,7 +5,8 @@ const resourceSchema = new mongoose.Schema({
   title: String,
   privacy: String,
   websiteUrl: String,
-  aboutCourse: String
+  aboutCourse: String,
+  assignedCourse: String
 })
 
 const Resource = new mongoose.model("Resource", resourceSchema);

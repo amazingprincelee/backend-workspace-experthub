@@ -15,7 +15,7 @@ const courseSchema = new mongoose.Schema({
         student: String,
     },
     about: String,
-    instructorId: String, 
+    instructorId: String,
     duration: Number,
     type: String,
     startDate: String,
@@ -29,6 +29,12 @@ const courseSchema = new mongoose.Schema({
     enrolledStudents: [{
         type: mongoose.Schema.Types.ObjectId,
         ref: 'User',
+    }],
+    days: [{
+        checked: Boolean,
+        day: String,
+        startTime: String,
+        endTime: String
     }],
     location: String,
     room: String,

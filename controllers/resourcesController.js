@@ -3,7 +3,7 @@ const Resource = require("../models/resources.js");
 
 const resourceController = {
   addCourseResources: async (req, res) => {
-    const { title, privacy, websiteUrl, aboutCourse, image } = req.body;
+    const { title, privacy, websiteUrl, aboutCourse, assignedCourse } = req.body;
 
     try {
       const { image } = req.files;
@@ -15,7 +15,8 @@ const resourceController = {
         privacy,
         websiteUrl,
         aboutCourse,
-        image: cloudFile.secure_url
+        image: cloudFile.secure_url,
+        assignedCourse
       };
 
       const resource = await Resource.create(newResource);
@@ -38,6 +39,18 @@ const resourceController = {
     }
   },
 
+  getAssignedResources: async (req, res) => {
+    const id = req.params.id
+    try {
+      const resource = await Resource.find({ assignedCourse: id });
+
+      return res.status(200).json({ resource });
+    } catch (error) {
+      console.error(error);
+      res.status(400).json(error);
+    }
+  },
+
   editResource: async (req, res) => {
     try {
       const resource = await Resource.updateOne({
@@ -46,6 +59,18 @@ const resourceController = {
         ...req.body
       }, {
         new: true
+      })
+      res.json(resource);
+    } catch (error) {
+      console.error(error);
+      res.status(400).json(error);
+    }
+  },
+
+  deleteResource: async (req, res) => {
+    try {
+      const resource = await Resource.deleteOne({
+        _id: req.params.id
       })
       res.json(resource);
     } catch (error) {
