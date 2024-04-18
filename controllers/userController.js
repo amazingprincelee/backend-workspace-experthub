@@ -27,6 +27,7 @@ const userControllers = {
         skillLevel: existingUser.skillLevel,
         country: existingUser.country,
         state: existingUser.state,
+        fullName: existingUser.fullname
       };
 
       return res.status(200).json({ message: 'User profile retrieved successfully', user: userProfile });
