@@ -46,6 +46,10 @@ const courseSchema = new mongoose.Schema({
         type: Boolean,
         default: false,
     },
+    modules: [{
+        title: String,
+        description: String
+    }]
 });
 
 

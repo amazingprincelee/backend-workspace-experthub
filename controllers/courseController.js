@@ -107,7 +107,7 @@ const courseController = {
     },
 
     addCourse: async (req, res) => {
-        const { title, about, duration, type, startDate, endDate, startTime, endTime, category, privacy, fee, strikedFee, scholarship, meetingPassword, target } = req.body;
+        const { title, about, duration, type, startDate, endDate, startTime, endTime, category, privacy, fee, strikedFee, scholarship, meetingPassword, target, modules } = req.body;
 
         // Get user ID from the request headers
         const userId = req.params.userId;
@@ -142,6 +142,7 @@ const courseController = {
                 target,
                 fee,
                 strikedFee,
+                modules,
                 enrolledStudents: req.body.scholarship,
                 thumbnail: cloudFile.url,  // Set the thumbnail field with the Cloudinary URL
             };
@@ -163,9 +164,8 @@ const courseController = {
                 await course.save()
             }
 
-            if (newCourse.type === 'offline') {
+            if (newCourse.type === 'offline' || course.type === 'online') {
                 course.days = req.body.days
-
                 await course.save()
             }
 
