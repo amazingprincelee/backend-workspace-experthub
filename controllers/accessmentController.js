@@ -83,8 +83,8 @@ const assessmentControllers = {
     try {
       const id = req.params.id
 
-      const {studentId,userId}=req.body
-  
+      const { studentId, userId } = req.body
+
 
       const myAssesment = await Assessment.findById(id);
       const user = await User.findById(userId);
@@ -96,10 +96,10 @@ const assessmentControllers = {
 
       await myAssesment.save();
       await Notification.create({
-        title:"Assesmet assigned",
-        content:`${user.fullname} sent you an Assessment`,
-        contentId:myAssesment.id,
-        userId:studentId,
+        title: "Assesmet assigned",
+        content: `${user.fullname} sent you an Assessment`,
+        contentId: myAssesment.id,
+        userId: studentId,
       });
       return res.status(200).json({ message: 'User assesment Assigned successfully', myAssesment });
 
@@ -192,6 +192,8 @@ const assessmentControllers = {
           currentEducation,
           joiningAccomplishment,
         };
+
+        foundUser.assignedCourse = preferedCourse
 
         // Save the user document with the updated survey data
         await foundUser.save();

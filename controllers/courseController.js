@@ -1,12 +1,13 @@
 const Course = require("../models/courses.js");
 const User = require("../models/user.js");
+const Category = require("../models/category.js");
 const upload = require("../config/cloudinary.js");
 const { cloudinaryVidUpload } = require("../config/cloudinary.js");
 const createZoomMeeting = require("../utils/createZoomMeeting.js");
 const KJUR = require("jsrsasign");
 const Notification = require("../models/notifications.js");
-const categories = ["Virtual Assistant", "Product Management", "Cybersecurity", "Software Development", "AI / Machine Learning", "Data Analysis & Visualisation", "Story Telling", "Animation", "Cloud Computing", "Dev Ops", "UI/UX Design", "Journalism", "Game development", "Data Science", "Digital Marketing", "Advocacy"]
 
+// const categories = ["Virtual Assistant", "Product Management", "Cybersecurity", "Software Development", "AI / Machine Learning", "Data Analysis & Visualisation", "Story Telling", "Animation", "Cloud Computing", "Dev Ops", "UI/UX Design", "Journalism", "Game development", "Data Science", "Digital Marketing", "Advocacy"]
 
 
 const courseController = {
@@ -14,8 +15,9 @@ const courseController = {
     getAllCategory: async (req, res) => {
         try {
             const allCourse = []
+            const categories = await Category.findOne({ _id: "66191b8819d5dab6af174540" })
 
-            await Promise.all(categories.map(async (category) => {
+            await Promise.all(categories.subCategory.map(async (category) => {
                 const courses = await Course.find({ category, approved: true }).populate({ path: 'enrolledStudents', select: "profilePicture fullname _id" }).lean();;
                 if (courses.length !== 0) {
                     allCourse.push({
