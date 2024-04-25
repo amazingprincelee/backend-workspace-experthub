@@ -12,6 +12,7 @@ const notificationRouter = require('./routes/notification');
 const resourceRoute = require('./routes/resourceRouter');
 const eventRouter = require('./routes/eventRoute');
 const categoryRoute = require('./routes/categoryRoute');
+const noticeRouter = require('./routes/noticeRouter');
 
 const bodyParser = require('body-parser');
 const { connect } = require('./config/connectionState');
@@ -71,7 +72,7 @@ app.use('/resources', resourceRoute);
 app.use('/assessment', accessmentRouter);
 app.use('/notifications', notificationRouter);
 app.use('/category', categoryRoute)
-
+app.use('/notice', noticeRouter)
 
 
 app.listen(PORT, () => {
