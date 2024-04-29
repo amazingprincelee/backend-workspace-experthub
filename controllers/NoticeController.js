@@ -4,11 +4,11 @@ const Notice = require("../models/notice.js");
 
 const noticeController = {
   addNotice: async (req, res) => {
-    const { title, body, role, category, country, state, link, page, cancel, action } = req.body
+    const { title, body, role, category, country, state, link, page, cancel, action, recipient } = req.body
 
     users = await User.find({ role, assignedCourse: category, state, country })
 
-    if (users.length === 0) {
+    if (users.length === 0 || recipient === undefined) {
       return res.status(403).json({ message: 'No user falls into the description' });
     }
 
@@ -27,7 +27,7 @@ const noticeController = {
         cancel,
         action,
         // image: cloudFile,
-        receivers: users
+        receivers: recipient ? recipient : users
       }
 
       const notice = await Notice.create(newNotice)
