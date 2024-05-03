@@ -8,7 +8,7 @@ const noticeController = {
 
     users = await User.find({ role, assignedCourse: category, state, country })
 
-    if (users.length === 0 || recipient === undefined) {
+    if (recipient === undefined && users.length === 0) {
       return res.status(403).json({ message: 'No user falls into the description' });
     }
 
