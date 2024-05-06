@@ -281,6 +281,7 @@ const courseController = {
 
             // Enroll the student in the course
             course.enrolledStudents.push(id);
+            course.contact = false
             await course.save();
 
             await Notification.create({

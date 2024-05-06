@@ -37,7 +37,10 @@ const userSchema = new mongoose.Schema({
     currentEducation: String,
     joiningAccomplishment: String,
   },
-
+  contact: {
+    type: Boolean,
+    default: true
+  },
   aptitudeTest: {
     willDadicate6Hours: String,
     describeSelf: String,
