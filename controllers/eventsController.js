@@ -3,6 +3,7 @@ const upload = require("../config/cloudinary.js");
 const createZoomMeeting = require("../utils/createZoomMeeting.js");
 const LearningEvent = require("../models/event.js");
 const Notification = require("../models/notifications.js");
+const cloudinaryVidUpload = require("../config/cloudinary.js");
 
 const eventsController = {
   createEvent: async (req, res) => {
@@ -18,7 +19,18 @@ const eventsController = {
     }
 
     try {
-      const cloudFile = await upload(req.body.image);
+      let cloudFile
+      if (req.body.asset.type === 'image') {
+        const file = await upload(req.body.asset.url);
+        cloudFile = file.url
+      } else {
+        try {
+          const video = await upload.cloudinaryVidUpload(req.body.asset.url)
+          cloudFile = video
+        } catch (e) {
+          console.log(e)
+        }
+      }
       const newEvent = {
         author: user.fullname,
         authorId: userId,
@@ -36,7 +48,10 @@ const eventsController = {
         target,
         strikedFee,
         enrolledStudents: scholarship,
-        thumbnail: cloudFile.url,  // Set the thumbnail field with the Cloudinary URL
+        thumbnail: {
+          type: req.body.asset.type,
+          url: cloudFile
+        },
       };
 
       const event = await LearningEvent.create(newEvent);

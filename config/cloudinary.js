@@ -33,5 +33,6 @@ const cloudinaryVidUpload = async (asset) => {
   }
 };
 
-module.exports.cloudinaryVidUpload = cloudinaryVidUpload;
-module.exports = upload;
+
+// module.exports.cloudinaryVidUpload = cloudinaryVidUpload;
+module.exports = { upload, cloudinaryVidUpload };

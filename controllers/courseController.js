@@ -2,12 +2,13 @@ const Course = require("../models/courses.js");
 const User = require("../models/user.js");
 const Category = require("../models/category.js");
 const upload = require("../config/cloudinary.js");
-const { cloudinaryVidUpload } = require("../config/cloudinary.js");
+const cloudinaryVidUpload = require("../config/cloudinary.js");
 const createZoomMeeting = require("../utils/createZoomMeeting.js");
 const KJUR = require("jsrsasign");
 const Notification = require("../models/notifications.js");
 
 // const categories = ["Virtual Assistant", "Product Management", "Cybersecurity", "Software Development", "AI / Machine Learning", "Data Analysis & Visualisation", "Story Telling", "Animation", "Cloud Computing", "Dev Ops", "UI/UX Design", "Journalism", "Game development", "Data Science", "Digital Marketing", "Advocacy"]
+
 
 
 const courseController = {
@@ -124,7 +125,18 @@ const courseController = {
         }
 
         try {
-            const cloudFile = await upload(req.body.image);
+            let cloudFile
+            if (req.body.asset.type === 'image') {
+                const file = await upload(req.body.asset.url);
+                cloudFile = file.url
+            } else {
+                try {
+                    const video = await upload.cloudinaryVidUpload(req.body.asset.url)
+                    cloudFile = video
+                } catch (e) {
+                    console.log(e)
+                }
+            }
 
             // Create a new course object
             const newCourse = {
@@ -147,7 +159,10 @@ const courseController = {
                 modules,
                 benefits,
                 enrolledStudents: scholarship,
-                thumbnail: cloudFile.url,  // Set the thumbnail field with the Cloudinary URL
+                thumbnail: {
+                    type: req.body.asset.type,
+                    url: cloudFile
+                },  // Set the thumbnail field with the Cloudinary URL
             };
 
             // Save the new course

@@ -1,6 +1,7 @@
 const User = require("../models/user")
 const upload = require("../config/cloudinary.js");
 const Notice = require("../models/notice.js");
+const cloudinaryVidUpload = require("../config/cloudinary.js");
 
 const noticeController = {
   addNotice: async (req, res) => {
@@ -13,7 +14,18 @@ const noticeController = {
     }
 
     try {
-      // const cloudFile = await upload(req.body.image);
+      let cloudFile
+      if (req.body.asset.type === 'image') {
+        const file = await upload(req.body.asset.url);
+        cloudFile = file.url
+      } else {
+        try {
+          const video = await upload.cloudinaryVidUpload(req.body.asset.url)
+          cloudFile = video
+        } catch (e) {
+          console.log(e)
+        }
+      }
 
       const newNotice = {
         title,
@@ -26,7 +38,10 @@ const noticeController = {
         page,
         cancel,
         action,
-        // image: cloudFile,
+        thumbnail: {
+          type: req.body.asset.type,
+          url: cloudFile
+        },
         receivers: recipient ? recipient : users
       }
 

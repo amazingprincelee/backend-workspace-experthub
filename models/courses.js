@@ -6,7 +6,16 @@ const courseSchema = new mongoose.Schema({
     instructorName: String,
     instructorImage: String,
     file: String,
-    thumbnail: String,
+    thumbnail: {
+        type: {
+            type: String,
+            required: true
+        },
+        url: {
+            type: String,
+            required: true
+        }
+    },
     category: String,
     meetingId: String,
     meetingPassword: String,

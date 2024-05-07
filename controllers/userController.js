@@ -139,7 +139,8 @@ const userControllers = {
         course: student.assignedCourse,
         profilePicture: student.profilePicture,
         graduate: student.graduate,
-        blocked: student.blocked
+        blocked: student.blocked,
+        contact: student.contact
       }));
 
       return res.status(200).json({ message: 'Students retrieved successfully', students: studentProfiles });
@@ -173,7 +174,8 @@ const userControllers = {
         course: student.assignedCourse,
         profilePicture: student.profilePicture,
         graduate: student.graduate,
-        isVerified: student.isVerified
+        isVerified: student.isVerified,
+        contact: student.contact
       }));
 
       return res.status(200).json({ message: 'Students retrieved successfully', students: studentProfiles });

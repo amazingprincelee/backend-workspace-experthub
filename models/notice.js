@@ -12,7 +12,16 @@ const noticeSchema = new mongoose.Schema({
   page: String,
   cancel: Boolean,
   action: String,
-  image: String,
+  thumbnail: {
+    type: {
+      type: String,
+      required: true
+    },
+    url: {
+      type: String,
+      required: true
+    }
+  },
   receivers: [{
     type: mongoose.Schema.Types.ObjectId,
     ref: 'User',

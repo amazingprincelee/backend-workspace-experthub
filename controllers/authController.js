@@ -26,7 +26,8 @@ const authControllers = {
         state,
         address,
         role,
-        verificationCode
+        verificationCode,
+        contact: true
       });
 
       await User.register(newUser, password, async (err, user) => {
