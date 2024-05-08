@@ -1,0 +1,33 @@
+<!DOCTYPE html>
+<html lang="en">
+
+<head>
+  <meta charset="UTF-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1.0">
+  <title>Notification Email</title>
+</head>
+
+<body>
+  <div style="font-family: Arial, sans-serif; max-width: 600px; margin: 0 auto;">
+    <!-- <h2 style="color: #333;">Your Unread Notifications</h2> -->
+    <p style="text-transform: capitalize;">Hello {{ userName }},</p>
+    <p>You have {{ notifications.length }} unread notifications to review</p>
+    <div>
+      {{#each notifications}}
+      <div
+        style="border: 1px solid #333; margin-top: 15px; margin-bottom: 5px; display: flex; padding: 5px; border-radius: 10px;">
+        <div style="background-color: white; border-radius: 100%; ">
+          <img style="border-radius: 100%;" src="https://trainings.experthubllc.com/images/logo.png" alt="">
+        </div>
+        <div>
+          <strong>{{ this.title }}</strong>
+          <p>{{ this.content }}</p>
+        </div>
+      </div>
+      {{/each}}
+    </div>
+    <p>Thank you!</p>
+  </div>
+</body>
+
+</html>

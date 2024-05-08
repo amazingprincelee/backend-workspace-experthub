@@ -1,17 +1,65 @@
 const cron = require("node-cron");
 const User = require("../models/user");
-const { getUserNotificatins } = require("../controllers/notificationController");
+const nodemailer = require('nodemailer');
+const Notification = require("../models/notifications");
+const handlebars = require('handlebars');
+const fs = require('fs');
 
-const getUsers = async () => {
+
+const source = fs.readFileSync('./templates/notificationEmail.html', 'utf8');
+
+
+const template = handlebars.compile(source, {
+  allowedProtoMethods: {
+    trim: true
+  }
+});
+
+
+async function sendEmail(user, notifications) {
+  // Configure nodemailer transporter
+  const transporter = nodemailer.createTransport({
+    host: 'mail.privateemail.com',
+    port: 465,
+    auth: {
+      user: 'trainings@experthubllc.com',
+      pass: process.env.NOTIFICATION_EMAIL_PASSWORD,
+    },
+  });
+
+  const mailOptions = {
+    from: 'trainings@experthubllc.com',
+    to: 'alaboexcel123@gmail.com',
+    subject: 'Your Unread Notifications',
+    html: template({ userName: user.fullname, notifications })
+    // text: `Hello ${user.fullname}, you have ${notifications.length} unread notifications: ${notifications}`
+  };
+
+  // Send email
   try {
-    const users = await User.find({})
-
-    users.map(single => getUserNotificatins({ req: { params: { id: single._id } } }))
-  } catch (e) {
-    console.log(e)
+    await transporter.sendMail(mailOptions);
+    console.log(`Email sent to ${user.email}`);
+  } catch (error) {
+    console.error(`Error sending email to ${user.email}:`, error);
   }
 }
 
-cron.schedule("0 8,20 * * *", function () {
+// "0 8,20 * * *",
+cron.schedule('*/2 * * * *', async () => {
+  try {
+    const users = await User.find({ role: 'student', role: 'tutor' })
+    for (const user of users) {
+      // Get notifications for the user
+      const raw = await Notification.find({ userId: user._id }).lean();
 
+      const notifications = raw.filter((single) => !single.read)
+
+      // Send email with notifications
+      if (notifications.length >= 1) {
+        await sendEmail(user, notifications);
+      }
+    }
+  } catch (error) {
+    console.error('Error in cron job:', error);
+  }
 })

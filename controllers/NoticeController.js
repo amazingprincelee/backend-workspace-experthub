@@ -7,7 +7,11 @@ const noticeController = {
   addNotice: async (req, res) => {
     const { title, body, role, category, country, state, link, page, cancel, action, recipient } = req.body
 
-    users = await User.find({ role, assignedCourse: category, state, country })
+    if (role === 'all') {
+      users = await User.find()
+    } else {
+      users = await User.find({ role, assignedCourse: category, state, country })
+    }
 
     if (recipient === undefined && users.length === 0) {
       return res.status(403).json({ message: 'No user falls into the description' });

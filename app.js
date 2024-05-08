@@ -14,6 +14,7 @@ const eventRouter = require('./routes/eventRoute');
 const categoryRoute = require('./routes/categoryRoute');
 const noticeRouter = require('./routes/noticeRouter');
 
+const { sendEmail } = require('./utils/sendEmail')
 const bodyParser = require('body-parser');
 const { connect } = require('./config/connectionState');
 
