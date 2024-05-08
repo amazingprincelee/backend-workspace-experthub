@@ -29,7 +29,7 @@ async function sendEmail(user, notifications) {
 
   const mailOptions = {
     from: 'trainings@experthubllc.com',
-    to: 'alaboexcel123@gmail.com',
+    to: user.email,
     subject: 'Your Unread Notifications',
     html: template({ userName: user.fullname, notifications })
     // text: `Hello ${user.fullname}, you have ${notifications.length} unread notifications: ${notifications}`
