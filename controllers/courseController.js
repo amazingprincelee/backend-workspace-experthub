@@ -48,6 +48,21 @@ const courseController = {
         }
     },
 
+    getAuthorCourse: async (req, res) => {
+        const category = req.body.category;
+        const userId = req.body.id;
+
+
+        try {
+            const courses = await Course.find({ category, approved: true, instructorId: userId }).populate({ path: 'enrolledStudents', select: "profilePicture fullname _id" }).lean();;
+
+            return res.status(200).json({ courses });
+        } catch (error) {
+            console.error(error);
+            return res.status(500).json({ message: 'Unexpected error while fetching courses' });
+        }
+    },
+
     getCourseById: async (req, res) => {
         const courseId = req.params.courseId;
 
