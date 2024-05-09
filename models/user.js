@@ -39,7 +39,7 @@ const userSchema = new mongoose.Schema({
   },
   contact: {
     type: Boolean,
-    default: false
+    default: true
   },
   aptitudeTest: {
     willDadicate6Hours: String,
