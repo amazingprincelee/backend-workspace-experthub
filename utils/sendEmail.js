@@ -44,10 +44,10 @@ async function sendEmail(user, notifications) {
   }
 }
 
-// "*/2 * * * *",
-cron.schedule(' 0 8,20 * * *', async () => {
+//"*/2 * * * *" ,
+cron.schedule('0 8,20 * * *', async () => {
   try {
-    const users = await User.find({ role: 'student', role: 'tutor'})
+    const users = await User.find({ role: { $in: ["tutor", "student"] } })
     for (const user of users) {
       // Get notifications for the user
       const raw = await Notification.find({ userId: user._id }).lean();
