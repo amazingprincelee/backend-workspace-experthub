@@ -34,7 +34,10 @@ const courseSchema = new mongoose.Schema({
     fee: Number,
     strikedFee: Number,
     target: Number,
-
+    assignedTutors: [{
+        type: mongoose.Schema.Types.ObjectId,
+        ref: 'User',
+    }],
     enrolledStudents: [{
         type: mongoose.Schema.Types.ObjectId,
         ref: 'User',

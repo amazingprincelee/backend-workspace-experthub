@@ -54,7 +54,13 @@ const courseController = {
 
 
         try {
-            const courses = await Course.find({ category, approved: true, instructorId: userId }).populate({ path: 'enrolledStudents', select: "profilePicture fullname _id" }).lean();;
+            const courses = await Course.find({
+                $or: [
+                    { assignedTutors: { $in: userId }, approved: true },
+                    { category: category, approved: true },
+                    { instructorId: userId, approved: true }
+                ]
+            }).populate({ path: 'enrolledStudents', select: "profilePicture fullname _id" }).lean();;
 
             return res.status(200).json({ courses });
         } catch (error) {
@@ -325,6 +331,45 @@ const courseController = {
         } catch (error) {
             console.error(error);
             return res.status(500).json({ message: 'Unexpected error during enrollment' });
+        }
+    },
+
+    assignTutor: async (req, res) => {
+        const courseId = req.params.courseId;
+
+        const { id } = req.body
+
+        try {
+
+            const course = await Course.findById(courseId);
+            const user = await User.findById(id);
+
+            console.log(user);
+            if (!course) {
+                return res.status(404).json({ message: 'Course not found' });
+            }
+            console.log(course);
+            // Check if the student is already enrolled
+            if (course.assignedTutors.includes(id)) {
+                return res.status(400).json({ message: 'Tutor is already assigned to this course' });
+            }
+
+            // Enroll the student in the course
+            course.assignedTutors.push(id);
+            course.contact = false
+            await course.save();
+
+            await Notification.create({
+                title: "Tutor Assigned",
+                content: `${user.fullname} was assigned to your Course ${course.title}`,
+                contentId: course._id,
+                userId: course.instructorId,
+            });
+
+            return res.status(200).json({ message: 'Assigned successfully' });
+        } catch (error) {
+            console.error(error);
+            return res.status(500).json({ message: 'Unexpected error during assignment' });
         }
     },
 
