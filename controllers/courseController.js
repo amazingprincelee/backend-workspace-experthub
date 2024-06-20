@@ -1,11 +1,12 @@
 const Course = require("../models/courses.js");
 const User = require("../models/user.js");
 const Category = require("../models/category.js");
-const {upload} = require("../config/cloudinary.js");
+const { upload } = require("../config/cloudinary.js");
 const cloudinaryVidUpload = require("../config/cloudinary.js");
 const createZoomMeeting = require("../utils/createZoomMeeting.js");
 const KJUR = require("jsrsasign");
 const Notification = require("../models/notifications.js");
+const Transaction = require("../models/transactions.js");
 
 // const categories = ["Virtual Assistant", "Product Management", "Cybersecurity", "Software Development", "AI / Machine Learning", "Data Analysis & Visualisation", "Story Telling", "Animation", "Cloud Computing", "Dev Ops", "UI/UX Design", "Journalism", "Game development", "Data Science", "Digital Marketing", "Advocacy"]
 
@@ -57,8 +58,7 @@ const courseController = {
             const courses = await Course.find({
                 $or: [
                     { assignedTutors: { $in: userId }, approved: true },
-                    { category: category, approved: true },
-                    { instructorId: userId, approved: true }
+                    { category: category, approved: true, instructorId: userId, },
                 ]
             }).populate({ path: 'enrolledStudents', select: "profilePicture fullname _id" }).lean();;
 
@@ -304,6 +304,7 @@ const courseController = {
 
             const course = await Course.findById(courseId);
             const user = await User.findById(id);
+            const author = await User.findById(course.instructorId)
 
             console.log(user);
             if (!course) {
@@ -326,6 +327,19 @@ const courseController = {
                 contentId: course._id,
                 userId: course.instructorId,
             });
+
+            if (course.fee > 0) {
+                await Transaction.create({
+                    userId: id,
+                    soldBy: author._id,
+                    courseId: courseId,
+                    amount: course.fee,
+                    type: 'credit'
+                })
+                const amountToAdd = course.fee * 0.95;
+                author.balance += amountToAdd 
+                await author.save();
+            }
 
             return res.status(200).json({ message: 'Enrolled successfully' });
         } catch (error) {

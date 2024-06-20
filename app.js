@@ -13,6 +13,7 @@ const resourceRoute = require('./routes/resourceRouter');
 const eventRouter = require('./routes/eventRoute');
 const categoryRoute = require('./routes/categoryRoute');
 const noticeRouter = require('./routes/noticeRouter');
+const transactionRouter = require('./routes/transactionRoute');
 
 const { sendEmail } = require('./utils/sendEmail')
 const bodyParser = require('body-parser');
@@ -74,6 +75,7 @@ app.use('/assessment', accessmentRouter);
 app.use('/notifications', notificationRouter);
 app.use('/category', categoryRoute)
 app.use('/notice', noticeRouter)
+app.use('/transactions', transactionRouter)
 
 
 app.listen(PORT, () => {
