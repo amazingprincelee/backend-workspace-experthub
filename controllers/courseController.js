@@ -94,7 +94,7 @@ const courseController = {
 
     getAllCourses: async (req, res) => {
         try {
-            const courses = await Course.find({ approved: true }).populate({ path: 'enrolledStudents', select: "profilePicture fullname _id" }).lean();
+            const courses = await Course.find({ approved: true }).populate({ path: 'enrolledStudents assignedTutors', select: "profilePicture fullname _id" }).lean();
 
             return res.status(200).json({ courses });
         } catch (error) {
@@ -337,7 +337,7 @@ const courseController = {
                     type: 'credit'
                 })
                 const amountToAdd = course.fee * 0.95;
-                author.balance += amountToAdd 
+                author.balance += amountToAdd
                 await author.save();
             }
 
@@ -365,22 +365,26 @@ const courseController = {
             console.log(course);
             // Check if the student is already enrolled
             if (course.assignedTutors.includes(id)) {
-                return res.status(400).json({ message: 'Tutor is already assigned to this course' });
+                await Course.updateOne(
+                    { _id: course._id },
+                    { $pull: { assignedTutors: id } }
+                );
+                return res.status(200).json({ message: 'Tutor is Unassigned to this course' });
+            } else {
+                course.assignedTutors.push(id);
+                course.contact = false
+                await course.save();
+
+                await Notification.create({
+                    title: "Tutor Assigned",
+                    content: `${user.fullname} was assigned to your Course ${course.title}`,
+                    contentId: course._id,
+                    userId: course.instructorId,
+                });
             }
 
-            // Enroll the student in the course
-            course.assignedTutors.push(id);
-            course.contact = false
-            await course.save();
-
-            await Notification.create({
-                title: "Tutor Assigned",
-                content: `${user.fullname} was assigned to your Course ${course.title}`,
-                contentId: course._id,
-                userId: course.instructorId,
-            });
-
             return res.status(200).json({ message: 'Assigned successfully' });
+
         } catch (error) {
             console.error(error);
             return res.status(500).json({ message: 'Unexpected error during assignment' });
