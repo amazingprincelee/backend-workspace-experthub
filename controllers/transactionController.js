@@ -77,8 +77,13 @@ const transactionController = {
 
   createRecipient: async (req, res) => {
     const { userId, bankCode, accountNumber } = req.body;
+
     try {
       const user = await User.findById(userId);
+
+      user.bankCode = bankCode;
+      user.accountNumber = accountNumber
+      await user.save();
       if (!user) {
         return res.status(404).send('User not found');
       }
@@ -95,10 +100,6 @@ const transactionController = {
       });
 
       // console.log(response.data.data)
-
-      user.bankCode = bankCode;
-      user.accountNumber = accountNumber
-      await user.save();
 
       res.status(200).json({ message: 'Recipient created', recipientCode: user.flutterwaveRecipientCode });
     } catch (error) {
