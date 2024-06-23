@@ -325,11 +325,11 @@ const eventsController = {
   },
 
   eventReminder: async (req, res) => {
-    const { userId, event } = req.body
+    const { userId, event, type } = req.body
     const user = await User.findOne({ _id: userId });
 
     try {
-      await sendEmailReminder(user.email, event, user.fullname);
+      await sendEmailReminder(user.email, event, user.fullname, type);
 
       res.json({
         message: "Reminder sent successfully!"
