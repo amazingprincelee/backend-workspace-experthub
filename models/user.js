@@ -20,8 +20,10 @@ const userSchema = new mongoose.Schema({
   password: String,
   role: String,
   googleId: String,
+  bankCode: String,
   profilePicture: String,
   assignedCourse: String,
+  accountNumber: String,
   assessmentAnswers: {
     type: [String], // Array to store user's assessment answers
   },
