@@ -23,6 +23,7 @@ eventRouter.get("/enrolled/:courseId", eventsController.getEnrolledStudents);
 
 eventRouter.get("/:eventId", eventsController.getEventById)
 
+eventRouter.post('/reminder', eventsController.eventReminder)
 
 eventRouter.delete("/delete/:id", eventsController.deleteEvent)
 

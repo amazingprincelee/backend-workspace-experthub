@@ -4,6 +4,7 @@ const createZoomMeeting = require("../utils/createZoomMeeting.js");
 const LearningEvent = require("../models/event.js");
 const Notification = require("../models/notifications.js");
 const cloudinaryVidUpload = require("../config/cloudinary.js");
+const { sendEmailReminder } = require("../utils/sendEmailReminder.js");
 
 const eventsController = {
   createEvent: async (req, res) => {
@@ -230,6 +231,7 @@ const eventsController = {
       res.status(400).json(error);
     }
   },
+
   getEnrolledStudents: async (req, res) => {
     const courseId = req.params.courseId;
 
@@ -321,6 +323,22 @@ const eventsController = {
       res.status(400).json(error);
     }
   },
+
+  eventReminder: async (req, res) => {
+    const { userId, event } = req.body
+    const user = await User.findOne({ _id: userId });
+
+    try {
+      await sendEmailReminder(user.email, event, user.fullname);
+
+      res.json({
+        message: "Reminder sent successfully!"
+      });
+    } catch (error) {
+      console.error(error);
+      return res.status(500).json({ message: 'Unexpected error during Reminder' });
+    }
+  }
 
 }
 
