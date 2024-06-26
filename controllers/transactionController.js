@@ -149,7 +149,7 @@ const transactionController = {
       res.status(200).json({ message: 'Withdrawal successful' });
     } catch (error) {
       console.error('Error during withdrawal:', error.response ? error.response.data : error.message);
-      res.status(500).send('Internal Server Error');
+      res.status(500).send(error.response.data.message);
     }
   }
 }
