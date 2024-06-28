@@ -134,19 +134,24 @@ const transactionController = {
         },
       });
 
-      // Deduct amount from user balance
-      user.balance -= amount;
-      await user.save();
+      if (response.data.status === 'success') {
+        // Deduct amount from user balance
 
-      await Transaction.create({
-        userId: user._id,
-        soldBy: "",
-        courseId: courseId,
-        amount: amount,
-        type: 'debit'
-      })
+        user.balance -= amount;
+        await user.save();
 
-      res.status(200).json({ message: 'Withdrawal successful' });
+        await Transaction.create({
+          userId: user._id,
+          soldBy: "",
+          courseId: "",
+          amount: amount,
+          type: 'debit'
+        })
+
+        return res.status(200).json({ message: 'Withdrawal successful' });
+      }
+
+      res.status(200).json({ message: response.data.message });
     } catch (error) {
       console.error('Error during withdrawal:', error.response ? error.response.data : error.message);
       res.status(500).send(error.response.data.message);
