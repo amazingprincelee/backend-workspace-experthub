@@ -142,8 +142,6 @@ const transactionController = {
 
         await Transaction.create({
           userId: user._id,
-          soldBy: "",
-          courseId: "",
           amount: amount,
           type: 'debit'
         })
