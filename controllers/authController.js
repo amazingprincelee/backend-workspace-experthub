@@ -32,7 +32,8 @@ const authControllers = {
 
       await User.register(newUser, password, async (err, user) => {
         if (err) {
-          console.error(err); if (err.name === 'UserExistsError') {
+          console.error(err);
+          if (err.name === 'UserExistsError') {
             // Handle the case where the user is already registered
             return res.status(400).json({ message: 'User already registered' });
           } else {

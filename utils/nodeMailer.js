@@ -1,11 +1,11 @@
 const nodemailer = require('nodemailer');
 
 const transporter = nodemailer.createTransport({
-  host: 'business85.web-hosting.com',
+  host: 'mail.privateemail.com',
   port: 465,
   auth: {
     user: 'verify@experthubllc.com',
-    pass: process.env.EMAIL_PASSWORD,
+    pass: process.env.NOTIFICATION_EMAIL_PASSWORD,
   },
 });
 

@@ -154,6 +154,13 @@ const transactionController = {
       console.error('Error during withdrawal:', error.response ? error.response.data : error.message);
       res.status(500).send(error.response.data.message);
     }
+  },
+
+  addFundws: async (req, res) => {
+
+  },
+  payWith: async (req, res) => {
+
   }
 }
 
