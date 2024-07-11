@@ -156,11 +156,55 @@ const transactionController = {
     }
   },
 
-  addFundws: async (req, res) => {
+  addFunds: async (req, res) => {
+    const { userId, amount } = req.body;
+    try {
+      const user = await User.findById(userId);
+      if (!user) {
+        return res.status(404).send('User not found');
+      }
 
+      user.balance += amount;
+      await user.save();
+
+      await Transaction.create({
+        userId: user._id,
+        amount: amount,
+        type: 'credit'
+      })
+
+      return res.status(200).json({ message: 'Funds Added successfully' });
+    } catch (error) {
+      // console.error('Error during withdrawal:', error.response ? error.response.data : error.message);
+      res.status(500).send(error.response.data.message);
+    }
   },
-  payWith: async (req, res) => {
 
+  payWith: async (req, res) => {
+    const { userId, amount } = req.body;
+    try {
+      const user = await User.findById(userId);
+      if (!user) {
+        return res.status(404).send('User not found');
+      }
+      if (user.balance < amount) {
+        return res.status(400).send('Insufficient balance');
+      }
+
+      user.balance -= amount;
+      await user.save();
+
+      await Transaction.create({
+        userId: user._id,
+        amount: amount,
+        type: 'debit'
+      })
+      
+      return res.status(200).json({ message: 'Payment Made successfully' });
+
+    } catch (error) {
+      res.status(500).send(error.response.data.message);
+    }
   }
 }
 
