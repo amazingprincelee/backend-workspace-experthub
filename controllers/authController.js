@@ -12,7 +12,7 @@ const authControllers = {
 
   register: async (req, res) => {
     try {
-      const { userType, fullname, email, phone, country, state, address, password } = req.body;
+      const { userType, fullname, email, phone, country, state, address, contact, password } = req.body;
 
       const lowercasedUserType = userType.toLowerCase();
       const role = determineRole(lowercasedUserType);
@@ -27,7 +27,7 @@ const authControllers = {
         address,
         role,
         verificationCode,
-        contact: true
+        contact
       });
 
       await User.register(newUser, password, async (err, user) => {
