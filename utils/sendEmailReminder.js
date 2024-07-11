@@ -13,7 +13,7 @@ const sendEmailReminder = async (to, message, type) => {
   const mailOptions = {
     from: 'trainings@experthubllc.com',
     to,
-    subject: type + 'from ExpertHub',
+    subject: type + ' from ExpertHub',
     text: message,
   };
 
