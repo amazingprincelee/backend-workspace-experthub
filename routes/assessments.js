@@ -22,6 +22,7 @@ accessmentRouter.get("/single/:id", assessmentControllers.getSingleAssesment)
 accessmentRouter.post("/submit-assessment/:userId", assessmentControllers.submitAssessment);
 
 
+accessmentRouter.delete("/delete/:id", assessmentControllers.deleteAssesment)
 
 
 

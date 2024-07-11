@@ -125,6 +125,18 @@ const assessmentControllers = {
     }
   },
 
+  deleteAssesment: async (req, res) => {
+    try {
+      const assesment = await Assessment.deleteOne({
+        _id: req.params.id
+      })
+      res.json(assesment);
+    } catch (error) {
+      console.error(error);
+      res.status(400).json(error);
+    }
+  },
+
   submitAssessment: async (req, res) => {
     try {
       const answer = req.body.answer; // Extract answers from the request body
