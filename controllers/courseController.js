@@ -331,9 +331,7 @@ const courseController = {
 
             if (course.fee > 0) {
                 await Transaction.create({
-                    userId: id,
-                    soldBy: author._id,
-                    courseId: courseId,
+                    userId: author._id,
                     amount: course.fee,
                     type: 'credit'
                 })
