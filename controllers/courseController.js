@@ -310,7 +310,7 @@ const courseController = {
             if (!course) {
                 return res.status(404).json({ message: 'Course not found' });
             }
-            console.log(course);
+            // console.log(course);
             // Check if the student is already enrolled
             if (course.enrolledStudents.includes(id)) {
                 return res.status(400).json({ message: 'Student is already enrolled in the course' });
@@ -318,9 +318,9 @@ const courseController = {
 
             // Enroll the student in the course
             course.enrolledStudents.push(id);
+            await course.save();
             user.contact = false
             await user.save()
-            await course.save();
 
             await Notification.create({
                 title: "Course enrolled",
