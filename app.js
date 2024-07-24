@@ -6,6 +6,7 @@ const cors = require('cors');
 const fileUpload = require('express-fileupload');
 const http = require('http');
 const { Server } = require("socket.io");
+const Notification = require("./models/notifications.js");
 
 const authRoute = require('./routes/authRoute');
 const userRouter = require('./routes/userRoute');
@@ -163,6 +164,13 @@ io.on('connection', async (socket) => {
     const chat = await Chat.findById(conversation_id);
     chat.messages.push(new_message);
     await chat.save({ new: true, validateModifiedOnly: true });
+
+    await Notification.create({
+      title: "Message",
+      content: `${from_user.fullname} Just sent you a message '${text}'`,
+      contentId: conversation_id,
+      userId: to,
+    });
 
     io.to(to_user?.socket_id).emit("new_message", {
       conversation_id,
