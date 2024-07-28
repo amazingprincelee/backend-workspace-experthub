@@ -1,6 +1,7 @@
 const express = require('express');
 const userControllers = require('../controllers/userController.js');
 const userRouter = express.Router();
+const auth = require("../middlewares/auth.js");
 
 
 userRouter.get("/", (req, res) => {
@@ -8,13 +9,12 @@ userRouter.get("/", (req, res) => {
 });
 
 
-
 //User controllers routes
-userRouter.get("/profile/:userId", userControllers.getProfile);
+userRouter.get("/profile", auth, userControllers.getProfile);
 userRouter.get("/instructors", userControllers.getInstructors);
 userRouter.get("/students", userControllers.getStudents);
-userRouter.put("/updateProfile/:userId", userControllers.upDateprofile);
-userRouter.put("/updateProfilePicture/:userId", userControllers.updateProfilePhote);
+userRouter.put("/updateProfile", auth, userControllers.upDateprofile);
+userRouter.put("/updateProfilePicture", auth, userControllers.updateProfilePhote);
 
 // get course student and instructors
 userRouter.put("/myinstructors", userControllers.getMyInstructors);

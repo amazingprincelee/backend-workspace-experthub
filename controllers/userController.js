@@ -8,7 +8,7 @@ const userControllers = {
   // To get user profile
   getProfile: async (req, res) => {
     try {
-      const userId = req.params.userId;
+      const userId = req.user.id;
 
       // Check if the user exists
       const existingUser = await User.findById(userId);
@@ -42,7 +42,7 @@ const userControllers = {
   //To update user profile
   upDateprofile: async (req, res) => {
     try {
-      const userId = req.params.userId;
+      const userId = req.user.id;
 
       // Check if the user exists
       const existingUser = await User.findById(userId);
@@ -291,7 +291,7 @@ const userControllers = {
 
   updateProfilePhote: async (req, res) => {
     try {
-      const userId = req.params.userId;
+      const userId = req.user.id;
 
       const isUser = await User.findById(userId);
 

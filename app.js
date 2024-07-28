@@ -1,7 +1,5 @@
 require('dotenv/config');
 const express = require('express');
-const session = require('express-session');
-const passport = require('passport');
 const cors = require('cors');
 const fileUpload = require('express-fileupload');
 const http = require('http');
@@ -51,14 +49,6 @@ app.use(express.static('public'));
 app.set('view engine', 'ejs');
 app.use(express.json());
 
-app.use(session({
-  secret: "Our little secret.",
-  resave: false,
-  saveUninitialized: false,
-}));
-
-app.use(passport.initialize());
-app.use(passport.session());
 
 // File upload middleware
 app.use(fileUpload({
