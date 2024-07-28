@@ -1,25 +1,46 @@
 const passport = require("passport");
+const bcrypt = require("bcryptjs");
+const jwt = require("jsonwebtoken");
 const User = require("../models/user.js");
-const { generateVerificationCode } = require("../utils/verficationCodeGenerator.js");
-const { sendVerificationEmail } = require('../utils/nodeMailer.js');
+const {
+  generateVerificationCode,
+} = require("../utils/verficationCodeGenerator.js");
+const { sendVerificationEmail } = require("../utils/nodeMailer.js");
 const determineRole = require("../utils/determinUserType.js");
 
 const verificationCode = generateVerificationCode();
 
-
-
 const authControllers = {
-
   register: async (req, res) => {
     try {
-      const { userType, fullname, email, phone, country, state, address, contact, password } = req.body;
+      const {
+        userType,
+        fullname,
+        email,
+        phone,
+        country,
+        state,
+        address,
+        contact,
+        password,
+      } = req.body;
 
       const lowercasedUserType = userType.toLowerCase();
       const role = determineRole(lowercasedUserType);
 
-      const newUser = User({
-        username: email,
-        email,
+      const alreadyExistingUser = await User.findOne({
+        email: email.toLowerCase(),
+      });
+
+      if (alreadyExistingUser) {
+        return res.status(400).json({ message: "User already registered" });
+      }
+
+      const hashPassword = bcrypt.hashSync(password);
+
+      const newUser = new User({
+        username: email.toLowerCase(),
+        email: email.toLowerCase(),
         fullname,
         phone,
         country,
@@ -27,78 +48,86 @@ const authControllers = {
         address,
         role,
         verificationCode,
-        contact
+        contact,
+        password: hashPassword,
       });
 
-      await User.register(newUser, password, async (err, user) => {
-        if (err) {
-          console.error(err);
-          if (err.name === 'UserExistsError') {
-            // Handle the case where the user is already registered
-            return res.status(400).json({ message: 'User already registered' });
-          } else {
-            console.error(err);
-            return res.status(500).json({ message: 'Internal Server Error' });
-          }
-        } else {
-          // Send verification code via email
-          await sendVerificationEmail(user.email, verificationCode);
+      await newUser.save();
 
-          passport.authenticate('local')(req, res, () => {
-            // Redirect to verify route 
-            res.status(200).json({ message: "Verification code sent to email", id: user._id })
-          });
-        }
-      });
+      // Send verification code via email
+      await sendVerificationEmail(newUser.email, verificationCode);
+
+      res
+        .status(200)
+        .json({ message: "Verification code sent to email", id: newUser._id });
     } catch (error) {
       console.error(error);
-      return res.status(500).json({ message: 'Unexpected error during registration' });
+      return res
+        .status(500)
+        .json({ message: "Unexpected error during registration" });
     }
   },
 
   login: async (req, res) => {
-    passport.authenticate("local", (err, user, info) => {
-      if (!user) {
-        return res.status(401).json({ message: 'Incorrect Email or Password!' });
-      }
-      if (user.blocked) {
-        return res.status(401).json({ message: 'User Blocked!' });
-      }
+    const { email, password } = req.body;
+    if (!email || !password) {
+      return res.status(400).json({ message: "Missing fields" });
+    }
 
-      res.status(201).json({
-        message: 'Successfully logged in',
-        user: {
-          fullName: user.fullname,
-          id: user._id,
-          email: user.email,
-          role: user.role,
-          emailVerification: user.isVerified,
-          assignedCourse: user.assignedCourse,
-          profilePicture: user.profilePicture
-        },
-      });
+    const user = await User.findOne({ email: email.toLowerCase() });
+    if (!user) {
+      return res.status(401).json({ message: "Incorrect Email or Password!" });
+    }
 
-    })(req, res);
+    if (user.blocked) {
+      return res.status(401).json({ message: "User Blocked!" });
+    }
 
+    // Password matching
+    const isMatch = bcrypt.compareSync(password, user.password ?? "");
+
+    if (!isMatch) {
+      return res.status(401).json({ message: "Incorrect Email or Password" });
+    }
+
+    // generate jwt
+    const payload = {
+      fullName: user.fullname,
+      id: user._id,
+      email: user.email,
+      role: user.role,
+      emailVerification: user.isVerified,
+      profilePicture: user.profilePicture,
+    };
+    const accessToken = jwt.sign(payload, process.env.JWT_SECRET, {
+      expiresIn: "30m",
+    });
+
+    res.status(201).json({
+      message: "Successfully logged in",
+      accessToken,
+      user: {
+        fullName: user.fullname,
+        id: user._id,
+        email: user.email,
+        role: user.role,
+        emailVerification: user.isVerified,
+        assignedCourse: user.assignedCourse,
+        profilePicture: user.profilePicture,
+      },
+    });
   },
 
   logout: (req, res) => {
-    req.logout((err) => {
-      if (err) {
-        console.log(err);
-      } else {
-        res.status(200).json({ message: "successfully signed out" });
-      }
-    });
-
+    res.status(200).json({ message: "successfully signed out" });
   },
 
-  // Verify 
+  // Verify
   verify: async (req, res) => {
     try {
       const { verifyCode } = req.body;
 
-      const userId = (req.params.userId);
+      const userId = req.params.userId;
 
       // Query the user database to get the user's role
       const user = await User.findById(userId);
@@ -109,7 +138,7 @@ const authControllers = {
 
       // Check if the verification code matches the one in the database
       if (user.verificationCode !== verifyCode) {
-        return res.status(400).json({ message: 'Invalid verification code' });
+        return res.status(400).json({ message: "Invalid verification code" });
       }
 
       // Update user's verification status
@@ -119,7 +148,7 @@ const authControllers = {
 
       // Return information to populate dashboard
       return res.status(201).json({
-        message: 'Successfully Registered a Student',
+        message: "Successfully Registered a Student",
         user: {
           fullName: user.fullname,
           id: user._id,
@@ -128,15 +157,17 @@ const authControllers = {
           role: user.role,
         },
       });
-
     } catch (error) {
       console.error(error);
-      return res.status(500).json({ message: 'Unexpected error during verification' });
+      return res
+        .status(500)
+        .json({ message: "Unexpected error during verification" });
     }
   },
 
   forgotPassword: async (req, res) => {
-    const user = await User.findOne({ email: req.body.email });
+    const { email } = req.body;
+    const user = await User.findOne({ email });
     if (!user)
       return res.status(400).send({
         message: "An account with " + req.body.email + " does not exist!",
@@ -145,46 +176,48 @@ const authControllers = {
     try {
       await sendVerificationEmail(user.email, verificationCode);
 
-      user.verificationCode = verificationCode
-      await user.save()
+      user.verificationCode = verificationCode;
+      await user.save();
 
       res.json({
-        message: "Code sent to " + req.body.email
+        message: "Code sent to " + email,
       });
-
     } catch (error) {
       console.error(error);
-      return res.status(500).json({ message: 'Unexpected error during verification' });
+      return res
+        .status(500)
+        .json({ message: "Unexpected error during verification" });
     }
   },
 
   resetPassword: async (req, res) => {
-    const user = await User.findOne({ verificationCode: req.body.verificationCode });
+    const { password, verificationCode } = req.body;
+    const user = await User.findOne({
+      verificationCode,
+    });
 
-    if (!user)
+    if (!user) {
       return res.status(400).send({
         message: "Invalid OTP code ",
       });
+    }
 
     try {
-
-      await user.setPassword(req.body.password)
-      await user.save()
-
-      user.verificationCode = null
-      await user.save()
+      const newHash = bcrypt.hashSync(password);
+      user.password = newHash;
+      user.verificationCode = null;
+      await user.save();
 
       res.json({
-        message: "Password reset successfully"
+        message: "Password reset successfully",
       });
-
     } catch (error) {
       console.error(error);
-      return res.status(500).json({ message: 'Unexpected error during verification' });
+      return res
+        .status(500)
+        .json({ message: "Unexpected error during verification" });
     }
-  }
+  },
 };
 
-
 module.exports = authControllers;
-

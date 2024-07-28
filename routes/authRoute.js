@@ -7,7 +7,7 @@ router.get("/", (req, res)=>{
   res.status(200).json({message:"Welcome to ExpertHub Auth Route"})
 });
 
-router.get("/logout", authControllers.logout);
+router.get("/logout", authControllers.logout); // TODO: use less
 router.post('/register', authControllers.register);
 router.post('/login', authControllers.login);
 router.post('/verify/:userId', authControllers.verify);
