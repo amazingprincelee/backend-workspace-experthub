@@ -23,5 +23,6 @@ userRouter.put("/graduate", userControllers.getGraduates);
 userRouter.put("/mygraduate", userControllers.getMyGraduates);
 
 userRouter.put("/block/:userId", userControllers.block)
+userRouter.put("/graduate/:userId", userControllers.makeGraduate)
 
 module.exports = userRouter;

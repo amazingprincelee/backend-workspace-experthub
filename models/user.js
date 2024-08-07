@@ -58,7 +58,15 @@ const userSchema = new mongoose.Schema({
     default: false
   },
   verificationCode: String,
-
+  days: [{
+    checked: Boolean,
+    day: String,
+    startTime: String,
+    endTime: String
+  }],
+  mode: [{
+    type: String
+  }]
 });
 
 const User = new mongoose.model("User", userSchema);
