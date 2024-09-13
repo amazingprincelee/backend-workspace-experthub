@@ -1,11 +1,24 @@
 const Appointment = require("../models/appointment");
+const Notification = require("../models/notifications.js");
+const User = require("../models/user.js");
 
 const appointmentControllers = {
   bookAppointment: async (req, res) => {
     try {
       const appointment = req.body
-      const newAppointment = await Appointment.create(appointment)
+      const user = await User.findById(req.body.from);
 
+      const newAppointment = await Appointment.create(appointment)
+      try {
+        await Notification.create({
+          title: "Appointment Booked",
+          content: `${user.fullname} just booked an appointment with you!`,
+          contentId: newAppointment._id,
+          userId: req.body.to,
+        });
+      } catch (error) {
+        console.error("Error creating notification:", error);
+      }
       return res.status(200).json({ message: 'Appointemt Created successfully', appointment: newAppointment });
 
     } catch (error) {
@@ -18,7 +31,9 @@ const appointmentControllers = {
     try {
       const id = req.params.id
 
-      const appointment = await Appointment.find({ from: id, to: id });
+      const appointment = await Appointment.find({
+        $or: [{ from: id }, { to: id }]
+      }).populate({ path: 'from to', select: "profilePicture fullname _id" }).lean();;
 
       return res.status(200).json({ appointment });
 
