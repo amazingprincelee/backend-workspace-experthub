@@ -73,6 +73,37 @@ const appointmentControllers = {
       console.error(error);
       res.status(400).json(error);
     }
+  },
+
+  updateUserAvailability: async (req, res) => {
+    try {
+      const user = await User.findById(req.params.id);
+      user.days = req.body.days;
+      user.mode = req.body.mode;
+      await user.save();
+
+      return res.status(200).json({ message: 'Availability Added successfully!' });
+
+    } catch (e) {
+      console.error(e);
+      return res.status(500).json({ message: 'Unexpected error' });
+    }
+  },
+
+  getAvailability: async (req, res) => {
+    try {
+      const user = await User.findById(req.params.id);
+
+      if (!user.days && !user.mode) {
+        return res.status(200).json({ message: 'User has not updated availability!' });
+      } else {
+        return res.status(200).json({ days: user.days, mode: user.mode });
+      }
+
+    } catch (e) {
+      console.error(error);
+      return res.status(500).json({ message: 'Unexpected error' });
+    }
   }
 }
 

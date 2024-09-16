@@ -42,7 +42,7 @@ const userControllers = {
   //To update user profile
   upDateprofile: async (req, res) => {
     try {
-      const userId = req.user.id;
+      const userId = req.params.id;
 
       // Check if the user exists
       const existingUser = await User.findById(userId);

@@ -65,7 +65,8 @@ const userSchema = new mongoose.Schema({
     endTime: String
   }],
   mode: [{
-    type: String
+    checked: Boolean,
+    name: String
   }]
 });
 

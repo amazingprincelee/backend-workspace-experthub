@@ -13,7 +13,7 @@ userRouter.get("/", (req, res) => {
 userRouter.get("/profile", auth, userControllers.getProfile);
 userRouter.get("/instructors", userControllers.getInstructors);
 userRouter.get("/students", userControllers.getStudents);
-userRouter.put("/updateProfile", auth, userControllers.upDateprofile);
+userRouter.put("/updateProfile/:id", auth, userControllers.upDateprofile);
 userRouter.put("/updateProfilePicture", auth, userControllers.updateProfilePhote);
 
 // get course student and instructors

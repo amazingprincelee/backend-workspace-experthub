@@ -178,7 +178,7 @@ const authControllers = {
 
       user.verificationCode = verificationCode;
       await user.save();
-
+      
       res.json({
         message: "Code sent to " + email,
       });
