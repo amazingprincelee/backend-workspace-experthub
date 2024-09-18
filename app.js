@@ -6,6 +6,9 @@ const http = require('http');
 const { Server } = require("socket.io");
 const Notification = require("./models/notifications.js");
 
+const { upload } = require("./config/cloudinary.js");
+const { cloudinaryVidUpload } = require("./config/cloudinary.js");
+
 const authRoute = require('./routes/authRoute');
 const userRouter = require('./routes/userRoute');
 const courseRouter = require('./routes/courseRoute');
@@ -141,17 +144,27 @@ io.on('connection', async (socket) => {
   socket.on("send_dm", async (data) => {
     console.log("Received message:", data);
 
-    const { text, conversation_id, from, to, type } = data;
+    const { text, conversation_id, from, to, type, file } = data;
 
     const to_user = await User.findById(to);
     const from_user = await User.findById(from);
+    let cloudFile
+    if(type === 'Video'){
+      const video = await cloudinaryVidUpload(video.videoUrl)
+      cloudFile = video
+    }
+    if (type === 'Image' || type === 'Document') {
+      const image = await upload(file);
+      cloudFile = image.url
+    }
 
     const new_message = {
       to: to,
       from: from,
       type: type,
       created_at: Date.now(),
-      text: text
+      text: text || null,
+      file: cloudFile
     };
 
     const chat = await Chat.findById(conversation_id);

@@ -19,7 +19,7 @@ const chat = new mongoose.Schema({
       },
       type: {
         type: String,
-        enum: ["Text", "Media", "Document", "Link"],
+        enum: ["Text", "Image", "Document", "Video"],
       },
       created_at: {
         type: Date,
