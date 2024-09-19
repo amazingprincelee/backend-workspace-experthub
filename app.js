@@ -142,55 +142,129 @@ io.on('connection', async (socket) => {
   });
 
   socket.on("send_dm", async (data) => {
-    // console.log("Received message:", data);
+    console.log("Received message:", data);
 
-    const { text, conversation_id, from, to, type, file } = data;
+    try {
+      const { text, conversation_id, from, to, type, file } = data;
 
-    const to_user = await User.findById(to);
-    const from_user = await User.findById(from);
-    let cloudFile
-    console.log(type)
+      const to_user = await User.findById(to);
+      const from_user = await User.findById(from);
+      let cloudFile
+      console.log(type)
 
-    if (type === 'Image' || type === 'Document') {
-      const image = await upload(file);
-      cloudFile = image.url
-    } else if (type === 'Video') {
-      const video = await cloudinaryVidUpload(file)
-      console.log(video)
-      cloudFile = video
+      if (type === 'Image' || type === 'Document') {
+        const image = await upload(file);
+        cloudFile = image.url
+      } else if (type === 'Video') {
+        const video = await cloudinaryVidUpload(file)
+        console.log(video)
+        cloudFile = video
+      }
+
+      const new_message = {
+        to: to,
+        from: from,
+        type: type,
+        created_at: Date.now(),
+        text: text || null,
+        file: cloudFile
+      };
+
+      const chat = await Chat.findById(conversation_id);
+      chat.messages.push(new_message);
+      await chat.save({ new: true, validateModifiedOnly: true });
+
+      await Notification.create({
+        title: "Message",
+        content: `${from_user.fullname} Just sent you a message '${text}'`,
+        contentId: conversation_id,
+        userId: to,
+      });
+
+      io.to(to_user?.socket_id).emit("new_message", {
+        conversation_id,
+        message: new_message,
+      });
+
+      io.to(from_user?.socket_id).emit("new_message", {
+        conversation_id,
+        message: new_message,
+      });
+    } catch (e) {
+      console.error('Error blocking user:', e);
+
     }
-
-    const new_message = {
-      to: to,
-      from: from,
-      type: type,
-      created_at: Date.now(),
-      text: text || null,
-      file: cloudFile
-    };
-
-    const chat = await Chat.findById(conversation_id);
-    chat.messages.push(new_message);
-    await chat.save({ new: true, validateModifiedOnly: true });
-
-    await Notification.create({
-      title: "Message",
-      content: `${from_user.fullname} Just sent you a message '${text}'`,
-      contentId: conversation_id,
-      userId: to,
-    });
-
-    io.to(to_user?.socket_id).emit("new_message", {
-      conversation_id,
-      message: new_message,
-    });
-
-    io.to(from_user?.socket_id).emit("new_message", {
-      conversation_id,
-      message: new_message,
-    });
-
   });
+
+  socket.on('block_user', async (data) => {
+    const { by, conversation_id } = data;
+
+    try {
+      // Find the user to be blocked
+      const chat = await Chat.findById(conversation_id);
+
+      // const user = await User.findById(by);
+
+      // if (!user) {
+      //   return socket.emit('error', { message: 'User not found' });
+      // }
+
+      // Update the blocked field
+      chat.blocked = {
+        isBlocked: true,
+        by: by
+      };
+
+      await chat.save();
+
+      // Emit success message
+      socket.emit('user_blocked', {
+        message: `User has been blocked successfully by ${by}.`,
+      });
+
+      console.log(`User blocked by ${by}`);
+    } catch (error) {
+      console.error('Error blocking user:', error);
+      socket.emit('error', { message: 'Error blocking user' });
+    }
+  });
+
+  socket.on('unblock_user', async (data) => {
+    const { by, conversation_id } = data;
+  
+    try {
+      // Find the chat conversation by ID
+      const chat = await Chat.findById(conversation_id);
+  
+      if (!chat) {
+        return socket.emit('error', { message: 'Conversation not found' });
+      }
+  
+      // Check if the conversation is currently blocked and if the 'by' user matches the blocker
+      if (!chat.blocked.isBlocked || String(chat.blocked.by) !== String(by)) {
+        return socket.emit('error', { message: 'You are not authorized to unblock this conversation or it is not blocked.' });
+      }
+  
+      // Update the blocked field: Unblock the conversation
+      chat.blocked = {
+        isBlocked: false,
+        by: null // Set 'by' to null since there's no current blocker after unblocking
+      };
+  
+      await chat.save();
+  
+      // Emit success message after unblocking
+      socket.emit('unblock_user', {
+        message: `Conversation ${conversation_id} has been unblocked successfully by user ${by}.`,
+      });
+  
+      console.log(`Conversation ${conversation_id} unblocked by user ${by}`);
+    } catch (error) {
+      console.error('Error unblocking user:', error);
+      socket.emit('error', { message: 'Error unblocking the conversation' });
+    }
+  });
+  
 
   socket.on("end", async (data) => {
     if (data.user_id) {

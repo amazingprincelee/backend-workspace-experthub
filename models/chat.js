@@ -7,6 +7,19 @@ const chat = new mongoose.Schema({
       ref: "User",
     },
   ],
+  blocked: {
+    type: {
+      isBlocked: {
+        type: Boolean,
+        default: false,
+      },
+      by: {
+        type: mongoose.Schema.Types.ObjectId,
+        ref: 'User',
+      },
+    },
+    default: { isBlocked: false },
+  },
   messages: [
     {
       to: {
