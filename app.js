@@ -265,6 +265,87 @@ io.on('connection', async (socket) => {
     }
   });
   
+  socket.on('delete_message', async (data) => {
+    const { conversation_id, message_id, user_id } = data;
+  
+    try {
+      const chat = await Chat.findById(conversation_id);
+  
+      if (!chat) {
+        return socket.emit('error', { message: 'Conversation not found' });
+      }
+  
+      // Find the message by ID
+      const message = chat.messages.id(message_id);
+  
+      if (!message) {
+        return socket.emit('error', { message: 'Message not found' });
+      }
+  
+      // Check if the user requesting the delete is the author of the message
+      if (String(message.from) !== String(user_id)) {
+        return socket.emit('error', { message: 'You are not authorized to delete this message' });
+      }
+  
+      // Remove the message
+      chat.messages = chat.messages.filter((msg) => msg._id.toString() !== message_id);
+  
+      await chat.save();
+  
+      // Emit success message
+      socket.emit('message_deleted', {
+        conversation_id,
+        message_id,
+      });
+  
+      console.log(`Message ${message_id} deleted by user ${user_id}`);
+    } catch (error) {
+      console.error('Error deleting message:', error);
+      socket.emit('error', { message: 'Error deleting message' });
+    }
+  });
+  
+  socket.on('edit_message', async (data) => {
+    const { conversation_id, message_id, newText, user_id } = data;
+  
+    try {
+      const chat = await Chat.findById(conversation_id);
+  
+      if (!chat) {
+        return socket.emit('error', { message: 'Conversation not found' });
+      }
+  
+      // Find the message by ID
+      const message = chat.messages.find((msg) => msg._id.toString() === message_id);
+  
+      if (!message) {
+        return socket.emit('error', { message: 'Message not found' });
+      }
+  
+      // Check if the user requesting the edit is the author of the message
+      if (String(message.from) !== String(user_id)) {
+        return socket.emit('error', { message: 'You are not authorized to edit this message' });
+      }
+  
+      // Update the message text
+      message.text = newText;
+  
+      await chat.save();
+  
+      // Emit success message
+      socket.emit('message_edited', {
+        conversation_id,
+        message_id,
+        newText,
+      });
+  
+      console.log(`Message ${message_id} edited by user ${user_id}`);
+    } catch (error) {
+      console.error('Error editing message:', error);
+      socket.emit('error', { message: 'Error editing message' });
+    }
+  });
+  
 
   socket.on("end", async (data) => {
     if (data.user_id) {
