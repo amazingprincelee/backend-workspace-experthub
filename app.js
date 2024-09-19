@@ -346,6 +346,13 @@ io.on('connection', async (socket) => {
     }
   });
   
+  socket.on('typing', ({ conversation_id }) => {
+    socket.broadcast.emit('user_typing', { conversation_id });
+  });
+
+  socket.on('stop_typing', ({ conversation_id }) => {
+    socket.broadcast.emit('user_stopped_typing', { conversation_id });
+  });
 
   socket.on("end", async (data) => {
     if (data.user_id) {
