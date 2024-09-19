@@ -98,7 +98,7 @@ io.on('connection', async (socket) => {
       participants: { $all: [user_id] },
     }).populate("participants", "fullname _id email profilePicture");
 
-    console.log(existing_conversations);
+    // console.log(existing_conversations);
 
     callback(existing_conversations);
   });
@@ -142,20 +142,22 @@ io.on('connection', async (socket) => {
   });
 
   socket.on("send_dm", async (data) => {
-    console.log("Received message:", data);
+    // console.log("Received message:", data);
 
     const { text, conversation_id, from, to, type, file } = data;
 
     const to_user = await User.findById(to);
     const from_user = await User.findById(from);
     let cloudFile
-    if(type === 'Video'){
-      const video = await cloudinaryVidUpload(video.videoUrl)
-      cloudFile = video
-    }
+    console.log(type)
+
     if (type === 'Image' || type === 'Document') {
       const image = await upload(file);
       cloudFile = image.url
+    } else if (type === 'Video') {
+      const video = await cloudinaryVidUpload(file)
+      console.log(video)
+      cloudFile = video
     }
 
     const new_message = {
