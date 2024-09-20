@@ -44,6 +44,10 @@ const chat = new mongoose.Schema({
       file: {
         type: String,
       },
+      read: {
+        type: Boolean,
+        default: false,
+      }
     },
   ],
 });

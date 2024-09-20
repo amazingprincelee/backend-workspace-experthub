@@ -181,15 +181,11 @@ io.on('connection', async (socket) => {
         userId: to,
       });
 
-      io.to(to_user?.socket_id).emit("new_message", {
+      io.to(to_user?.socket_id).broadcast.emit("new_message", {
         conversation_id,
         message: new_message,
       });
 
-      io.to(from_user?.socket_id).emit("new_message", {
-        conversation_id,
-        message: new_message,
-      });
     } catch (e) {
       console.error('Error blocking user:', e);
 
@@ -218,7 +214,7 @@ io.on('connection', async (socket) => {
       await chat.save();
 
       // Emit success message
-      socket.emit('user_blocked', {
+      socket.broadcast.emit('user_blocked', {
         message: `User has been blocked successfully by ${by}.`,
       });
 
@@ -231,127 +227,148 @@ io.on('connection', async (socket) => {
 
   socket.on('unblock_user', async (data) => {
     const { by, conversation_id } = data;
-  
+
     try {
       // Find the chat conversation by ID
       const chat = await Chat.findById(conversation_id);
-  
+
       if (!chat) {
         return socket.emit('error', { message: 'Conversation not found' });
       }
-  
+
       // Check if the conversation is currently blocked and if the 'by' user matches the blocker
       if (!chat.blocked.isBlocked || String(chat.blocked.by) !== String(by)) {
         return socket.emit('error', { message: 'You are not authorized to unblock this conversation or it is not blocked.' });
       }
-  
+
       // Update the blocked field: Unblock the conversation
       chat.blocked = {
         isBlocked: false,
         by: null // Set 'by' to null since there's no current blocker after unblocking
       };
-  
+
       await chat.save();
-  
+
       // Emit success message after unblocking
-      socket.emit('unblock_user', {
+      socket.broadcast.emit('unblock_user', {
         message: `Conversation ${conversation_id} has been unblocked successfully by user ${by}.`,
       });
-  
+
       console.log(`Conversation ${conversation_id} unblocked by user ${by}`);
     } catch (error) {
       console.error('Error unblocking user:', error);
       socket.emit('error', { message: 'Error unblocking the conversation' });
     }
   });
-  
+
   socket.on('delete_message', async (data) => {
     const { conversation_id, message_id, user_id } = data;
-  
+
     try {
       const chat = await Chat.findById(conversation_id);
-  
+
       if (!chat) {
         return socket.emit('error', { message: 'Conversation not found' });
       }
-  
+
       // Find the message by ID
       const message = chat.messages.id(message_id);
-  
+
       if (!message) {
         return socket.emit('error', { message: 'Message not found' });
       }
-  
+
       // Check if the user requesting the delete is the author of the message
       if (String(message.from) !== String(user_id)) {
         return socket.emit('error', { message: 'You are not authorized to delete this message' });
       }
-  
+
       // Remove the message
       chat.messages = chat.messages.filter((msg) => msg._id.toString() !== message_id);
-  
+
       await chat.save();
-  
+
       // Emit success message
       socket.emit('message_deleted', {
         conversation_id,
         message_id,
       });
-  
+
       console.log(`Message ${message_id} deleted by user ${user_id}`);
     } catch (error) {
       console.error('Error deleting message:', error);
       socket.emit('error', { message: 'Error deleting message' });
     }
   });
-  
+
   socket.on('edit_message', async (data) => {
     const { conversation_id, message_id, newText, user_id } = data;
-  
+
     try {
       const chat = await Chat.findById(conversation_id);
-  
+
       if (!chat) {
         return socket.emit('error', { message: 'Conversation not found' });
       }
-  
+
       // Find the message by ID
       const message = chat.messages.find((msg) => msg._id.toString() === message_id);
-  
+
       if (!message) {
         return socket.emit('error', { message: 'Message not found' });
       }
-  
+
       // Check if the user requesting the edit is the author of the message
       if (String(message.from) !== String(user_id)) {
         return socket.emit('error', { message: 'You are not authorized to edit this message' });
       }
-  
+
       // Update the message text
       message.text = newText;
-  
+
       await chat.save();
-  
+
       // Emit success message
       socket.emit('message_edited', {
         conversation_id,
         message_id,
         newText,
       });
-  
+
       console.log(`Message ${message_id} edited by user ${user_id}`);
     } catch (error) {
       console.error('Error editing message:', error);
       socket.emit('error', { message: 'Error editing message' });
     }
   });
-  
+
   socket.on('typing', ({ conversation_id }) => {
     socket.broadcast.emit('user_typing', { conversation_id });
   });
 
   socket.on('stop_typing', ({ conversation_id }) => {
     socket.broadcast.emit('user_stopped_typing', { conversation_id });
+  });
+
+  socket.on('mark_all_as_read', async ({ chat_id, user_id }) => {
+    try {
+      // Update messages to mark them as read in the specific chat document
+      const result = await Chat.updateMany(
+        { _id: chat_id, 'messages.to': user_id },
+        { $set: { 'messages.$[elem].read': true } },
+        {
+          arrayFilters: [{ 'elem.to': user_id }],
+        }
+      );
+
+      // Log the result to see if any documents were modified
+      // console.log('Messages marked as read:', result);
+
+      // Notify other participants in the chat
+      socket.broadcast.emit('all_messages_read', { chat_id, user_id });
+    } catch (error) {
+      console.error('Error marking messages as read:', error);
+    }
   });
 
   socket.on("end", async (data) => {
