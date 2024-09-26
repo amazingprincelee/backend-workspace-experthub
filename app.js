@@ -150,14 +150,12 @@ io.on('connection', async (socket) => {
       const to_user = await User.findById(to);
       const from_user = await User.findById(from);
       let cloudFile
-      console.log(type)
-
       if (type === 'Image' || type === 'Document') {
         const image = await upload(file);
         cloudFile = image.url
       } else if (type === 'Video') {
         const video = await cloudinaryVidUpload(file)
-        console.log(video)
+        console.log("Uploaded video info:", video);
         cloudFile = video
       }
 
@@ -188,7 +186,6 @@ io.on('connection', async (socket) => {
 
     } catch (e) {
       console.error('Error blocking user:', e);
-
     }
   });
 
@@ -342,8 +339,10 @@ io.on('connection', async (socket) => {
     }
   });
 
-  socket.on('typing', ({ conversation_id }) => {
-    socket.broadcast.emit('user_typing', { conversation_id });
+  // Handle when a user starts typing
+  socket.on('typing', ({ conversation_id, user_fullname }) => {
+    // Broadcast to other users in the conversation that this user is typing
+    socket.broadcast.emit('user_typing', { conversation_id, user_fullname });
   });
 
   socket.on('stop_typing', ({ conversation_id }) => {

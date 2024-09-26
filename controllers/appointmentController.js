@@ -101,7 +101,7 @@ const appointmentControllers = {
       }
 
     } catch (e) {
-      console.error(error);
+      console.error(e);
       return res.status(500).json({ message: 'Unexpected error' });
     }
   }
