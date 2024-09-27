@@ -31,6 +31,10 @@ const appointmentSchema = new mongoose.Schema(
     },
     location: String,
     room: String,
+    phone: String,
+    meetingId: String,
+    meetingPassword: String,
+    zakToken: String,
   }
 )
 

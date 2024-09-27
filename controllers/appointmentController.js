@@ -1,6 +1,7 @@
 const Appointment = require("../models/appointment");
 const Notification = require("../models/notifications.js");
 const User = require("../models/user.js");
+const createZoomMeeting = require("../utils/createZoomMeeting.js");
 
 const appointmentControllers = {
   bookAppointment: async (req, res) => {
@@ -9,6 +10,17 @@ const appointmentControllers = {
       const user = await User.findById(req.body.from);
 
       const newAppointment = await Appointment.create(appointment)
+      if (newAppointment.mode === "online") {
+        //....Args -- course topic, course duration, scheduled date of the course, zoom password for course,
+        const meetingData = await createZoomMeeting(newAppointment.category)
+        if (meetingData.success) {
+          newAppointment.meetingId = meetingData.meetingId
+          newAppointment.meetingPassword = meetingData.meetingPassword
+          newAppointment.zakToken = meetingData.zakToken
+          await newAppointment.save()
+        }
+      }
+
       try {
         await Notification.create({
           title: "Appointment Booked",
@@ -80,6 +92,8 @@ const appointmentControllers = {
       const user = await User.findById(req.params.id);
       user.days = req.body.days;
       user.mode = req.body.mode;
+      user.room = req.body.room;
+      user.location = req.body.location
       await user.save();
 
       return res.status(200).json({ message: 'Availability Added successfully!' });
@@ -97,7 +111,7 @@ const appointmentControllers = {
       if (!user.days && !user.mode) {
         return res.status(200).json({ message: 'User has not updated availability!' });
       } else {
-        return res.status(200).json({ days: user.days, mode: user.mode });
+        return res.status(200).json({ days: user.days, mode: user.mode, room: user.room, location: user.location });
       }
 
     } catch (e) {

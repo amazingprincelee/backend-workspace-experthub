@@ -67,7 +67,9 @@ const userSchema = new mongoose.Schema({
   mode: [{
     checked: Boolean,
     name: String
-  }]
+  }],
+  location: String,
+  room: String,
 });
 
 const User = new mongoose.model("User", userSchema);
