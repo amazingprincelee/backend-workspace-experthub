@@ -2,6 +2,7 @@ const Appointment = require("../models/appointment");
 const Notification = require("../models/notifications.js");
 const User = require("../models/user.js");
 const createZoomMeeting = require("../utils/createZoomMeeting.js");
+const mongoose = require('mongoose'); // Ensure mongoose is imported
 
 const appointmentControllers = {
   bookAppointment: async (req, res) => {
@@ -47,7 +48,7 @@ const appointmentControllers = {
         $or: [{ from: id }, { to: id }]
       }).populate({ path: 'from to', select: "profilePicture fullname _id" }).lean();;
 
-      return res.status(200).json({ appointment });
+      return res.status(200).json({ appointment: appointment.reverse() });
 
     } catch (error) {
       console.error(error);
@@ -75,15 +76,25 @@ const appointmentControllers = {
     }
   },
 
+
   deleteAppointment: async (req, res) => {
     try {
-      const appointment = await Appointment.deleteOne({
-        _id: req.params.id
-      })
-      res.json(appointment);
+      // Validate if the id is a valid ObjectId
+      if (!mongoose.Types.ObjectId.isValid(req.params.id)) {
+        return res.status(400).json({ message: 'Invalid appointment ID format' });
+      }
+
+      // Attempt to delete the appointment
+      const appointment = await Appointment.deleteOne({ _id: req.params.id });
+
+      if (appointment.deletedCount === 0) {
+        return res.status(404).json({ message: 'Appointment not found' });
+      }
+
+      res.json({ message: 'Appointment deleted successfully' });
     } catch (error) {
       console.error(error);
-      res.status(400).json(error);
+      res.status(500).json({ message: 'Server error', error });
     }
   },
 
