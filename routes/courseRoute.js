@@ -44,6 +44,7 @@ courseRouter.put("/approve/:courseId", courseController.approveCourse)
 
 // uplaod video
 courseRouter.post("/upload/:courseId", courseController.videoUpload)
+courseRouter.get("/cloudinary/signed-url", courseController.getSignedURL)
 
 
 module.exports = courseRouter;

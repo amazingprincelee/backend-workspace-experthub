@@ -1,7 +1,7 @@
 const Course = require("../models/courses.js");
 const User = require("../models/user.js");
 const Category = require("../models/category.js");
-const { upload } = require("../config/cloudinary.js");
+const { upload, getSignature } = require("../config/cloudinary.js");
 const { cloudinaryVidUpload } = require("../config/cloudinary.js");
 const createZoomMeeting = require("../utils/createZoomMeeting.js");
 const KJUR = require("jsrsasign");
@@ -211,18 +211,12 @@ const courseController = {
 
             if (newCourse.type === 'video') {
                 const videos = req.body.videos
-                await Promise.all(videos.map(async video => {
-                    try {
-                        const cloudFile = await cloudinaryVidUpload(video.videoUrl)
-                        course.videos = [...course.videos, {
-                            title: video.title,
-                            videoUrl: cloudFile
-                        }]
-                    } catch (error) {
-                        console.error(`Error uploading image ${error}`);
-                    }
-                }))
-
+                videos.map(async video => {
+                    course.videos = [...course.videos, {
+                        title: video.title,
+                        videoUrl: video.videoUrl
+                    }]
+                })
                 await course.save()
             }
 
@@ -272,7 +266,15 @@ const courseController = {
             return res.status(500).json({ message: 'Unexpected error while fetching courses by category' });
         }
     },
-
+    getSignedURL: async (req, res) => {
+        try {
+            const data = await getSignature()
+            return res.status(200).json({ ...data });
+        } catch (error) {
+            console.error(error);
+            return res.status(500).json({ message: 'Unexpected error while fetching signature' });
+        }
+    },
     approveCourse: async (req, res) => {
         const courseId = req.params.courseId;
         try {

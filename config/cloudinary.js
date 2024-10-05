@@ -16,6 +16,21 @@ const upload = async (file) => {
   return image;
 };
 
+const getSignature = async () => {
+  const timestamp = Math.floor(new Date().getTime() / 1000);
+
+  const signature = cloudinary.utils.api_sign_request(
+    { timestamp },
+    'SzPorCF6VXl9iRMOvitjLaQFSy4'
+  );
+  return {
+    apiKey: '741617957557579',
+    timestamp: timestamp,
+    signature: signature,
+    cloudname: 'peoples-power-technology'
+  };
+};
+
 const cloudinaryVidUpload = async (asset) => {
   try {
     const res = await cloudinary.uploader.upload(asset, {
@@ -35,4 +50,4 @@ const cloudinaryVidUpload = async (asset) => {
 
 
 // module.exports.cloudinaryVidUpload = cloudinaryVidUpload;
-module.exports = { upload, cloudinaryVidUpload };
+module.exports = { upload, cloudinaryVidUpload, getSignature };
