@@ -19,6 +19,7 @@ courseRouter.put("/category", courseController.getCourseByCategory);
 courseRouter.put("/category/author", courseController.getAuthorCourse);
 
 courseRouter.get("/all", courseController.getAllCourses);
+
 courseRouter.post("/get-zoom-signature", courseController.getZoomSignature);
 courseRouter.post("/add-course/:userId", courseController.addCourse);
 courseRouter.get("/single-course/:courseId", courseController.getCourseById)

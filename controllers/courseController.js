@@ -7,6 +7,10 @@ const createZoomMeeting = require("../utils/createZoomMeeting.js");
 const KJUR = require("jsrsasign");
 const Notification = require("../models/notifications.js");
 const Transaction = require("../models/transactions.js");
+const dayjs = require("dayjs");
+const isBetween = require("dayjs/plugin/isBetween.js");
+
+dayjs.extend(isBetween)
 
 // const categories = ["Virtual Assistant", "Product Management", "Cybersecurity", "Software Development", "AI / Machine Learning", "Data Analysis & Visualisation", "Story Telling", "Animation", "Cloud Computing", "Dev Ops", "UI/UX Design", "Journalism", "Game development", "Data Science", "Digital Marketing", "Advocacy"]
 
@@ -167,9 +171,9 @@ const courseController = {
                 title,
                 about,
                 duration,
-                type, //online, pdf, offline, video
-                startDate,
-                endDate,
+                type,
+                startDate: new Date(`${startDate}T${startTime}`),
+                endDate: new Date(`${endDate}T${endTime}`),
                 startTime,
                 endTime,
                 category,
@@ -183,12 +187,38 @@ const courseController = {
                 thumbnail: {
                     type: req.body.asset.type,
                     url: cloudFile
-                },  // Set the thumbnail field with the Cloudinary URL
+                }
             };
+            if (type === 'online') {
+                if (parseInt(duration) > parseInt(process.env.NEXT_PUBLIC_MEETING_DURATION)) {
+                    return res.status(400).json({ message: `Live courses have a limit of ${process.env.NEXT_PUBLIC_MEETING_DURATION} minutes` });
+                }
+                const courses = await Course.find({ type: 'online' }).lean();
+                const isConflict = courses.some(course => {
+                    const courseStartDate = dayjs(course.startDate).startOf('day');
+                    const courseEndDate = dayjs(course.endDate).endOf('day');
+                    const newCourseStartDate = dayjs(startDate).startOf('day');
+                    const newCourseEndDate = dayjs(endDate).endOf('day');
+                    const isDateOverlap = newCourseStartDate.isBetween(courseStartDate, courseEndDate, null, '[]') ||
+                        newCourseEndDate.isBetween(courseStartDate, courseEndDate, null, '[]');
+                    if (isDateOverlap) {
+                        const courseDate = courseStartDate.format('YYYY-MM-DD');
+                        const courseStartTime = dayjs(`${courseDate} ${course.startTime}`, 'YYYY-MM-DD HH:mm');
+                        const courseEndTime = dayjs(`${courseDate} ${course.endTime}`, 'YYYY-MM-DD HH:mm');
+                        const newStartTime = dayjs(`${newCourseStartDate.format('YYYY-MM-DD')} ${startTime}`, 'YYYY-MM-DD HH:mm');
+                        const newEndTime = dayjs(`${newCourseStartDate.format('YYYY-MM-DD')} ${endTime}`, 'YYYY-MM-DD HH:mm');
+
+                        return newStartTime.isBefore(courseEndTime) && newEndTime.isAfter(courseStartTime);
+                    }
+                    return false;
+                });
+                if (isConflict) {
+                    return res.status(400).json({ message: `Time slot unavailable. Please choose another.` });
+                }
+            }
 
             // Save the new course
             const course = await Course.create(newCourse);
-            console.log("creting");
             if (newCourse.type === "pdf") {
                 // const { pdf } = req.files;
                 const cloudFile = await upload(req.body.pdf);
@@ -222,6 +252,7 @@ const courseController = {
 
             //Creating an online course 
             if (newCourse.type === "online") {
+
                 //....Args -- course topic, course duration, scheduled date of the course, zoom password for course,
                 const meetingData = await createZoomMeeting(course.title, parseInt(course.duration), new Date(startDate), meetingPassword)
                 if (meetingData.success) {
