@@ -4,13 +4,19 @@ const userSchema = new mongoose.Schema({
   username: String,
   email: String,
   fullname: String,
-  phone: String,
+  phone: {
+    type: String,
+    default: ""
+  },
   gender: String,
   age: String,
   skillLevel: String,
   country: String,
   state: String,
-  address: String,
+  address: {
+    type: String,
+    default: ""
+  },
   password: String,
   role: String,
   googleId: String,
@@ -57,7 +63,10 @@ const userSchema = new mongoose.Schema({
     type: Boolean,
     default: false
   },
-  verificationCode: String,
+  verificationCode: {
+    type: String,
+    default: ""
+  },
   days: [{
     checked: Boolean,
     day: String,

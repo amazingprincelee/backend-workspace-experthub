@@ -7,6 +7,7 @@ const {
 } = require("../utils/verficationCodeGenerator.js");
 const { sendVerificationEmail } = require("../utils/nodeMailer.js");
 const determineRole = require("../utils/determinUserType.js");
+const { default: axios } = require("axios");
 
 const verificationCode = generateVerificationCode();
 
@@ -23,6 +24,7 @@ const authControllers = {
         address,
         contact,
         password,
+        verificationCode,
       } = req.body;
 
       const lowercasedUserType = userType.toLowerCase();
@@ -36,8 +38,7 @@ const authControllers = {
         return res.status(400).json({ message: "User already registered" });
       }
 
-      const hashPassword = bcrypt.hashSync(password);
-
+      const hashPassword = bcrypt.hashSync(password, 10);
       const newUser = new User({
         username: email.toLowerCase(),
         email: email.toLowerCase(),
@@ -54,27 +55,62 @@ const authControllers = {
 
       await newUser.save();
 
-      // Send verification code via email
-      await sendVerificationEmail(newUser.email, verificationCode);
+      await axios.post(`${process.env.PEOPLES_POWER_API}/api/v5/auth/sync`, {
+        email,
+        name: fullname,
+        country,
+        state,
+        userType,
+        password: hashPassword
+      });
 
-      res
-        .status(200)
-        .json({ message: "Verification code sent to email", id: newUser._id });
+      await sendVerificationEmail(newUser.email, verificationCode);
+      res.status(200).json({ message: "Verification code sent to email", id: newUser._id });
     } catch (error) {
       console.error(error);
-      return res
-        .status(500)
-        .json({ message: "Unexpected error during registration" });
+      return res.status(500).json({ message: "Unexpected error during registration" });
     }
   },
+  sync: async (req, res) => {
+    try {
+      const {
+        email,
+        fullname,
+        country,
+        state,
+        userType,
+        password,
+      } = req.body;
 
+      const lowercasedUserType = userType.toLowerCase();
+      const role = determineRole(lowercasedUserType);
+      await User.updateOne(
+        { email: email.toLowerCase() },
+        {
+          fullname,
+          country,
+          state,
+          password,
+          role,
+        }
+      );
+      console.log(`synced`);
+
+      res.status(200).json({ message: "User synced successfully" });
+    } catch (error) {
+      console.error("Error during user sync:", error);
+      return res.status(500).json({ message: "Unexpected error during sync" });
+    }
+  },
   login: async (req, res) => {
     const { email, password } = req.body;
     if (!email || !password) {
       return res.status(400).json({ message: "Missing fields" });
     }
+    console.log(email);
 
     const user = await User.findOne({ email: email.toLowerCase() });
+
     if (!user) {
       return res.status(401).json({ message: "Incorrect Email or Password!" });
     }
@@ -178,7 +214,7 @@ const authControllers = {
 
       user.verificationCode = verificationCode;
       await user.save();
-      
+
       res.json({
         message: "Code sent to " + email,
       });
