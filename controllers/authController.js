@@ -1,6 +1,5 @@
 const passport = require("passport");
 const bcrypt = require("bcryptjs");
-const jwt = require("jsonwebtoken");
 const User = require("../models/user.js");
 const {
   generateVerificationCode,
@@ -8,6 +7,7 @@ const {
 const { sendVerificationEmail } = require("../utils/nodeMailer.js");
 const determineRole = require("../utils/determinUserType.js");
 const { default: axios } = require("axios");
+const jwt = require('jsonwebtoken');
 
 const verificationCode = generateVerificationCode();
 
@@ -152,6 +152,33 @@ const authControllers = {
         profilePicture: user.profilePicture,
       },
     });
+  },
+  loginWithToken: async (req, res) => {
+    const { accessToken } = req.body;
+
+    jwt.verify(accessToken, process.env.JWT_SECRET, async (err, user) => {
+      if (err) {
+        return res.sendStatus(403); // Forbidden
+      }
+      const theUser = await User.findOne({ email: user.email.toLowerCase() });
+      if (!theUser) {
+        return res.sendStatus(403);
+      }
+      return res.status(201).json({
+        message: "Successfully logged in",
+        accessToken,
+        user: {
+          fullName: theUser.fullname,
+          id: theUser._id,
+          email: theUser.email,
+          role: theUser.role,
+          emailVerification: theUser.isVerified,
+          assignedCourse: theUser.assignedCourse,
+          profilePicture: theUser.profilePicture,
+        },
+      });
+    });
+
   },
 
   logout: (req, res) => {

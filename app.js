@@ -64,20 +64,6 @@ app.use(fileUpload({
 // Connect to database
 connect();
 
-// Make the function asynchronous
-app.get('/tester', async (req, res) => {
-  try {
-
-
-    const { data: peopleFromSecondAPI } = await axios.get(`${process.env.PEOPLES_POWER_API}/api/v5/user`);
-
-
-    return res.status(200).json({ message: 'Users synced successfully', peopleFromSecondAPI });
-  } catch (e) {
-    console.log(e);
-    return res.status(400).json({ message: 'Error in the file' });
-  }
-});
 // Routes
 app.use('/auth', authRoute);
 app.use('/user', userRouter);
@@ -90,6 +76,8 @@ app.use('/category', categoryRoute);
 app.use('/notice', noticeRouter);
 app.use('/transactions', transactionRouter);
 app.use('/appointment', appointmentRouter);
+
+
 
 // Socket.io logic
 io.on('connection', async (socket) => {
