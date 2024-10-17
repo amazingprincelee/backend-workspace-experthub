@@ -22,6 +22,8 @@ const userSchema = new mongoose.Schema({
   googleId: String,
   bankCode: String,
   profilePicture: String,
+  image: String,
+
   assignedCourse: String,
   accountNumber: String,
   assessmentAnswers: {

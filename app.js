@@ -77,8 +77,6 @@ app.use('/notice', noticeRouter);
 app.use('/transactions', transactionRouter);
 app.use('/appointment', appointmentRouter);
 
-
-
 // Socket.io logic
 io.on('connection', async (socket) => {
   const user_id = socket.handshake.query["user_id"];

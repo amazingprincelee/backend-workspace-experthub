@@ -302,6 +302,8 @@ const userControllers = {
       const cloudFile = await upload(image.tempFilePath);
 
       isUser.profilePicture = cloudFile.url || isUser.profilePicture;
+      isUser.image = cloudFile.url || isUser.profilePicture;
+
 
       await isUser.save();
 
