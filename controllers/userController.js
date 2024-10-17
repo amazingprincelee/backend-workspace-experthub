@@ -1,5 +1,5 @@
 const User = require("../models/user.js");
-const upload = require("../config/cloudinary.js");
+const { upload } = require("../config/cloudinary.js");
 const Notification = require("../models/notifications.js");
 
 
@@ -8,7 +8,7 @@ const userControllers = {
   // To get user profile
   getProfile: async (req, res) => {
     try {
-      const userId = req.user.id;
+      const userId = req.params.id;
 
       // Check if the user exists
       const existingUser = await User.findById(userId);
@@ -19,7 +19,7 @@ const userControllers = {
 
       // Extract relevant profile information
       const userProfile = {
-        profilePicture: existingUser.profilePicture,
+        profilePicture: existingUser.image,
         phone: existingUser.phone,
         email: existingUser.email,
         gender: existingUser.gender,
@@ -291,7 +291,7 @@ const userControllers = {
 
   updateProfilePhote: async (req, res) => {
     try {
-      const userId = req.user.id;
+      const userId = req.params.id;
 
       const isUser = await User.findById(userId);
 

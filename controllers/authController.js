@@ -149,7 +149,7 @@ const authControllers = {
         role: user.role,
         emailVerification: user.isVerified,
         assignedCourse: user.assignedCourse,
-        profilePicture: user.profilePicture,
+        profilePicture: user.image,
       },
     });
   },
@@ -174,7 +174,7 @@ const authControllers = {
           role: theUser.role,
           emailVerification: theUser.isVerified,
           assignedCourse: theUser.assignedCourse,
-          profilePicture: theUser.profilePicture,
+          profilePicture: theUser.image,
         },
       });
     });

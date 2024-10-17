@@ -10,11 +10,11 @@ userRouter.get("/", (req, res) => {
 
 
 //User controllers routes
-userRouter.get("/profile", auth, userControllers.getProfile);
+userRouter.get("/profile/:id", userControllers.getProfile);
 userRouter.get("/instructors", userControllers.getInstructors);
 userRouter.get("/students", userControllers.getStudents);
-userRouter.put("/updateProfile/:id", auth, userControllers.upDateprofile);
-userRouter.put("/updateProfilePicture", auth, userControllers.updateProfilePhote);
+userRouter.put("/updateProfile/:id", userControllers.upDateprofile);
+userRouter.put("/updateProfilePicture/:id", userControllers.updateProfilePhote);
 
 // get course student and instructors
 userRouter.put("/myinstructors", userControllers.getMyInstructors);
