@@ -24,7 +24,6 @@ const authControllers = {
         address,
         contact,
         password,
-        verificationCode,
       } = req.body;
 
       const lowercasedUserType = userType.toLowerCase();
