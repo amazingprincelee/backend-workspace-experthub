@@ -135,7 +135,7 @@ const courseController = {
     },
 
     addCourse: async (req, res) => {
-        const { title, about, duration, type, startDate, endDate, startTime, endTime, category, privacy, fee, strikedFee, scholarship, meetingPassword, target, modules, benefits } = req.body;
+        const { title, about, duration, type, startDate, endDate, startTime, endTime, category, privacy, days, fee, strikedFee, scholarship, meetingPassword, target, modules, benefits } = req.body;
 
         // Get user ID from the request headers
         const userId = req.params.userId;
@@ -172,14 +172,15 @@ const courseController = {
                 about,
                 duration,
                 type,
-                startDate: new Date(`${startDate}T${startTime}`),
-                endDate: new Date(`${endDate}T${endTime}`),
+                startDate,
+                endDate,
                 startTime,
                 endTime,
                 category,
                 privacy,
                 target,
                 fee,
+                days,
                 strikedFee,
                 modules,
                 benefits,
@@ -194,27 +195,48 @@ const courseController = {
                     return res.status(400).json({ message: `Live courses have a limit of ${process.env.NEXT_PUBLIC_MEETING_DURATION} minutes` });
                 }
                 const courses = await Course.find({ type: 'online' }).lean();
+                console.log(`hmmer for them`);
+
                 const isConflict = courses.some(course => {
                     const courseStartDate = dayjs(course.startDate).startOf('day');
                     const courseEndDate = dayjs(course.endDate).endOf('day');
                     const newCourseStartDate = dayjs(startDate).startOf('day');
                     const newCourseEndDate = dayjs(endDate).endOf('day');
+
                     const isDateOverlap = newCourseStartDate.isBetween(courseStartDate, courseEndDate, null, '[]') ||
                         newCourseEndDate.isBetween(courseStartDate, courseEndDate, null, '[]');
-                    if (isDateOverlap) {
-                        const courseDate = courseStartDate.format('YYYY-MM-DD');
-                        const courseStartTime = dayjs(`${courseDate} ${course.startTime}`, 'YYYY-MM-DD HH:mm');
-                        const courseEndTime = dayjs(`${courseDate} ${course.endTime}`, 'YYYY-MM-DD HH:mm');
-                        const newStartTime = dayjs(`${newCourseStartDate.format('YYYY-MM-DD')} ${startTime}`, 'YYYY-MM-DD HH:mm');
-                        const newEndTime = dayjs(`${newCourseStartDate.format('YYYY-MM-DD')} ${endTime}`, 'YYYY-MM-DD HH:mm');
 
-                        return newStartTime.isBefore(courseEndTime) && newEndTime.isAfter(courseStartTime);
+                    if (isDateOverlap) {
+                        return course.days.some(courseDay => {
+
+                            if (courseDay.checked) {
+                                const newCourseDay = days.find(d => d.day === courseDay.day && d.checked);
+                                if (newCourseDay) {
+
+                                    const courseStartTime = dayjs(`${courseStartDate.format('YYYY-MM-DD')} ${courseDay.startTime}`, 'YYYY-MM-DD HH:mm');
+                                    const courseEndTime = dayjs(`${courseStartDate.format('YYYY-MM-DD')} ${courseDay.endTime}`, 'YYYY-MM-DD HH:mm');
+                                    const newStartTime = dayjs(`${newCourseStartDate.format('YYYY-MM-DD')} ${newCourseDay.startTime}`, 'YYYY-MM-DD HH:mm');
+                                    const newEndTime = dayjs(`${newCourseStartDate.format('YYYY-MM-DD')} ${newCourseDay.endTime}`, 'YYYY-MM-DD HH:mm');
+
+                                    const isStartTimeConflict = newStartTime.isBetween(courseStartTime, courseEndTime, null, '[]');
+                                    const isEndTimeConflict = newEndTime.isBetween(courseStartTime, courseEndTime, null, '[]');
+
+                                    console.log(courseStartTime.format('YYYY-MM-DD HH:mm'), courseEndTime.format('YYYY-MM-DD HH:mm'));
+                                    console.log(newStartTime.format('YYYY-MM-DD HH:mm'), newEndTime.format('YYYY-MM-DD HH:mm'));
+
+                                    return isStartTimeConflict || isEndTimeConflict;
+                                }
+                            }
+                            return false;
+                        });
                     }
                     return false;
                 });
+
                 if (isConflict) {
-                    return res.status(400).json({ message: `Time slot unavailable. Please choose another.` });
+                    return res.status(400).json({ message: `Time slot unavailable on one or more days. Please choose another.` });
                 }
+
             }
 
             // Save the new course
@@ -250,11 +272,27 @@ const courseController = {
                 await course.save()
             }
 
-            //Creating an online course 
             if (newCourse.type === "online") {
+                const dayMap = {
+                    "Sunday": 7,
+                    "Monday": 1,
+                    "Tuesday": 2,
+                    "Wednesday": 3,
+                    "Thursday": 4,
+                    "Friday": 5,
+                    "Saturday": 6
+                };
+                const getZoomWeeklyDaysFormat = (days) => {
+                    return days
+                        .filter(day => day.checked)
+                        .map(day => dayMap[day.day])
+                        .join(',');
+                };
+                const weeks = getZoomWeeklyDaysFormat(days)
 
-                //....Args -- course topic, course duration, scheduled date of the course, zoom password for course,
-                const meetingData = await createZoomMeeting(course.title, parseInt(course.duration), new Date(startDate), meetingPassword)
+                console.log(weeks, startDate, endDate);
+
+                const meetingData = await createZoomMeeting(course.title, parseInt(course.duration), startDate, endDate, weeks, meetingPassword)
                 if (meetingData.success) {
                     course.meetingId = meetingData.meetingId
                     course.meetingPassword = meetingData.meetingPassword
@@ -292,6 +330,15 @@ const courseController = {
             const courses = await Course.find({ approved: false });
 
             return res.status(200).json({ courses });
+        } catch (error) {
+            console.error(error);
+            return res.status(500).json({ message: 'Unexpected error while fetching courses by category' });
+        }
+    },
+    getLive: async (req, res) => {
+        try {
+            const courses = await Course.find({ type: 'online' }).lean();
+            return res.status(200).json(courses);
         } catch (error) {
             console.error(error);
             return res.status(500).json({ message: 'Unexpected error while fetching courses by category' });

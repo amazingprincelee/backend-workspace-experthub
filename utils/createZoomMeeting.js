@@ -1,7 +1,7 @@
 const axios = require("axios");
 
 
-const createZoomMeeting = async (topic, duration, startTime, meetingPassword) => {
+const createZoomMeeting = async (topic, duration, startTime, endTime, weeks, meetingPassword) => {
     try {
         const base64Credentials = Buffer.from(`${process.env.ZOOM_CLIENT_ID}:${process.env.ZOOM_CLIENT_SECRET}`).toString('base64');
 
@@ -20,12 +20,16 @@ const createZoomMeeting = async (topic, duration, startTime, meetingPassword) =>
 
         let data = JSON.stringify({
             "topic": topic,
-            "type": 2,
+            "type": 3,
             "start_time": startTime,
-            ...(duration && {
-                "duration": duration,
-            }),
+            "duration": duration,
             "password": meetingPassword || "",
+            "recurrence": {
+                "type": 2,
+                "repeat_interval": 1,
+                "weekly_days": weeks,
+                "end_date_time": endTime
+            },
             "settings": {
                 "join_before_host": true,
                 "waiting_room": true,
@@ -41,7 +45,7 @@ const createZoomMeeting = async (topic, duration, startTime, meetingPassword) =>
         }
         const response_data = meetingResponse.data;
 
-    
+
         function extractZakToken(url) {
             const params = new URLSearchParams(new URL(url).search);
             return params.get('zak');
@@ -50,7 +54,7 @@ const createZoomMeeting = async (topic, duration, startTime, meetingPassword) =>
         const content = {
             meetingId: response_data.id, //For instructors
             meetingPassword: response_data.password,
-            zakToken:extractZakToken(response_data.start_url),
+            zakToken: extractZakToken(response_data.start_url),
             success: true,
         };
         return content
