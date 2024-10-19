@@ -506,7 +506,7 @@ const courseController = {
             // }
 
             // Get the enrolled courses using the user's enrolledCourses array
-            const enrolledCourses = await Course.find({ enrolledStudents: { _id: userId } }).populate({ path: 'enrolledStudents', select: "profilePicture fullname _id" }).lean();
+            const enrolledCourses = await Course.find({ enrolledStudents: { _id: userId } }).populate({ path: 'enrolledStudents', select: "profilePicture fullname _id" }).sort({ startDate: -1 }).lean();
             // console.log(enrolledCourses)
 
             if (!enrolledCourses || enrolledCourses.length === 0) {
