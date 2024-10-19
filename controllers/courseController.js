@@ -350,12 +350,6 @@ const courseController = {
     },
     getLive: async (req, res) => {
         try {
-
-            const coursesN = await User.deleteOne(
-                { email: `experthubllc@gmail.com` },
-            );
-
-
             const courses = await Course.find({
                 type: 'online',
                 endDate: { $lte: new Date() }
