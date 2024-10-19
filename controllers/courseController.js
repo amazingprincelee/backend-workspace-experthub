@@ -82,6 +82,7 @@ const courseController = {
         // }
 
         try {
+
             const course = await Course.findById(courseId);
 
             if (!course) {

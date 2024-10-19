@@ -24,12 +24,14 @@ const createZoomMeeting = async (topic, duration, startTime, endTime, weeks, mee
             "start_time": startTime,
             "duration": duration,
             "password": meetingPassword || "",
-            "recurrence": {
-                "type": 2,
-                "repeat_interval": 1,
-                "weekly_days": weeks,
-                "end_date_time": endTime
-            },
+            ...(weeks === `` && {
+                "recurrence": {
+                    "type": 2,
+                    "repeat_interval": 1,
+                    "weekly_days": weeks,
+                    "end_date_time": endTime
+                },
+            }),
             "settings": {
                 "join_before_host": true,
                 "waiting_room": true,
@@ -44,7 +46,6 @@ const createZoomMeeting = async (topic, duration, startTime, endTime, weeks, mee
             return 'Unable to generate meeting link'
         }
         const response_data = meetingResponse.data;
-
 
         function extractZakToken(url) {
             const params = new URLSearchParams(new URL(url).search);
