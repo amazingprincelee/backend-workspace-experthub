@@ -20,7 +20,7 @@ const createZoomMeeting = async (topic, duration, startTime, endTime, weeks, mee
 
         let data = JSON.stringify({
             "topic": topic,
-            "type": 3,
+            "type": weeks === `` ? 2 : 3,
             "start_time": startTime,
             "duration": duration,
             "password": meetingPassword || "",

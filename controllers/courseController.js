@@ -207,28 +207,40 @@ const courseController = {
                         newCourseEndDate.isBetween(courseStartDate, courseEndDate, null, '[]');
 
                     if (isDateOverlap) {
-                        return course.days.some(courseDay => {
+                        if (course.days.filter(day => day.checked).length !== 0) {
+                            return course.days.some(courseDay => {
 
-                            if (courseDay.checked) {
-                                const newCourseDay = days.find(d => d.day === courseDay.day && d.checked);
-                                if (newCourseDay) {
+                                if (courseDay.checked) {
+                                    const newCourseDay = days.find(d => d.day === courseDay.day && d.checked);
+                                    if (newCourseDay) {
 
-                                    const courseStartTime = dayjs(`${courseStartDate.format('YYYY-MM-DD')} ${courseDay.startTime}`, 'YYYY-MM-DD HH:mm');
-                                    const courseEndTime = dayjs(`${courseStartDate.format('YYYY-MM-DD')} ${courseDay.endTime}`, 'YYYY-MM-DD HH:mm');
-                                    const newStartTime = dayjs(`${newCourseStartDate.format('YYYY-MM-DD')} ${newCourseDay.startTime}`, 'YYYY-MM-DD HH:mm');
-                                    const newEndTime = dayjs(`${newCourseStartDate.format('YYYY-MM-DD')} ${newCourseDay.endTime}`, 'YYYY-MM-DD HH:mm');
+                                        const courseStartTime = dayjs(`${courseStartDate.format('YYYY-MM-DD')} ${courseDay.startTime}`, 'YYYY-MM-DD HH:mm');
+                                        const courseEndTime = dayjs(`${courseStartDate.format('YYYY-MM-DD')} ${courseDay.endTime}`, 'YYYY-MM-DD HH:mm');
+                                        const newStartTime = dayjs(`${newCourseStartDate.format('YYYY-MM-DD')} ${newCourseDay.startTime}`, 'YYYY-MM-DD HH:mm');
+                                        const newEndTime = dayjs(`${newCourseStartDate.format('YYYY-MM-DD')} ${newCourseDay.endTime}`, 'YYYY-MM-DD HH:mm');
 
-                                    const isStartTimeConflict = newStartTime.isBetween(courseStartTime, courseEndTime, null, '[]');
-                                    const isEndTimeConflict = newEndTime.isBetween(courseStartTime, courseEndTime, null, '[]');
+                                        const isStartTimeConflict = newStartTime.isBetween(courseStartTime, courseEndTime, null, '[]');
+                                        const isEndTimeConflict = newEndTime.isBetween(courseStartTime, courseEndTime, null, '[]');
 
-                                    console.log(courseStartTime.format('YYYY-MM-DD HH:mm'), courseEndTime.format('YYYY-MM-DD HH:mm'));
-                                    console.log(newStartTime.format('YYYY-MM-DD HH:mm'), newEndTime.format('YYYY-MM-DD HH:mm'));
 
-                                    return isStartTimeConflict || isEndTimeConflict;
+                                        return isStartTimeConflict || isEndTimeConflict;
+                                    }
                                 }
-                            }
-                            return false;
-                        });
+                                return false;
+                            });
+                        } else {
+
+                            const courseStartTime = dayjs(`${courseStartDate.format('YYYY-MM-DD')} ${course.startTime}`, 'YYYY-MM-DD HH:mm');
+                            const courseEndTime = dayjs(`${courseStartDate.format('YYYY-MM-DD')} ${course.endTime}`, 'YYYY-MM-DD HH:mm');
+                            const newStartTime = dayjs(`${newCourseStartDate.format('YYYY-MM-DD')} ${startTime}`, 'YYYY-MM-DD HH:mm');
+                            const newEndTime = dayjs(`${newCourseStartDate.format('YYYY-MM-DD')} ${endTime}`, 'YYYY-MM-DD HH:mm');
+
+                            const isStartTimeConflict = newStartTime.isBetween(courseStartTime, courseEndTime, null, '[]');
+                            const isEndTimeConflict = newEndTime.isBetween(courseStartTime, courseEndTime, null, '[]');
+
+                            return isStartTimeConflict || isEndTimeConflict;
+                        }
+
                     }
                     return false;
                 });
@@ -337,7 +349,12 @@ const courseController = {
     },
     getLive: async (req, res) => {
         try {
-            const courses = await Course.find({ type: 'online' }).lean();
+            const courses = await Course.find({
+                type: 'online',
+                endDate: { $lte: new Date() }
+            })
+                .sort({ startDate: -1 })
+                .lean();
             return res.status(200).json(courses);
         } catch (error) {
             console.error(error);
