@@ -30,7 +30,7 @@ const appointmentControllers = {
           contentId: newAppointment._id,
           userId: req.body.to,
         });
-        await sendEmailReminder(user.email, 'Appointment', `${user.fullname} just booked an appointment with you!`)
+        await sendEmailReminder(user.email, `${user.fullname} just booked an appointment with you!`, 'Appointment',)
       } catch (error) {
         console.error("Error creating notification:", error);
       }
