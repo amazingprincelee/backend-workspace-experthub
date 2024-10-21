@@ -10,6 +10,7 @@ const appointmentControllers = {
     try {
       const appointment = req.body
       const user = await User.findById(req.body.from);
+      const tutor = await User.findById(req.body.to);
 
       const newAppointment = await Appointment.create(appointment)
       if (newAppointment.mode === "online") {
@@ -30,7 +31,7 @@ const appointmentControllers = {
           contentId: newAppointment._id,
           userId: req.body.to,
         });
-        await sendEmailReminder(user.email, `${user.fullname} just booked an appointment with you!`, 'Appointment',)
+        await sendEmailReminder(tutor.email, `${user.fullname} just booked an appointment with you!`, 'Appointment',)
       } catch (error) {
         console.error("Error creating notification:", error);
       }
