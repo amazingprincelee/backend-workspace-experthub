@@ -3,6 +3,7 @@ const Notification = require("../models/notifications.js");
 const User = require("../models/user.js");
 const createZoomMeeting = require("../utils/createZoomMeeting.js");
 const mongoose = require('mongoose'); // Ensure mongoose is imported
+const { sendEmailReminder } = require("../utils/sendEmailReminder.js");
 
 const appointmentControllers = {
   bookAppointment: async (req, res) => {
@@ -29,6 +30,7 @@ const appointmentControllers = {
           contentId: newAppointment._id,
           userId: req.body.to,
         });
+        await sendEmailReminder(user.email, 'Appointment', `${user.fullname} just booked an appointment with you!`)
       } catch (error) {
         console.error("Error creating notification:", error);
       }
