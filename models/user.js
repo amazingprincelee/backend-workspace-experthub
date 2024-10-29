@@ -25,6 +25,9 @@ const userSchema = new mongoose.Schema({
   image: String,
 
   assignedCourse: String,
+  otherCourse: [{
+    type: String
+  }],
   accountNumber: String,
   assessmentAnswers: {
     type: [String], // Array to store user's assessment answers

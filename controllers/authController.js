@@ -149,6 +149,7 @@ const authControllers = {
         emailVerification: user.isVerified,
         assignedCourse: user.assignedCourse,
         profilePicture: user.image,
+        otherCourse: user.otherCourse,
       },
     });
   },
@@ -174,6 +175,7 @@ const authControllers = {
           emailVerification: theUser.isVerified,
           assignedCourse: theUser.assignedCourse,
           profilePicture: theUser.image,
+          otherCourse: user.otherCourse,
         },
       });
     });
