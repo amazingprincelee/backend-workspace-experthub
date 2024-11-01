@@ -9,8 +9,11 @@ const Notification = require("../models/notifications.js");
 const Transaction = require("../models/transactions.js");
 const dayjs = require("dayjs");
 const isBetween = require("dayjs/plugin/isBetween.js");
+const isSameOrAfter = require("dayjs/plugin/isSameOrAfter.js");
 
 dayjs.extend(isBetween)
+dayjs.extend(isSameOrAfter)
+
 
 // const categories = ["Virtual Assistant", "Product Management", "Cybersecurity", "Software Development", "AI / Machine Learning", "Data Analysis & Visualisation", "Story Telling", "Animation", "Cloud Computing", "Dev Ops", "UI/UX Design", "Journalism", "Game development", "Data Science", "Digital Marketing", "Advocacy"]
 
@@ -99,9 +102,15 @@ const courseController = {
 
     getAllCourses: async (req, res) => {
         try {
-            const courses = await Course.find({ approved: true }).populate({ path: 'enrolledStudents assignedTutors', select: "profilePicture fullname _id" }).lean();
+            const courses = await Course.find({
+                approved: true,
 
-            return res.status(200).json({ courses });
+            }).populate({
+                path: 'enrolledStudents assignedTutors',
+                select: "profilePicture fullname _id"
+            }).lean();
+
+            return res.status(200).json({ courses: courses.filter(course => dayjs(course.endDate).isSameOrAfter(dayjs(), 'day')) });
         } catch (error) {
             console.error(error);
             return res.status(500).json({ message: 'Unexpected error while fetching all courses' });
@@ -195,60 +204,7 @@ const courseController = {
                 if (parseInt(duration) > parseInt(process.env.NEXT_PUBLIC_MEETING_DURATION)) {
                     return res.status(400).json({ message: `Live courses have a limit of ${process.env.NEXT_PUBLIC_MEETING_DURATION} minutes` });
                 }
-                const courses = await Course.find({ type: 'online' }).lean();
-                console.log(`hmmer for them`);
 
-                const isConflict = courses.some(course => {
-                    const courseStartDate = dayjs(course.startDate).startOf('day');
-                    const courseEndDate = dayjs(course.endDate).endOf('day');
-                    const newCourseStartDate = dayjs(startDate).startOf('day');
-                    const newCourseEndDate = dayjs(endDate).endOf('day');
-
-                    const isDateOverlap = newCourseStartDate.isBetween(courseStartDate, courseEndDate, null, '[]') ||
-                        newCourseEndDate.isBetween(courseStartDate, courseEndDate, null, '[]');
-
-                    if (isDateOverlap) {
-                        if (course.days.filter(day => day.checked).length !== 0) {
-                            return course.days.some(courseDay => {
-
-                                if (courseDay.checked) {
-                                    const newCourseDay = days.find(d => d.day === courseDay.day && d.checked);
-                                    if (newCourseDay) {
-
-                                        const courseStartTime = dayjs(`${courseStartDate.format('YYYY-MM-DD')} ${courseDay.startTime}`, 'YYYY-MM-DD HH:mm');
-                                        const courseEndTime = dayjs(`${courseStartDate.format('YYYY-MM-DD')} ${courseDay.endTime}`, 'YYYY-MM-DD HH:mm');
-                                        const newStartTime = dayjs(`${newCourseStartDate.format('YYYY-MM-DD')} ${newCourseDay.startTime}`, 'YYYY-MM-DD HH:mm');
-                                        const newEndTime = dayjs(`${newCourseStartDate.format('YYYY-MM-DD')} ${newCourseDay.endTime}`, 'YYYY-MM-DD HH:mm');
-
-                                        const isStartTimeConflict = newStartTime.isBetween(courseStartTime, courseEndTime, null, '[]');
-                                        const isEndTimeConflict = newEndTime.isBetween(courseStartTime, courseEndTime, null, '[]');
-
-
-                                        return isStartTimeConflict || isEndTimeConflict;
-                                    }
-                                }
-                                return false;
-                            });
-                        } else {
-
-                            const courseStartTime = dayjs(`${courseStartDate.format('YYYY-MM-DD')} ${course.startTime}`, 'YYYY-MM-DD HH:mm');
-                            const courseEndTime = dayjs(`${courseStartDate.format('YYYY-MM-DD')} ${course.endTime}`, 'YYYY-MM-DD HH:mm');
-                            const newStartTime = dayjs(`${newCourseStartDate.format('YYYY-MM-DD')} ${startTime}`, 'YYYY-MM-DD HH:mm');
-                            const newEndTime = dayjs(`${newCourseStartDate.format('YYYY-MM-DD')} ${endTime}`, 'YYYY-MM-DD HH:mm');
-
-                            const isStartTimeConflict = newStartTime.isBetween(courseStartTime, courseEndTime, null, '[]');
-                            const isEndTimeConflict = newEndTime.isBetween(courseStartTime, courseEndTime, null, '[]');
-
-                            return isStartTimeConflict || isEndTimeConflict;
-                        }
-
-                    }
-                    return false;
-                });
-
-                if (isConflict) {
-                    return res.status(400).json({ message: `Time slot unavailable on one or more days. Please choose another.` });
-                }
 
             }
 
@@ -303,7 +259,6 @@ const courseController = {
                 };
                 const weeks = getZoomWeeklyDaysFormat(days)
 
-                console.log(weeks, startDate, endDate);
 
                 const meetingData = await createZoomMeeting(course.title, parseInt(course.duration), startDate, endDate, weeks, meetingPassword)
                 if (meetingData.success) {
@@ -350,12 +305,17 @@ const courseController = {
     },
     getLive: async (req, res) => {
         try {
-            const courses = await Course.find({
+
+
+            const dbCourses = await Course.find({
                 type: 'online',
-                endDate: { $lte: new Date() }
             })
                 .sort({ startDate: -1 })
                 .lean();
+
+            const courses = dbCourses.filter(data => {
+                return dayjs(data.endDate).isSameOrAfter(dayjs(), 'day');
+            })
             return res.status(200).json(courses);
         } catch (error) {
             console.error(error);
