@@ -15,7 +15,10 @@ const assessmentSchema = new mongoose.Schema(
       type: mongoose.Schema.Types.ObjectId,
       ref: 'User',
     }],
-
+    tutor: {
+      type: mongoose.Schema.Types.ObjectId,
+      ref: "User",
+    },
     assesment: [
       {
         question: {

@@ -1,6 +1,7 @@
 const User = require("../models/user.js");
 const { upload } = require("../config/cloudinary.js");
 const Notification = require("../models/notifications.js");
+const { addCourse } = require("./courseController.js");
 
 
 const userControllers = {
@@ -39,6 +40,25 @@ const userControllers = {
     }
   },
 
+  addCourse: async (req, res) => {
+    const id = req.params.userId;
+    const { course } = req.body
+    const user = await User.findById(id);
+    try {
+      if (user.otherCourse.includes(course) || user.assignedCourse === course) {
+        return res.status(400).json({ message: 'Student is already assigned course' });
+      }
+      
+      user.otherCourse.push(course);
+      await user.save();
+      return res.status(200).json({ message: 'Assigned successfully', user });
+
+    } catch (error) {
+      console.error(error);
+      return res.status(500).json({ message: 'Unexpected error!' });
+    }
+
+  },
   //To update user profile
   upDateprofile: async (req, res) => {
     try {

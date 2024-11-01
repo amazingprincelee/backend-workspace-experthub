@@ -518,7 +518,7 @@ const courseController = {
             const userId = req.params.userId
 
             const user = await User.findOne({ _id: userId })
-            const category = user.assignedCourse
+            const category = [user.assignedCourse, ...user.otherCourse]
             // const numberOfCourses = 4; // Set the number of recommended courses you want
             const count = await Course.countDocuments();
 
@@ -535,7 +535,7 @@ const courseController = {
             //     }
             // }
 
-            const courses = await Course.find({ category, approved: true })
+            const courses = await Course.find({ category: { $in: category }, approved: true })
             const recommendedCourses = await courses.map((course) => {
                 if (course.enrolledStudents.includes(userId)) {
                     return null
