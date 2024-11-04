@@ -54,7 +54,38 @@ const eventsController = {
           url: cloudFile
         },
       };
+      if (type === 'online') {
+        if (parseInt(duration) > parseInt(process.env.NEXT_PUBLIC_MEETING_DURATION)) {
+          return res.status(400).json({ message: `Live courses have a limit of ${process.env.NEXT_PUBLIC_MEETING_DURATION} minutes` });
+        }
+        const courses = await LearningEvent.find({ type: 'online' }).lean();
 
+        const isConflict = courses.some(course => {
+          const courseStartDate = dayjs(course.startDate).startOf('day');
+          const courseEndDate = dayjs(course.endDate).endOf('day');
+          const newCourseStartDate = dayjs(startDate).startOf('day');
+          const newCourseEndDate = dayjs(endDate).endOf('day');
+
+          const isDateOverlap = newCourseStartDate.isBetween(courseStartDate, courseEndDate, null, '[]') ||
+            newCourseEndDate.isBetween(courseStartDate, courseEndDate, null, '[]');
+
+          if (isDateOverlap) {
+            const courseStartTime = dayjs(`${courseStartDate.format('YYYY-MM-DD')} ${course.startTime}`, 'YYYY-MM-DD HH:mm');
+            const courseEndTime = dayjs(`${courseStartDate.format('YYYY-MM-DD')} ${course.endTime}`, 'YYYY-MM-DD HH:mm');
+            const newStartTime = dayjs(`${newCourseStartDate.format('YYYY-MM-DD')} ${startTime}`, 'YYYY-MM-DD HH:mm');
+            const newEndTime = dayjs(`${newCourseStartDate.format('YYYY-MM-DD')} ${endTime}`, 'YYYY-MM-DD HH:mm');
+            const isStartTimeConflict = newStartTime.isBetween(courseStartTime, courseEndTime, null, '[]');
+            const isEndTimeConflict = newEndTime.isBetween(courseStartTime, courseEndTime, null, '[]');
+            return isStartTimeConflict || isEndTimeConflict;
+          }
+          return false;
+        });
+
+        if (isConflict) {
+          return res.status(400).json({ message: `Time slot unavailable on one or more days. Please choose another.` });
+        }
+
+      }
       const event = await LearningEvent.create(newEvent);
 
       if (newEvent.type === "offline") {
@@ -65,7 +96,7 @@ const eventsController = {
 
       if (newEvent.type === "online") {
         //....Args -- course topic, course duration, scheduled date of the course, zoom password for course,
-        const meetingData = await createZoomMeeting(event.title, parseInt(event.duration), new Date(startDate), meetingPassword)
+        const meetingData = await createZoomMeeting(event.title, parseInt(event.duration), startDate, endDate, null, meetingPassword)
         if (meetingData.success) {
           event.meetingId = meetingData.meetingId
           event.meetingPassword = meetingData.meetingPassword
