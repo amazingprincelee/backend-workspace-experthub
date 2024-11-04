@@ -677,6 +677,10 @@ const courseController = {
             console.log(error);
             return res.status(500).json({ message: 'Unexpected error during video upload' });
         }
+    },
+
+    renewCourse: async (req, res) => {
+        
     }
 };
 

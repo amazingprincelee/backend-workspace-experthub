@@ -39,8 +39,16 @@ const courseSchema = new mongoose.Schema({
         ref: 'User',
     }],
     enrolledStudents: [{
-        type: mongoose.Schema.Types.ObjectId,
-        ref: 'User',
+        user: {
+            type: mongoose.Schema.Types.ObjectId,
+            ref: 'User',
+        },
+        enrolledOn: {
+            type: String
+        },
+        status: {
+            type: String
+        }
     }],
     days: [{
         checked: Boolean,
@@ -62,6 +70,9 @@ const courseSchema = new mongoose.Schema({
         title: String,
         description: String
     }],
+    timeframs: {
+        type: String
+    },
     benefits: [{
         type: String
     }]
