@@ -39,6 +39,10 @@ const courseSchema = new mongoose.Schema({
         ref: 'User',
     }],
     enrolledStudents: [{
+        type: mongoose.Schema.Types.ObjectId,
+        ref: 'User',
+    }],
+    enrollments: [{
         user: {
             type: mongoose.Schema.Types.ObjectId,
             ref: 'User',
@@ -47,6 +51,9 @@ const courseSchema = new mongoose.Schema({
             type: String
         },
         status: {
+            type: String
+        },
+        updatedAt: {
             type: String
         }
     }],
@@ -70,8 +77,9 @@ const courseSchema = new mongoose.Schema({
         title: String,
         description: String
     }],
-    timeframs: {
-        type: String
+    timeframe: {
+        value: Number,
+        unit: String,
     },
     benefits: [{
         type: String
