@@ -145,7 +145,7 @@ const courseController = {
     },
 
     addCourse: async (req, res) => {
-        const { title, about, duration, type, startDate, endDate, startTime, endTime, category, privacy, days, fee, strikedFee, scholarship, meetingPassword, target, modules, benefits } = req.body;
+        const { title, about, duration, type, startDate, endDate, startTime, endTime, category, privacy, days, fee, strikedFee, scholarship, meetingPassword, target, modules, benefits, timeframe} = req.body;
 
         // Get user ID from the request headers
         const userId = req.params.userId;
@@ -198,7 +198,8 @@ const courseController = {
                 thumbnail: {
                     type: req.body.asset.type,
                     url: cloudFile
-                }
+                },
+                timeframe
             };
             if (type === 'online') {
                 if (parseInt(duration) > parseInt(process.env.NEXT_PUBLIC_MEETING_DURATION)) {
@@ -374,8 +375,17 @@ const courseController = {
                 return res.status(400).json({ message: 'Student is already enrolled in the course' });
             }
 
+            const student = course.enrollments.find(student => student.user.toString() === id);
+
+            if (student) {
+                return res.status(400).json({ message: 'Student is already enrolled in the course' });
+            }
             // Enroll the student in the course
-            course.enrolledStudents.push(id);
+            course.enrollments.push({
+                user: id,
+                staus: 'active',
+                enrolledOn: new Date()
+            });
             await course.save();
             user.contact = false
             await user.save()
@@ -460,7 +470,12 @@ const courseController = {
             // }
 
             // Get the enrolled courses using the user's enrolledCourses array
-            const enrolledCourses = await Course.find({ enrolledStudents: { _id: userId } }).populate({ path: 'enrolledStudents', select: "profilePicture fullname _id" }).sort({ startDate: -1 }).lean();
+            const enrolledCourses = await Course.find({
+                $or: [
+                    { "enrolledStudents": userId },
+                    { "enrollments.user": userId }
+                ]
+            }).populate({ path: 'enrolledStudents', select: "profilePicture fullname _id" }).sort({ startDate: -1 }).lean();
             // console.log(enrolledCourses)
 
             if (!enrolledCourses || enrolledCourses.length === 0) {
@@ -536,10 +551,14 @@ const courseController = {
             // }
 
             const courses = await Course.find({ category: { $in: category }, approved: true })
+
             const recommendedCourses = await courses.map((course) => {
                 if (course.enrolledStudents.includes(userId)) {
                     return null
-                } else {
+                } else if (course.enrollments?.find(student => student.user.toString() === userId)) {
+                    return null
+                }
+                else {
                     return course
                 }
             }).filter(item => item !== null)
@@ -637,7 +656,43 @@ const courseController = {
             console.log(error);
             return res.status(500).json({ message: 'Unexpected error during video upload' });
         }
-    }
+    },
+
+    updateStatus: async (req, res) => {
+        const courseId = req.params.courseId;
+        const { id } = req.body
+
+        try {
+            const course = await Course.findById(courseId);
+
+            if (!course) {
+                return res.status(404).json({ message: 'Course not found' });
+            }
+
+            // Find the student in the enrolledStudents array
+            const student = course.enrollments.find(student => student.user.toString() === id);
+
+            if (student) {
+                // Update status and updatedAt fields
+                student.status = 'expired';
+                student.updatedAt = new Date();
+
+                // Save the course with the updated student details
+                await course.save();
+
+                return res.status(200).json({ message: 'Status updated successfully' });
+            } else {
+                return res.status(404).json({ message: 'Student not found in enrolled students' });
+            }
+        } catch (error) {
+            console.error(error);
+            return res.status(500).json({ message: 'Unexpected error during course status update' });
+        }
+    },
+
+    // renewCourse: async (req, res) => {
+
+    // }
 };
 
 

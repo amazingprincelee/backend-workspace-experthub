@@ -129,10 +129,11 @@ const eventsController = {
   },
 
   getEventByCategory: async (req, res) => {
-    const category = req.body.category;
+    const user = User.findById(req.params.id)
+    const category = [user.assignedCourse, ...user.otherCourse]
 
     try {
-      const events = await LearningEvent.find({ category }).populate({ path: 'enrolledStudents', select: "profilePicture fullname _id" }).lean();
+      const events = await LearningEvent.find({ category: { $in: category } }).populate({ path: 'enrolledStudents', select: "profilePicture fullname _id" }).lean();
 
       return res.status(200).json({ events });
     } catch (error) {
