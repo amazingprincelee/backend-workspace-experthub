@@ -135,7 +135,7 @@ const authControllers = {
       profilePicture: user.profilePicture,
     };
     const accessToken = jwt.sign(payload, process.env.JWT_SECRET, {
-      expiresIn: "30m",
+      expiresIn: "24h",
     });
 
     res.status(201).json({

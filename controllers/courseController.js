@@ -127,7 +127,7 @@ const courseController = {
         const oPayload = {
             sdkKey: process.env.SDK_CLIENT_ID,
             mn: req.body.meetingNumber,
-            role: 0,
+            role: req.body.role,
             iat: iat,
             exp: exp,
             appKey: process.env.SDK_CLIENT_ID,
