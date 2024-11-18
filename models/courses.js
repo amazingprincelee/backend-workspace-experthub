@@ -42,6 +42,10 @@ const courseSchema = new mongoose.Schema({
         type: mongoose.Schema.Types.ObjectId,
         ref: 'User',
     }],
+    audience: [{
+        type: mongoose.Schema.Types.ObjectId,
+        ref: 'User',
+    }],
     enrollments: [{
         user: {
             type: mongoose.Schema.Types.ObjectId,

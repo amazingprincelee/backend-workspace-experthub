@@ -4,6 +4,16 @@ const userSchema = new mongoose.Schema({
   username: String,
   email: String,
   fullname: String,
+  name: String,
+  gender: String,
+  age: String,
+  premiumPlan: {
+    type: String,
+    default: "basic"
+  },
+  premiumPlanExpires: {
+    type: Date
+  },
   phone: {
     type: String,
     default: ""

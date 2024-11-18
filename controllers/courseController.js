@@ -23,11 +23,26 @@ const courseController = {
 
     getAllCategory: async (req, res) => {
         try {
+            const userId = req.query.id
+
             const allCourse = []
             const categories = await Category.findOne({ _id: "66191b8819d5dab6af174540" })
 
             await Promise.all(categories.subCategory.map(async (category) => {
-                const courses = await Course.find({ category, approved: true }).populate({ path: 'enrolledStudents', select: "profilePicture fullname _id" }).lean();;
+                const courses = await Course.find({
+                    category,
+                    approved: true,
+                    $or: [
+                        { audience: { $exists: false } },
+                        { audience: { $size: 0 } },
+                        { audience: userId },
+                    ],
+                }).populate({
+                    path: 'enrolledStudents',
+                    select: 'profilePicture fullname _id',
+                }).lean();
+
+
                 if (courses.length !== 0) {
                     allCourse.push({
                         category,
@@ -145,7 +160,7 @@ const courseController = {
     },
 
     addCourse: async (req, res) => {
-        const { title, about, duration, type, startDate, endDate, startTime, endTime, category, privacy, days, fee, strikedFee, scholarship, meetingPassword, target, modules, benefits, timeframe} = req.body;
+        const { title, about, duration, type, startDate, endDate, startTime, endTime, category, privacy, days, fee, strikedFee, scholarship, meetingPassword, target, modules, benefits, timeframe, audience } = req.body;
 
         // Get user ID from the request headers
         const userId = req.params.userId;
@@ -195,6 +210,7 @@ const courseController = {
                 modules,
                 benefits,
                 enrolledStudents: scholarship,
+                audience,
                 thumbnail: {
                     type: req.body.asset.type,
                     url: cloudFile
@@ -549,8 +565,7 @@ const courseController = {
             //         randomIndices.push(randomIndex);
             //     }
             // }
-
-            const courses = await Course.find({ category: { $in: category }, approved: true })
+            const courses = await Course.find({ category: { $in: category }, approved: true }).sort({ _id: -1 })
 
             const recommendedCourses = await courses.map((course) => {
                 if (course.enrolledStudents.includes(userId)) {
@@ -567,11 +582,13 @@ const courseController = {
             // Fetch the recommended courses based on random indices
             // const recommendedCourses = await Course.find({ category: user.assignedCourse }).skip(randomIndices[0]).limit(numberOfCourses);
 
+
+
             if (!recommendedCourses || recommendedCourses.length === 0) {
                 return res.status(404).json({ message: 'No courses available' });
             }
 
-            return res.status(200).json({ courses: recommendedCourses });
+            return res.status(200).json({ courses: recommendedCourses.filter(course => course.audience.length === 0 || course.audience.includes(userId)) });
         } catch (error) {
             console.error(error);
             return res.status(500).json({ message: 'Unexpected error while fetching recommended courses' });

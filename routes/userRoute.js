@@ -11,6 +11,8 @@ userRouter.get("/", (req, res) => {
 
 //User controllers routes
 userRouter.get("/profile/:id", userControllers.getProfile);
+userRouter.post("/premium", userControllers.updateTutorLevel);
+
 userRouter.get("/instructors", userControllers.getInstructors);
 userRouter.get("/students", userControllers.getStudents);
 userRouter.put("/updateProfile/:id", userControllers.upDateprofile);

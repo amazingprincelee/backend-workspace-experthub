@@ -2,6 +2,7 @@ const User = require("../models/user.js");
 const { upload } = require("../config/cloudinary.js");
 const Notification = require("../models/notifications.js");
 const { addCourse } = require("./courseController.js");
+const dayjs = require("dayjs");
 
 
 const userControllers = {
@@ -10,7 +11,6 @@ const userControllers = {
   getProfile: async (req, res) => {
     try {
       const userId = req.params.id;
-
       // Check if the user exists
       const existingUser = await User.findById(userId);
 
@@ -30,7 +30,11 @@ const userControllers = {
         state: existingUser.state,
         fullName: existingUser.fullname,
         accountNumber: existingUser.accountNumber,
-        bankCode: existingUser.bankCode
+        bankCode: existingUser.bankCode,
+        premiumPlanExpires: existingUser.premiumPlanExpires,
+        premiumPlan: existingUser.premiumPlan,
+
+
       };
 
       return res.status(200).json({ message: 'User profile retrieved successfully', user: userProfile });
@@ -48,7 +52,7 @@ const userControllers = {
       if (user.otherCourse.includes(course) || user.assignedCourse === course) {
         return res.status(400).json({ message: 'Student is already assigned course' });
       }
-      
+
       user.otherCourse.push(course);
       await user.save();
       return res.status(200).json({ message: 'Assigned successfully', user });
@@ -149,7 +153,7 @@ const userControllers = {
       // Extract relevant student information
       const studentProfiles = students.map(student => ({
         studentId: student._id,
-        fullname: student.fullname,
+        fullname: student.name,
         email: student.email,
         phone: student.phone,
         gender: student.gender,
@@ -334,7 +338,29 @@ const userControllers = {
       return res.status(500).json({ message: 'Unexpected error' });
     }
   },
+  updateTutorLevel: async (req, res) => {
+    try {
+      const userId = req.body.id;
+      const isUser = await User.findById(userId);
+      if (!isUser) {
+        return res.status(404).json({ message: 'User not found' });
+      }
 
+
+      isUser.premiumPlan = req.body.plan.toLowerCase()
+      if (req.body.isYearly) {
+        isUser.premiumPlanExpires = dayjs().add(1, 'year').add(2, 'month').toDate();
+      } else {
+        isUser.premiumPlanExpires = dayjs().add(30, 'day').toDate();
+      } await isUser.save();
+
+      return res.status(200).json({ message: 'Profile information updated successfully', user: isUser });
+
+    } catch (error) {
+      console.error(error);
+      return res.status(500).json({ message: 'Unexpected error' });
+    }
+  },
   makeGraduate: async (res, req) => {
     const userId = req.user.id;
     const user = await User.findById(userId);
