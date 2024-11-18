@@ -9,6 +9,8 @@ appointmentRouter.delete('/delete/:id', appointmentControllers.deleteAppointment
 
 appointmentRouter.put('/availability/:id', appointmentControllers.updateUserAvailability)
 appointmentRouter.get('/availability/:id', appointmentControllers.getAvailability)
+appointmentRouter.get('/single/:id', appointmentControllers.getAppointment)
+
 
 
 module.exports = appointmentRouter;
