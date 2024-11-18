@@ -145,7 +145,7 @@ const courseController = {
     },
 
     addCourse: async (req, res) => {
-        const { title, about, duration, type, startDate, endDate, startTime, endTime, category, privacy, days, fee, strikedFee, scholarship, meetingPassword, target, modules, benefits, timeframe} = req.body;
+        const { title, about, duration, type, startDate, endDate, startTime, endTime, category, privacy, days, fee, strikedFee, scholarship, meetingPassword, target, modules, benefits, timeframe } = req.body;
 
         // Get user ID from the request headers
         const userId = req.params.userId;
@@ -690,9 +690,46 @@ const courseController = {
         }
     },
 
-    // renewCourse: async (req, res) => {
+    renewCourse: async (req, res) => {
+        const courseId = req.params.courseId;
+        const id = req.params.id
 
-    // }
+        try {
+            const course = await Course.findById(courseId);
+            const user = await User.findById(id);
+
+            const student = course.enrollments.find(student => student.user.toString() === id);
+            if (!student) {
+                return res.status(400).json({ message: 'Student is not enrolled in this course' });
+            }
+
+            student.status = 'active'
+            student.enrolledOn = new Date()
+            await course.save();
+
+            if (course.fee > 0) {
+                await Transaction.create({
+                    userId: course.instructorId,
+                    amount: course.fee,
+                    type: 'credit'
+                })
+                const amountToAdd = course.fee * 0.95;
+                author.balance += amountToAdd
+                await author.save();
+            }
+            await Notification.create({
+                title: "Course enrollment renewal",
+                content: `${user.fullname} Just renewed enrollment for your Course ${course.title}`,
+                contentId: course._id,
+                userId: course.instructorId,
+            });
+            return res.status(200).json({ message: 'Renewed successfully' });
+
+        } catch (error) {
+            console.error(error);
+            return res.status(500).json({ message: 'Unexpected error during renewal' });
+        }
+    }
 };
 
 
