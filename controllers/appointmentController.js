@@ -59,8 +59,26 @@ const appointmentControllers = {
     }
   },
 
+  getAppointment: async (req, res) => {
+    try {
+      const id = req.params.id
+
+      const appointment = await Appointment.findById(id).populate({ path: 'from to', select: "profilePicture fullname _id" }).lean();;
+
+      return res.status(200).json({ appointment });
+
+    } catch (error) {
+      console.error(error);
+      return res.status(500).json({ message: 'Unexpected error during appointment processing' });
+    }
+  },
+
   editAppointmet: async (req, res) => {
     const appointment = await Appointment.find({ _id: req.params.id })
+
+    const user = await User.findById(appointment.from);
+    const tutor = await User.findById(appointment.to);
+
     if (!appointment) {
       return res.status(404).json({ message: 'Appointment not found' });
     }
@@ -72,6 +90,17 @@ const appointmentControllers = {
       }, {
         new: true
       })
+      try {
+        await Notification.create({
+          title: "Appointment Updated",
+          content: `${user.fullname} just updated an appointment with you!`,
+          contentId: appointment._id,
+          userId: appointment.to,
+        });
+        await sendEmailReminder(tutor.email, `${user.fullname} just updates an appointment with you!`, 'Appointment',)
+      } catch (error) {
+        console.error("Error creating notification:", error);
+      }
       res.json(updateAppointment);
     } catch (error) {
       console.error(error);

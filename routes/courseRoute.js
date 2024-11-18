@@ -49,5 +49,6 @@ courseRouter.put("/approve/:courseId", courseController.approveCourse)
 courseRouter.post("/upload/:courseId", courseController.videoUpload)
 courseRouter.get("/cloudinary/signed-url", courseController.getSignedURL)
 courseRouter.put('/update-status/:courseId', courseController.updateStatus)
+courseRouter.get('/renew/:courseId/:id', courseController.renewCourse)
 
 module.exports = courseRouter;
