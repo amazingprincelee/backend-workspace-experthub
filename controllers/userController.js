@@ -44,6 +44,7 @@ const userControllers = {
     }
   },
 
+  // to add aditional category
   addCourse: async (req, res) => {
     const id = req.params.userId;
     const { course } = req.body
@@ -55,7 +56,19 @@ const userControllers = {
 
       user.otherCourse.push(course);
       await user.save();
-      return res.status(200).json({ message: 'Assigned successfully', user });
+      return res.status(200).json({
+        message: 'Assigned successfully', user: {
+          fullName: user.fullname,
+          id: user._id,
+          email: user.email,
+          role: user.role,
+          emailVerification: user.isVerified,
+          assignedCourse: user.assignedCourse,
+          profilePicture: user.image,
+          otherCourse: user.otherCourse,
+          accessToken: user.accessToken
+        },
+      });
 
     } catch (error) {
       console.error(error);
@@ -63,6 +76,56 @@ const userControllers = {
     }
 
   },
+
+  unassignCourse: async (req, res) => {
+    const id = req.params.userId;
+    const { course } = req.body;
+
+    try {
+      // Find the user by ID
+      const user = await User.findById(id);
+      if (!user) {
+        return res.status(404).json({ message: 'User not found' });
+      }
+
+      // Check if the course exists in `otherCourse` or is the `assignedCourse`
+      const courseIndex = user.otherCourse.indexOf(course);
+      if (courseIndex === -1 && user.assignedCourse !== course) {
+        return res.status(400).json({ message: 'Course not assigned to the user' });
+      }
+
+      // Remove from `otherCourse` if found
+      if (courseIndex !== -1) {
+        user.otherCourse.splice(courseIndex, 1);
+      }
+
+      // Remove `assignedCourse` if it matches
+      // if (user.assignedCourse === course) {
+      //   user.assignedCourse = null;
+      // }
+
+      // Save the user data
+      await user.save();
+
+      return res.status(200).json({
+        message: 'Unassigned successfully', user: {
+          fullName: user.fullname,
+          id: user._id,
+          email: user.email,
+          role: user.role,
+          emailVerification: user.isVerified,
+          assignedCourse: user.assignedCourse,
+          profilePicture: user.image,
+          otherCourse: user.otherCourse,
+          accessToken: user.accessToken
+        },
+      });
+    } catch (error) {
+      console.error(error);
+      return res.status(500).json({ message: 'Unexpected error!' });
+    }
+  },
+
   //To update user profile
   upDateprofile: async (req, res) => {
     try {

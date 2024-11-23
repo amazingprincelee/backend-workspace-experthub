@@ -27,5 +27,6 @@ userRouter.put("/mygraduate", userControllers.getMyGraduates);
 userRouter.put("/block/:userId", userControllers.block)
 userRouter.put("/graduate/:userId", userControllers.makeGraduate)
 userRouter.put("/assign/:userId", userControllers.addCourse)
+userRouter.put("/unassign/:userId", userControllers.unassignCourse)
 
 module.exports = userRouter;
