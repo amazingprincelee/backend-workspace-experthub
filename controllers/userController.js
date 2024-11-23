@@ -131,7 +131,9 @@ const userControllers = {
         state: instructor.state,
         address: instructor.address,
         profilePicture: instructor.profilePicture,
-        blocked: instructor.blocked
+        blocked: instructor.blocked,
+        premiumPlanExpires: instructor.premiumPlanExpires,
+        premiumPlan: instructor.premiumPlan,
       }));
 
       return res.status(200).json({ message: 'Instructors retrieved successfully', instructors: instructorProfiles });

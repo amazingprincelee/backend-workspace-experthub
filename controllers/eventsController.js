@@ -1,10 +1,11 @@
 const User = require("../models/user.js");
-const upload = require("../config/cloudinary.js");
+const { upload } = require("../config/cloudinary.js");
 const createZoomMeeting = require("../utils/createZoomMeeting.js");
 const LearningEvent = require("../models/event.js");
 const Notification = require("../models/notifications.js");
 const cloudinaryVidUpload = require("../config/cloudinary.js");
 const { sendEmailReminder } = require("../utils/sendEmailReminder.js");
+const dayjs = require("dayjs");
 
 const eventsController = {
   createEvent: async (req, res) => {
@@ -57,32 +58,6 @@ const eventsController = {
       if (type === 'online') {
         if (parseInt(duration) > parseInt(process.env.NEXT_PUBLIC_MEETING_DURATION)) {
           return res.status(400).json({ message: `Live courses have a limit of ${process.env.NEXT_PUBLIC_MEETING_DURATION} minutes` });
-        }
-        const courses = await LearningEvent.find({ type: 'online' }).lean();
-
-        const isConflict = courses.some(course => {
-          const courseStartDate = dayjs(course.startDate).startOf('day');
-          const courseEndDate = dayjs(course.endDate).endOf('day');
-          const newCourseStartDate = dayjs(startDate).startOf('day');
-          const newCourseEndDate = dayjs(endDate).endOf('day');
-
-          const isDateOverlap = newCourseStartDate.isBetween(courseStartDate, courseEndDate, null, '[]') ||
-            newCourseEndDate.isBetween(courseStartDate, courseEndDate, null, '[]');
-
-          if (isDateOverlap) {
-            const courseStartTime = dayjs(`${courseStartDate.format('YYYY-MM-DD')} ${course.startTime}`, 'YYYY-MM-DD HH:mm');
-            const courseEndTime = dayjs(`${courseStartDate.format('YYYY-MM-DD')} ${course.endTime}`, 'YYYY-MM-DD HH:mm');
-            const newStartTime = dayjs(`${newCourseStartDate.format('YYYY-MM-DD')} ${startTime}`, 'YYYY-MM-DD HH:mm');
-            const newEndTime = dayjs(`${newCourseStartDate.format('YYYY-MM-DD')} ${endTime}`, 'YYYY-MM-DD HH:mm');
-            const isStartTimeConflict = newStartTime.isBetween(courseStartTime, courseEndTime, null, '[]');
-            const isEndTimeConflict = newEndTime.isBetween(courseStartTime, courseEndTime, null, '[]');
-            return isStartTimeConflict || isEndTimeConflict;
-          }
-          return false;
-        });
-
-        if (isConflict) {
-          return res.status(400).json({ message: `Time slot unavailable on one or more days. Please choose another.` });
         }
 
       }
@@ -182,6 +157,7 @@ const eventsController = {
       const event = await LearningEvent.findById(eventId);
       const user = await User.findById(id);
 
+      await LearningEvent.deleteOne({ _id: eventId })
 
       if (!event) {
         return res.status(404).json({ message: 'Event not found' });
@@ -189,11 +165,13 @@ const eventsController = {
 
       // Check if the student is already enrolled
       if (event.enrolledStudents.includes(id)) {
+
         return res.status(400).json({ message: 'Student is already booked event' });
       }
 
       // Enroll the student in the course
       event.enrolledStudents.push(id);
+
       await event.save();
       await Notification.create({
         title: "Course enrolled",

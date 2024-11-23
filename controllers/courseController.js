@@ -1,4 +1,6 @@
 const Course = require("../models/courses.js");
+const Event = require("../models/event.js");
+
 const User = require("../models/user.js");
 const Category = require("../models/category.js");
 const { upload, getSignature } = require("../config/cloudinary.js");
@@ -168,6 +170,9 @@ const courseController = {
 
         // Query the user database to get the user's role
         const user = await User.findById(userId);
+        const coursesByUser = await Course.find({
+            instructorId: userId,
+        });
 
         // Check if the user has the necessary role to add a course
         const allowedRoles = ['tutor', 'admin', 'super admin'];
@@ -175,6 +180,10 @@ const courseController = {
             return res.status(403).json({ message: 'Permission denied. Only tutors and admins can add courses' });
         }
 
+
+        if (user.role === "tutor" && type === "online" && ((user.premiumPlan === "basic" && coursesByUser.length >= 5) || user.premiumPlan === "standard" && coursesByUser.length >= 20)) {
+            return res.status(403).json({ message: 'Your have exceeded your plan limit for live courses' });
+        }
         try {
             let cloudFile
             if (req.body.asset.type === 'image') {
@@ -331,7 +340,12 @@ const courseController = {
                 .sort({ startDate: -1 })
                 .lean();
 
-            const courses = dbCourses.filter(data => {
+            const dbEvents = await Event.find({
+                type: 'online',
+            }).sort({ startDate: -1 })
+                .lean();
+
+            const courses = [...dbCourses, ...dbEvents].filter(data => {
                 return dayjs(data.endDate).isSameOrAfter(dayjs(), 'day');
             })
             return res.status(200).json(courses);
