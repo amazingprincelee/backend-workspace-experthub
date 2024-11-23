@@ -33,7 +33,7 @@ const userControllers = {
         bankCode: existingUser.bankCode,
         premiumPlanExpires: existingUser.premiumPlanExpires,
         premiumPlan: existingUser.premiumPlan,
-
+        signature: existingUser.signature
 
       };
 
@@ -464,6 +464,28 @@ const userControllers = {
     } catch (error) {
       console.error(error);
       return res.status(500).json({ message: 'Unexpected error during user retrieval' });
+    }
+  },
+
+  addSignature: async (req, res) => {
+    try {
+      const userId = req.params.id
+      const isUser = await User.findById(userId);
+
+      if (!isUser) {
+        return res.status(404).json({ message: 'User not found' });
+      }
+      const { image } = req.files;
+      const cloudFile = await upload(image.tempFilePath);
+
+      isUser.signature = cloudFile.url || isUser.signature;
+      await isUser.save();
+
+      return res.status(200).json({ message: 'Signature updated successfully', user: isUser });
+
+    } catch (error) {
+      console.error(error);
+      return res.status(500).json({ message: 'Unexpected error' });
     }
   }
 };
