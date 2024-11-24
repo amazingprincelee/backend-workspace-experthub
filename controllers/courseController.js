@@ -126,8 +126,9 @@ const courseController = {
                 path: 'enrolledStudents assignedTutors',
                 select: "profilePicture fullname _id"
             }).lean();
+            return res.status(200).json({ courses: courses });
 
-            return res.status(200).json({ courses: courses.filter(course => dayjs(course.endDate).isSameOrAfter(dayjs(), 'day')) });
+            // return res.status(200).json({ courses: courses.filter(course => dayjs(course.endDate).isSameOrAfter(dayjs(), 'day')) });
         } catch (error) {
             console.error(error);
             return res.status(500).json({ message: 'Unexpected error while fetching all courses' });
