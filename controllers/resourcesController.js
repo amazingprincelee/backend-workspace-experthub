@@ -1,4 +1,4 @@
-const upload = require("../config/cloudinary.js");
+const { upload } = require("../config/cloudinary.js");
 const Resource = require("../models/resources.js");
 
 const resourceController = {
@@ -12,7 +12,7 @@ const resourceController = {
       // Create a new resource
       const newResource = {
         title,
-        privacy,
+        // privacy,
         websiteUrl,
         aboutCourse,
         image: cloudFile.secure_url,
