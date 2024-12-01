@@ -12,6 +12,7 @@ const Transaction = require("../models/transactions.js");
 const dayjs = require("dayjs");
 const isBetween = require("dayjs/plugin/isBetween.js");
 const isSameOrAfter = require("dayjs/plugin/isSameOrAfter.js");
+const LearningEvent = require("../models/event.js");
 
 dayjs.extend(isBetween)
 dayjs.extend(isSameOrAfter)
@@ -170,10 +171,13 @@ const courseController = {
 
         // Query the user database to get the user's role
         const user = await User.findById(userId);
-        const coursesByUser = await Course.find({
+        let coursesByUser = await Course.find({
             instructorId: userId,
         });
 
+        coursesByUser = [...coursesByUser, ...(await LearningEvent.find({
+            authorId: userId,
+        }))]
         // Check if the user has the necessary role to add a course
         const allowedRoles = ['tutor', 'admin', 'super admin'];
         if (!user || !allowedRoles.includes(user.role)) {
@@ -181,7 +185,7 @@ const courseController = {
         }
 
 
-        if (user.role === "tutor" && type === "online" && ((user.premiumPlan === "basic" && coursesByUser.length >= 5) || user.premiumPlan === "standard" && coursesByUser.length >= 20)) {
+        if (user.role === "tutor" && ((user.premiumPlan === "basic" && coursesByUser.length >= 5) || user.premiumPlan === "standard" && coursesByUser.length >= 20)) {
             return res.status(403).json({ message: 'Your have exceeded your plan limit for live courses' });
         }
         try {

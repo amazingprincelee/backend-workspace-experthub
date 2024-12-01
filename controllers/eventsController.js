@@ -2,6 +2,8 @@ const User = require("../models/user.js");
 const { upload } = require("../config/cloudinary.js");
 const createZoomMeeting = require("../utils/createZoomMeeting.js");
 const LearningEvent = require("../models/event.js");
+const Course = require("../models/courses.js");
+
 const Notification = require("../models/notifications.js");
 const cloudinaryVidUpload = require("../config/cloudinary.js");
 const { sendEmailReminder } = require("../utils/sendEmailReminder.js");
@@ -19,7 +21,16 @@ const eventsController = {
     if (!user || !allowedRoles.includes(user.role)) {
       return res.status(403).json({ message: 'Permission denied. Only tutors and admins can add events' });
     }
+    let coursesByUser = await Course.find({
+      instructorId: userId,
+    });
+    coursesByUser = [...coursesByUser, ...(await LearningEvent.find({
+      authorId: userId,
+    }))]
 
+    if (user.role === "tutor" && ((user.premiumPlan === "basic" && coursesByUser.length >= 5) || user.premiumPlan === "standard" && coursesByUser.length >= 20)) {
+      return res.status(403).json({ message: 'Your have exceeded your plan limit for live courses' });
+    }
     try {
       let cloudFile
       if (req.body.asset.type === 'image') {
