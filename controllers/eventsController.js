@@ -29,7 +29,7 @@ const eventsController = {
     }))]
 
     if (user.role === "tutor" && ((user.premiumPlan === "basic" && coursesByUser.length >= 5) || user.premiumPlan === "standard" && coursesByUser.length >= 20)) {
-      return res.status(403).json({ message: 'Your have exceeded your plan limit for live courses' });
+      return res.status(403).json({ message: 'Your have exceeded your plan limit for live courses', showPop: true });
     }
     try {
       let cloudFile
