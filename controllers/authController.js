@@ -239,7 +239,7 @@ const authControllers = {
 
     try {
       await sendVerificationEmail(user.email, verificationCode);
-
+      // console.log(verificationCode)
       user.verificationCode = verificationCode;
       await user.save();
 

@@ -94,6 +94,7 @@ const userSchema = new mongoose.Schema({
   }],
   location: String,
   room: String,
+  signature: String,
 });
 
 const User = new mongoose.model("User", userSchema);
