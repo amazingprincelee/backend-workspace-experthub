@@ -8,6 +8,7 @@ eventRouter.post("/add-event/:userId", eventsController.createEvent);
 eventRouter.get("/my-events/:userId", eventsController.getEnrolledEvents);
 
 eventRouter.get("/category/:userId", eventsController.getEventByCategory)
+eventRouter.get("/author/:userId", eventsController.getAuthorEvent)
 
 eventRouter.get("/all", eventsController.getAllEvents)
 

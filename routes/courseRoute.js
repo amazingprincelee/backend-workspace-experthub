@@ -17,6 +17,7 @@ courseRouter.get("/", (req, res) => {
 //COURSE
 courseRouter.put("/category", courseController.getCourseByCategory);
 courseRouter.put("/category/author", courseController.getAuthorCourse);
+courseRouter.get("/author/:userId", courseController.getPlatformCOurses);
 
 courseRouter.get("/all", courseController.getAllCourses);
 courseRouter.get("/live", courseController.getLive);

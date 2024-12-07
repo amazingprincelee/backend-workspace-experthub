@@ -93,6 +93,20 @@ const courseController = {
             return res.status(500).json({ message: 'Unexpected error while fetching courses' });
         }
     },
+    getPlatformCOurses: async (req, res) => {
+        const instructorId = req.params.userId;
+
+        try {
+            const courses = await Course.find({
+                instructorId
+            }).populate({ path: 'enrolledStudents', select: "profilePicture fullname _id" }).lean();;
+
+            return res.status(200).json({ courses });
+        } catch (error) {
+            console.error(error);
+            return res.status(500).json({ message: 'Unexpected error while fetching courses' });
+        }
+    },
 
     getCourseById: async (req, res) => {
         const courseId = req.params.courseId;
@@ -120,6 +134,8 @@ const courseController = {
 
     getAllCourses: async (req, res) => {
         try {
+            console.log(("hmm na ehere"));
+
             const courses = await Course.find({
                 approved: true,
 
@@ -127,6 +143,9 @@ const courseController = {
                 path: 'enrolledStudents assignedTutors',
                 select: "profilePicture fullname _id"
             }).lean();
+
+            console.log(courses);
+
             return res.status(200).json({ courses: courses });
 
             // return res.status(200).json({ courses: courses.filter(course => dayjs(course.endDate).isSameOrAfter(dayjs(), 'day')) });

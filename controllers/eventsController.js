@@ -220,10 +220,13 @@ const eventsController = {
   },
 
   getAuthorEvent: async (req, res) => {
-    const author = req.params.id;
+    const authorId = req.params.userId;
+    console.log(authorId);
 
     try {
-      const events = await LearningEvent.find({ author })
+
+      const events = await LearningEvent.find({ authorId })
+      console.log(events);
 
       return res.status(200).json({ events });
     } catch (error) {
