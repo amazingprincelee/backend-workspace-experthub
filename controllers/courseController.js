@@ -318,6 +318,12 @@ const courseController = {
                     course.zakToken = meetingData.zakToken
                     await course.save()
                 }
+
+                //just for now
+                course.approved = true;
+                await course.save()
+
+
             }
             const adminUsers = await User.find({ role: { $in: ["admin", "super-admin"] } });
             adminUsers.forEach(async (adminUser) => {
