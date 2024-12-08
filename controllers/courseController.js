@@ -430,12 +430,13 @@ const courseController = {
                 return res.status(400).json({ message: 'Student is already enrolled in the course' });
             }
 
-            const student = course.enrollments.find(student => student.user.toString() === id);
+            // const student = course.enrollments.find(student => student.user.toString() === id);
 
-            if (student) {
-                return res.status(400).json({ message: 'Student is already enrolled in the course' });
-            }
+            // if (student) {
+            //     return res.status(400).json({ message: 'Student is already enrolled in the course' });
+            // }
             // Enroll the student in the course
+            course.enrolledStudents.push(id);
             course.enrollments.push({
                 user: id,
                 staus: 'active',
