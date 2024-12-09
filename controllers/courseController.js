@@ -614,9 +614,10 @@ const courseController = {
             const courses = await Course.find({ category: { $in: category }, approved: true }).sort({ _id: -1 })
 
             const recommendedCourses = await courses.map((course) => {
+
                 if (course.enrolledStudents.includes(userId)) {
                     return null
-                } else if (course.enrollments?.find(student => student.user.toString() === userId)) {
+                } else if (course.enrollments?.find(student => student.user?.toString() === userId)) {
                     return null
                 }
                 else {

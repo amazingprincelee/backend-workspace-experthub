@@ -168,7 +168,6 @@ const eventsController = {
       const event = await LearningEvent.findById(eventId);
       const user = await User.findById(id);
 
-      await LearningEvent.deleteOne({ _id: eventId })
 
       if (!event) {
         return res.status(404).json({ message: 'Event not found' });
@@ -307,6 +306,8 @@ const eventsController = {
       // }
 
       // Get the enrolled courses using the user's enrolledCourses array
+      const enrolledCourses2 = await LearningEvent.find()
+      console.log(enrolledCourses2)
       const enrolledCourses = await LearningEvent.find({ enrolledStudents: { _id: userId } }).populate({ path: 'enrolledStudents', select: "profilePicture fullname _id" }).lean();
       // console.log(enrolledCourses)
 
