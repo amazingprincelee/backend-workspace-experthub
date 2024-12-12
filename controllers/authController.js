@@ -109,6 +109,7 @@ const authControllers = {
     console.log(email);
 
     const user = await User.findOne({ email: email.toLowerCase() });
+    console.log(user);
 
     if (!user) {
       return res.status(401).json({ message: "Incorrect Email or Password!" });

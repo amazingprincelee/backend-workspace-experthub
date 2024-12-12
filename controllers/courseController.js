@@ -12,6 +12,7 @@ const Transaction = require("../models/transactions.js");
 const dayjs = require("dayjs");
 const isBetween = require("dayjs/plugin/isBetween.js");
 const isSameOrAfter = require("dayjs/plugin/isSameOrAfter.js");
+const LearningEvent = require("../models/event.js");
 
 dayjs.extend(isBetween)
 dayjs.extend(isSameOrAfter)
@@ -92,6 +93,20 @@ const courseController = {
             return res.status(500).json({ message: 'Unexpected error while fetching courses' });
         }
     },
+    getPlatformCOurses: async (req, res) => {
+        const instructorId = req.params.userId;
+
+        try {
+            const courses = await Course.find({
+                instructorId
+            }).populate({ path: 'enrolledStudents', select: "profilePicture fullname _id" }).lean();;
+
+            return res.status(200).json({ courses });
+        } catch (error) {
+            console.error(error);
+            return res.status(500).json({ message: 'Unexpected error while fetching courses' });
+        }
+    },
 
     getCourseById: async (req, res) => {
         const courseId = req.params.courseId;
@@ -119,6 +134,8 @@ const courseController = {
 
     getAllCourses: async (req, res) => {
         try {
+            console.log(("hmm na ehere"));
+
             const courses = await Course.find({
                 approved: true,
 
@@ -126,6 +143,9 @@ const courseController = {
                 path: 'enrolledStudents assignedTutors',
                 select: "profilePicture fullname _id"
             }).lean();
+
+            console.log(courses);
+
             return res.status(200).json({ courses: courses });
 
             // return res.status(200).json({ courses: courses.filter(course => dayjs(course.endDate).isSameOrAfter(dayjs(), 'day')) });
@@ -171,10 +191,13 @@ const courseController = {
 
         // Query the user database to get the user's role
         const user = await User.findById(userId);
-        const coursesByUser = await Course.find({
+        let coursesByUser = await Course.find({
             instructorId: userId,
         });
 
+        coursesByUser = [...coursesByUser, ...(await LearningEvent.find({
+            authorId: userId,
+        }))]
         // Check if the user has the necessary role to add a course
         const allowedRoles = ['tutor', 'admin', 'super admin'];
         if (!user || !allowedRoles.includes(user.role)) {
@@ -182,8 +205,8 @@ const courseController = {
         }
 
 
-        if (user.role === "tutor" && type === "online" && ((user.premiumPlan === "basic" && coursesByUser.length >= 5) || user.premiumPlan === "standard" && coursesByUser.length >= 20)) {
-            return res.status(403).json({ message: 'Your have exceeded your plan limit for live courses' });
+        if (user.role === "tutor" && ((user.premiumPlan === "basic" && coursesByUser.length >= 5) || user.premiumPlan === "standard" && coursesByUser.length >= 20)) {
+            return res.status(403).json({ message: 'Your have exceeded your plan limit for courses', showPop: true });
         }
         try {
             let cloudFile
@@ -295,6 +318,12 @@ const courseController = {
                     course.zakToken = meetingData.zakToken
                     await course.save()
                 }
+
+                //just for now
+                course.approved = true;
+                await course.save()
+
+
             }
             const adminUsers = await User.find({ role: { $in: ["admin", "super-admin"] } });
             adminUsers.forEach(async (adminUser) => {
@@ -407,12 +436,13 @@ const courseController = {
                 return res.status(400).json({ message: 'Student is already enrolled in the course' });
             }
 
-            const student = course.enrollments.find(student => student.user.toString() === id);
+            // const student = course.enrollments.find(student => student.user.toString() === id);
 
-            if (student) {
-                return res.status(400).json({ message: 'Student is already enrolled in the course' });
-            }
+            // if (student) {
+            //     return res.status(400).json({ message: 'Student is already enrolled in the course' });
+            // }
             // Enroll the student in the course
+            course.enrolledStudents.push(id);
             course.enrollments.push({
                 user: id,
                 staus: 'active',
@@ -584,9 +614,10 @@ const courseController = {
             const courses = await Course.find({ category: { $in: category }, approved: true }).sort({ _id: -1 })
 
             const recommendedCourses = await courses.map((course) => {
+
                 if (course.enrolledStudents.includes(userId)) {
                     return null
-                } else if (course.enrollments?.find(student => student.user.toString() === userId)) {
+                } else if (course.enrollments?.find(student => student.user?.toString() === userId)) {
                     return null
                 }
                 else {

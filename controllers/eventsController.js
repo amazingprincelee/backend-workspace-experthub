@@ -2,6 +2,8 @@ const User = require("../models/user.js");
 const { upload } = require("../config/cloudinary.js");
 const createZoomMeeting = require("../utils/createZoomMeeting.js");
 const LearningEvent = require("../models/event.js");
+const Course = require("../models/courses.js");
+
 const Notification = require("../models/notifications.js");
 const cloudinaryVidUpload = require("../config/cloudinary.js");
 const { sendEmailReminder } = require("../utils/sendEmailReminder.js");
@@ -19,7 +21,16 @@ const eventsController = {
     if (!user || !allowedRoles.includes(user.role)) {
       return res.status(403).json({ message: 'Permission denied. Only tutors and admins can add events' });
     }
+    let coursesByUser = await Course.find({
+      instructorId: userId,
+    });
+    coursesByUser = [...coursesByUser, ...(await LearningEvent.find({
+      authorId: userId,
+    }))]
 
+    if (user.role === "tutor" && ((user.premiumPlan === "basic" && coursesByUser.length >= 5) || user.premiumPlan === "standard" && coursesByUser.length >= 20)) {
+      return res.status(403).json({ message: 'Your have exceeded your plan limit for  events', showPop: true });
+    }
     try {
       let cloudFile
       if (req.body.asset.type === 'image') {
@@ -157,7 +168,6 @@ const eventsController = {
       const event = await LearningEvent.findById(eventId);
       const user = await User.findById(id);
 
-      await LearningEvent.deleteOne({ _id: eventId })
 
       if (!event) {
         return res.status(404).json({ message: 'Event not found' });
@@ -209,10 +219,13 @@ const eventsController = {
   },
 
   getAuthorEvent: async (req, res) => {
-    const author = req.params.id;
+    const authorId = req.params.userId;
+    console.log(authorId);
 
     try {
-      const events = await LearningEvent.find({ author })
+
+      const events = await LearningEvent.find({ authorId })
+      console.log(events);
 
       return res.status(200).json({ events });
     } catch (error) {
@@ -293,6 +306,8 @@ const eventsController = {
       // }
 
       // Get the enrolled courses using the user's enrolledCourses array
+      const enrolledCourses2 = await LearningEvent.find()
+      console.log(enrolledCourses2)
       const enrolledCourses = await LearningEvent.find({ enrolledStudents: { _id: userId } }).populate({ path: 'enrolledStudents', select: "profilePicture fullname _id" }).lean();
       // console.log(enrolledCourses)
 
