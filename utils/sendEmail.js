@@ -5,7 +5,6 @@ const Notification = require("../models/notifications");
 const handlebars = require('handlebars');
 const fs = require('fs');
 
-
 const source = fs.readFileSync('./templates/notificationEmail.html', 'utf8');
 
 

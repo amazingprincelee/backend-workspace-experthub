@@ -26,6 +26,8 @@ const Chat = require('./models/chat');
 const User = require('./models/user');
 
 const { sendEmail } = require('./utils/sendEmail');
+const { startCronJobs } = require('./utils/ReminderSetupEmail');
+
 const bodyParser = require('body-parser');
 const { connect } = require('./config/connectionState');
 const { default: axios } = require('axios');
@@ -40,7 +42,7 @@ const io = new Server(server, {
 });
 
 const PORT = process.env.PORT || 3002;
-
+startCronJobs()
 // Middleware
 app.use(cors({
   origin: "*",
