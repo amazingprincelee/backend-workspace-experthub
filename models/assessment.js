@@ -10,7 +10,6 @@ const assessmentSchema = new mongoose.Schema(
       type: String,
       required: true
     },
-
     assignedStudents: [{
       type: mongoose.Schema.Types.ObjectId,
       ref: 'User',
