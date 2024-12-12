@@ -4,18 +4,17 @@ const { cloudinaryVidUpload } = require("../config/cloudinary.js");
 
 const resourceController = {
   addCourseResources: async (req, res) => {
-    const { title, type, websiteUrl, aboutCourse, assignedCourse } = req.body;
-
+    const { title, type, websiteUrl, image, video, pdf, aboutCourse, assignedCourse } = req.body;
+    console.log(req.files)
     try {
-      const { image } = req.files;
-      const cloudFile = await upload(image.tempFilePath);
-      let url
+      const cloudFile = await upload(image);
+      let file
 
       if (type === 'video') {
-        url = await cloudinaryVidUpload(websiteUrl)
+        file = await cloudinaryVidUpload(video)
       }
       if (type === 'pdf') {
-        url = await upload(websiteUrl)
+        file = await upload(pdf)
       }
       if (type === 'link') {
         url = websiteUrl
@@ -23,7 +22,7 @@ const resourceController = {
       // Create a new resource
       const newResource = {
         title,
-        websiteUrl: url,
+        websiteUrl: file.url,
         aboutCourse,
         image: cloudFile.secure_url,
         assignedCourse,

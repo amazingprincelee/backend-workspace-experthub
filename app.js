@@ -21,6 +21,7 @@ const noticeRouter = require('./routes/noticeRouter');
 const transactionRouter = require('./routes/transactionRoute');
 const appointmentRouter = require('./routes/appointmentRouter.js');
 const certificateRouter = require('./routes/certificateRouter.js');
+const startUpKitRouter = require('./routes/startupkit.js');
 
 const Chat = require('./models/chat');
 const User = require('./models/user');
@@ -80,6 +81,8 @@ app.use('/notice', noticeRouter);
 app.use('/transactions', transactionRouter);
 app.use('/appointment', appointmentRouter);
 app.use('/certificate', certificateRouter)
+app.use('/start-up-kit', startUpKitRouter)
+
 
 // Socket.io logic
 io.on('connection', async (socket) => {
