@@ -19,7 +19,8 @@ accessmentRouter.get("/my-assessment/:id", assessmentControllers.getAssignedAsse
 accessmentRouter.put("/edit/:id", assessmentControllers.editAssesment)
 accessmentRouter.get("/single/:id", assessmentControllers.getSingleAssesment)
 // for submitting user's assessment answers
-accessmentRouter.post("/submit-assessment/:userId", assessmentControllers.submitAssessment);
+accessmentRouter.post("/submit-assessment/:id", assessmentControllers.submitAssessment);
+accessmentRouter.post("/set-score", assessmentControllers.updateScore);
 
 
 accessmentRouter.delete("/delete/:id", assessmentControllers.deleteAssesment)

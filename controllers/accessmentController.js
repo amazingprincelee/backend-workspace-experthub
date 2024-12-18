@@ -1,7 +1,8 @@
 const User = require("../models/user.js");
 const Assessment = require("../models/assessment.js");
-const upload = require("../config/cloudinary.js");
+const { upload } = require("../config/cloudinary.js");
 const Notification = require("../models/notifications.js");
+const mongoose = require("mongoose");
 
 
 const assessmentControllers = {
@@ -55,7 +56,7 @@ const assessmentControllers = {
     try {
       const id = req.params.id
 
-      const myAssesment = await Assessment.find({ _id: id });
+      const myAssesment = await Assessment.find({ _id: id }).populate({ path: 'responses.student', select: "profilePicture fullname _id" }).lean()
 
       return res.status(200).json({ message: 'Assesment retrieved successfully', myAssesment });
 
@@ -139,28 +140,47 @@ const assessmentControllers = {
 
   submitAssessment: async (req, res) => {
     try {
-      const answer = req.body.answer; // Extract answers from the request body
-      console.log(answer);
+      const { id } = req.params; // Assessment ID
+      const { studentId, answers } = req.body; // Student's ID and their answers
 
-      // Get user ID from the request headers
-      const userId = req.params.userId;
-
-      // Query the user database to get the user's role
-      const foundUser = await User.findById(userId);
-      if (foundUser) {
-        // Save user's assessment answers directly on the User model
-        foundUser.assessmentAnswers = answer;
-
-        // Save the user document with the updated assessment answers
-        await foundUser.save();
-
-        return res.status(200).json({ message: 'Assessment answers submitted successfully', user: foundUser });
-      } else {
-        return res.status(404).json({ message: 'User not found' });
+      if (!mongoose.Types.ObjectId.isValid(id)) {
+        return res.status(400).json({ message: "Invalid assessment ID." });
       }
+
+      const assessment = await Assessment.findById(id);
+
+      if (!assessment) {
+        return res.status(404).json({ message: "Assessment not found." });
+      }
+
+      // Check if the student has already submitted
+      const existingResponse = assessment.responses.find(
+        (response) => response.student.toString() === studentId
+      );
+
+      if (existingResponse) {
+        return res
+          .status(400)
+          .json({ message: "You have already submitted this assessment." });
+      }
+
+      // Add the student's response to the responses array
+      assessment.responses.push({
+        student: studentId,
+        answers,
+      });
+
+      // Save the updated assessment
+      await assessment.save();
+
+      return res.status(201).json({
+        message: "Assessment submitted successfully.",
+      });
     } catch (error) {
-      console.error(error);
-      return res.status(500).json({ message: 'Unexpected error during assessment submission' });
+      console.error("Error submitting assessment:", error);
+      return res
+        .status(500)
+        .json({ message: "An error occurred while submitting the assessment." });
     }
   },
 
@@ -257,7 +277,47 @@ const assessmentControllers = {
     }
   },
 
-};
+  updateScore: async (req, res) => {
+    try {
+      const { assessmentId, userId, score } = req.body;
 
+      // Validate input
+      if (!assessmentId || !userId || score === undefined) {
+        return res.status(400).json({ message: "Invalid input data." });
+      }
 
+      // Fetch the assessment
+      const assessment = await Assessment.findById(assessmentId);
+      if (!assessment) {
+        return res.status(404).json({ message: "Assessment not found." });
+      }
+
+      // Find the user in responses
+      const response = assessment.responses.find(
+        (res) => res.student.toString() === userId
+      );
+
+      if (!response) {
+        return res
+          .status(404)
+          .json({ message: "User response not found for this assessment." });
+      }
+
+      // Update the user's score
+      response.score = score;
+
+      // Save the updated assessment
+      await assessment.save();
+
+      return res.status(200).json({
+        success: true,
+        message: "Score updated successfully.",
+      });
+    } catch (error) {
+      console.error("Error updating score:", error);
+      return res.status(500).json({ message: "Unexpected error occurred." });
+    }
+  },
+
+}
 module.exports = assessmentControllers;
