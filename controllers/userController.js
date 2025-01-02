@@ -244,6 +244,77 @@ const userControllers = {
 
   getMyStudents: async (req, res) => {
     try {
+      const userId = req.body.id; // Assuming the tutor's ID is in `req.user.id`
+
+      // Fetch the tutor's courses
+      const courses = await Course.find({
+        $or: [
+          { assignedTutors: { $in: userId }, approved: true },
+          { approved: true, instructorId: userId },
+        ]
+      })
+        .populate({
+          path: 'enrollments.user',
+          select: "profilePicture fullname email phone gender age skillLevel country state address graduate blocked contact"
+        })
+        .lean();
+
+      if (!courses || courses.length === 0) {
+        return res.status(404).json({ message: 'No courses found for this tutor' });
+      }
+
+      // Extract unique users from enrollments using a Map
+      const uniqueUsersMap = new Map();
+
+      courses.forEach(course => {
+        // Ensure `enrollments` exists and is an array
+        if (Array.isArray(course.enrollments)) {
+          course.enrollments.forEach(enrollment => {
+            const student = enrollment.user;
+            if (student && !uniqueUsersMap.has(student._id.toString())) {
+              uniqueUsersMap.set(student._id.toString(), {
+                _id: student._id,
+                fullname: student.fullname,
+                email: student.email,
+                phone: student.phone,
+                gender: student.gender,
+                age: student.age,
+                skillLevel: student.skillLevel,
+                country: student.country,
+                state: student.state,
+                address: student.address,
+                profilePicture: student.profilePicture,
+                graduate: student.graduate,
+                blocked: student.blocked,
+                contact: student.contact,
+              });
+            }
+          });
+        }
+      });
+
+      // Convert unique users to an array
+      const uniqueUsers = Array.from(uniqueUsersMap.values());
+
+      if (uniqueUsers.length === 0) {
+        return res.status(404).json({ message: 'No students enrolled in your courses' });
+      }
+      console.log(uniqueUsers)
+      // Return the unique users' data
+      return res.status(200).json({
+        message: 'Students retrieved successfully',
+        students: uniqueUsers,
+      });
+    } catch (error) {
+      console.error(error);
+      return res.status(500).json({ message: 'Unexpected error during student retrieval' });
+    }
+  },
+
+
+
+  getMyMentees: async (req, res) => {
+    try {
       // Find all users with the role 'student'
       const students = await User.find({ role: 'student', assignedCourse: req.body.course });
 

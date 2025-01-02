@@ -10,7 +10,6 @@ const assessmentSchema = new mongoose.Schema(
       type: String,
       required: true
     },
-
     assignedStudents: [{
       type: mongoose.Schema.Types.ObjectId,
       ref: 'User',
@@ -27,19 +26,15 @@ const assessmentSchema = new mongoose.Schema(
         },
         answerA: {
           type: String,
-          required: true,
         },
         answerB: {
           type: String,
-          required: true,
         },
         answerC: {
           type: String,
-          required: true,
         },
         correctAnswerIndex: {
           type: Number,
-          required: true,
           validate: {
             validator: function (value) {
               return value >= 0 && value <= 2;
@@ -47,6 +42,28 @@ const assessmentSchema = new mongoose.Schema(
             message: 'Correct answer index must be a valid index within the answers array.',
           },
         },
+      }
+    ],
+    type: {
+      type: String,
+      required: true
+    },
+    responses: [
+      {
+        student: {
+          type: mongoose.Schema.Types.ObjectId,
+          ref: 'User',
+        },
+        score: {
+          type: Number
+        },
+        answers: [
+          {
+            answer: {
+              type: String,
+            },
+          }
+        ]
       }
     ]
   }

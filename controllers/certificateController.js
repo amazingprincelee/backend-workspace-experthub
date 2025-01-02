@@ -1,4 +1,5 @@
 const Ceritificate = require("../models/certificate");
+const Notification = require("../models/notifications.js");
 
 const certificateController = {
   claimCetificate: async (req, res) => {
@@ -15,6 +16,16 @@ const certificateController = {
 
       // Create a new certificate
       const certificate = await Ceritificate.create(req.body);
+      try {
+        await Notification.create({
+          title: "Certificate Claimed",
+          content: `You just claimed a new certificate on ${req.body.title}`,
+          contentId: certificate._id,
+          userId: req.body.user,
+        });
+      } catch (error) {
+        console.error("Error creating notification:", error);
+      }
       return res.status(201).json({
         success: true,
         message: 'Certificate created successfully',

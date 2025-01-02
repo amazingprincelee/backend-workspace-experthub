@@ -23,6 +23,8 @@ userRouter.put("/myinstructors", userControllers.getMyInstructors);
 userRouter.put("/mystudents", userControllers.getMyStudents);
 userRouter.get("/tutorstudents/:id", userControllers.getTutorStudents);
 
+userRouter.put("/mymentees", userControllers.getMyMentees);
+
 userRouter.put("/graduate", userControllers.getGraduates);
 userRouter.put("/mygraduate", userControllers.getMyGraduates);
 
