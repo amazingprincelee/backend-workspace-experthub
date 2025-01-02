@@ -11,7 +11,7 @@ const dayjs = require("dayjs");
 
 const eventsController = {
   createEvent: async (req, res) => {
-    const { title, about, duration, type, startDate, endDate, startTime, endTime, category, mode, fee, strikedFee, scholarship, meetingPassword, target } = req.body;
+    const { title, about, duration, type, startDate, endDate, startTime, endTime, category, mode, fee, strikedFee, days, videoUrl, scholarship, meetingPassword, target } = req.body;
 
     const userId = req.params.userId;
     // Query the user database to get the user's role
@@ -58,6 +58,8 @@ const eventsController = {
         category,
         mode,
         fee,
+        videoUrl,
+        days,
         target,
         strikedFee,
         enrolledStudents: scholarship,
@@ -103,6 +105,7 @@ const eventsController = {
           console.error("Error creating notification:", error);
         }
       });
+
       return res.status(201).json({
         success: true,
         message: 'Event added successfully',

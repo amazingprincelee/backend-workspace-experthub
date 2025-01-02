@@ -123,6 +123,7 @@ const courseController = {
             if (!course) {
                 return res.status(404).json({ message: 'Course not found' });
             }
+            console.log(course);
 
             return res.status(200).json({ course });
         } catch (error) {

@@ -30,7 +30,13 @@ const eventSchema = new mongoose.Schema({
   fee: Number,
   strikedFee: Number,
   target: Number,
-
+  videoUrl: String,
+  days: [{
+    checked: Boolean,
+    day: String,
+    startTime: String,
+    endTime: String
+  }],
   enrolledStudents: [{
     type: mongoose.Schema.Types.ObjectId,
     ref: 'User',
