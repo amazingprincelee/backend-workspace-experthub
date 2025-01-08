@@ -311,8 +311,6 @@ const userControllers = {
     }
   },
 
-
-
   getMyMentees: async (req, res) => {
     try {
       // Find all users with the role 'student'
@@ -559,7 +557,29 @@ const userControllers = {
       console.error(error);
       return res.status(500).json({ message: 'Unexpected error' });
     }
-  }
+  },
+  getTeamMembers: async (req, res) => {
+    try {
+      const { tutorId } = req.params;
+
+      // Find the tutor by ID and populate the teamMembers field
+      const tutor = await User.findById(tutorId).populate('teamMembers');
+
+      // If the tutor is not found or doesn't have the correct role, return an error
+      if (!tutor || tutor.role !== 'tutor') {
+        return res.status(404).json({ message: 'Tutor not found or invalid role' });
+      }
+
+      // Return the team members
+      return res.status(200).json({
+        success: true,
+        teamMembers: tutor.teamMembers,
+      });
+    } catch (error) {
+      console.error('Error fetching team members:', error);
+      return res.status(500).json({ message: 'Unexpected error!' });
+    }
+  },
 };
 
 

@@ -109,7 +109,7 @@ const authControllers = {
     console.log(email);
 
     const user = await User.findOne({ email: email.toLowerCase() });
-    console.log(user);
+    // console.log(user);
 
     if (!user) {
       return res.status(401).json({ message: "Incorrect Email or Password!" });
@@ -129,7 +129,7 @@ const authControllers = {
     // generate jwt
     const payload = {
       fullName: user.fullname,
-      id: user._id,
+      id: user.role === 'team_member' && user.tutorId ? user.tutorId : user._id, // Use tutorId for team_member
       email: user.email,
       role: user.role,
       emailVerification: user.isVerified,
@@ -139,20 +139,42 @@ const authControllers = {
       expiresIn: "24h",
     });
 
-    res.status(201).json({
-      message: "Successfully logged in",
-      accessToken,
-      user: {
-        fullName: user.fullname,
-        id: user._id,
-        email: user.email,
-        role: user.role,
-        emailVerification: user.isVerified,
-        assignedCourse: user.assignedCourse,
-        profilePicture: user.image,
-        otherCourse: user.otherCourse,
-      },
-    });
+    if (user.role === 'team_member') {
+      const tutor = await User.findOne({ _id: user.tutorId })
+
+      // console.log(tutor)
+      res.status(201).json({
+        message: "Successfully logged in",
+        accessToken,
+        user: {
+          fullName: user.fullname,
+          id: user.role === 'team_member' && user.tutorId ? user.tutorId : user._id, // Use tutorId for team_member
+          email: user.email,
+          role: user.role,
+          emailVerification: user.isVerified,
+          assignedCourse: user.role === 'team_member' && tutor ? tutor.assignedCourse : user.assignedCourse,
+          profilePicture: user.image,
+          otherCourse: user.role === 'team_member' && tutor ? tutor.otherCourse : user.otherCourse,
+        },
+      });
+    } else {
+      res.status(201).json({
+        message: "Successfully logged in",
+        accessToken,
+        user: {
+          fullName: user.fullname,
+          id: user._id,
+          email: user.email,
+          role: user.role,
+          emailVerification: user.isVerified,
+          assignedCourse: user.assignedCourse,
+          profilePicture: user.image,
+          otherCourse: user.otherCourse,
+        },
+      });
+    }
+
+
   },
   loginWithToken: async (req, res) => {
     const { accessToken } = req.body;
@@ -283,6 +305,59 @@ const authControllers = {
         .json({ message: "Unexpected error during verification" });
     }
   },
+
+  addTeamMember: async (req, res) => {
+    try {
+      const { tutorId, fullname, email, phone, country, state, address, password } = req.body;
+
+      // Check if tutor exists
+      const tutor = await User.findById(tutorId);
+      if (!tutor || tutor.role !== 'tutor') {
+        return res.status(404).json({ message: "Tutor not found or invalid role" });
+      }
+
+      // Check if the team member already exists
+      const existingTeamMember = await User.findOne({ email: email.toLowerCase() });
+      if (existingTeamMember) {
+        return res.status(400).json({ message: "Team member already registered" });
+      }
+
+      // Hash the password
+      const hashedPassword = bcrypt.hashSync(password, 10);
+
+      // Create the new team member
+      const newTeamMember = new User({
+        fullname,
+        email: email.toLowerCase(),
+        phone,
+        country,
+        state,
+        address,
+        role: 'team_member', // Assign the team member role
+        password: hashedPassword,
+        tutorId: tutorId
+      });
+
+      // Save the team member
+      await newTeamMember.save();
+
+      // Add the team member to the tutor's team
+      tutor.teamMembers = tutor.teamMembers || [];
+      tutor.teamMembers.push(newTeamMember._id);
+      await tutor.save();
+
+      res.status(201).json({
+        success: true,
+        message: "Team member added successfully",
+        teamMemberId: newTeamMember._id,
+      });
+    } catch (error) {
+      console.error("Error adding team member:", error);
+      res.status(500).json({ message: "Unexpected error during team member addition" });
+    }
+  },
+
+
 };
 
 module.exports = authControllers;
