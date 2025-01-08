@@ -379,7 +379,45 @@ const userControllers = {
       return res.status(500).json({ message: 'Unexpected error during student retrieval' });
     }
   },
+  getTutorStudents: async (req, res) => {
+    try {
+      const tutorId = req.params.id;
 
+      // Find all courses assigned to the tutor
+      const courses = await Course.find({ instructorId: tutorId }).populate('enrolledStudents');
+
+      if (!courses || courses.length === 0) {
+        return res.status(404).json({ message: 'No courses found for this tutor' });
+      }
+
+      // Extract all students from the courses
+      const allStudents = [];
+      courses.forEach(course => {
+        if (course.enrolledStudents) {
+          allStudents.push(...course.enrolledStudents);
+        }
+      });
+
+      // Remove duplicates based on student IDs
+      const uniqueStudents = Array.from(
+        new Map(allStudents.map(student => [student._id.toString(), student])).values()
+      );
+
+      // Format the student information
+      const studentProfiles = uniqueStudents.map(student => ({
+        id: student._id,
+        fullname: student.fullname,
+      }));
+
+      return res.status(200).json({
+        message: 'Students retrieved successfully',
+        students: studentProfiles
+      });
+    } catch (error) {
+      console.error(error);
+      return res.status(500).json({ message: 'Unexpected error during student retrieval' });
+    }
+  },
   getMyInstructors: async (req, res) => {
     try {
       // Find all users with the role 'instructor'
