@@ -92,6 +92,11 @@ const userSchema = new mongoose.Schema({
     checked: Boolean,
     name: String
   }],
+  tutorId: {
+    type: mongoose.Schema.Types.ObjectId,
+    ref: 'User', // Reference to the tutor
+  },
+  teamMembers: [{ type: mongoose.Schema.Types.ObjectId, ref: 'User' }],
   location: String,
   room: String,
   signature: String,

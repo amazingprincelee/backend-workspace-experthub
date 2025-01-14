@@ -34,4 +34,6 @@ userRouter.put("/assign/:userId", userControllers.addCourse)
 userRouter.put("/unassign/:userId", userControllers.unassignCourse)
 userRouter.put("/signature/:id", userControllers.addSignature)
 
+userRouter.get('/team/:tutorId', userControllers.getTeamMembers)
+
 module.exports = userRouter;
