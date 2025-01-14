@@ -27,6 +27,7 @@ const courseController = {
     getAllCategory: async (req, res) => {
         try {
             const userId = req.query.id
+            console.log(userId);
 
             const allCourse = []
             const categories = await Category.findOne({ _id: "66191b8819d5dab6af174540" })
