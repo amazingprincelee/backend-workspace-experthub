@@ -78,7 +78,6 @@ const courseController = {
         const category = req.body.category;
         const userId = req.body.id;
 
-
         try {
             const courses = await Course.find({
                 $or: [

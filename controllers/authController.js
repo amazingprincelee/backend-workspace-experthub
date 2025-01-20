@@ -129,7 +129,7 @@ const authControllers = {
     // generate jwt
     const payload = {
       fullName: user.fullname,
-      id: user.role === 'team_member' && user.tutorId ? user.tutorId : user._id, // Use tutorId for team_member
+      id: user._id, // Use tutorId for team_member
       email: user.email,
       role: user.role,
       emailVerification: user.isVerified,
@@ -139,41 +139,21 @@ const authControllers = {
       expiresIn: "24h",
     });
 
-    if (user.role === 'team_member') {
-      const tutor = await User.findOne({ _id: user.tutorId })
 
-      // console.log(tutor)
-      res.status(201).json({
-        message: "Successfully logged in",
-        accessToken,
-        user: {
-          fullName: user.fullname,
-          id: user.role === 'team_member' && user.tutorId ? user.tutorId : user._id, // Use tutorId for team_member
-          email: user.email,
-          role: user.role,
-          emailVerification: user.isVerified,
-          assignedCourse: user.role === 'team_member' && tutor ? tutor.assignedCourse : user.assignedCourse,
-          profilePicture: user.image,
-          otherCourse: user.role === 'team_member' && tutor ? tutor.otherCourse : user.otherCourse,
-        },
-      });
-    } else {
-      res.status(201).json({
-        message: "Successfully logged in",
-        accessToken,
-        user: {
-          fullName: user.fullname,
-          id: user._id,
-          email: user.email,
-          role: user.role,
-          emailVerification: user.isVerified,
-          assignedCourse: user.assignedCourse,
-          profilePicture: user.image,
-          otherCourse: user.otherCourse,
-        },
-      });
-    }
-
+    res.status(201).json({
+      message: "Successfully logged in",
+      accessToken,
+      user: {
+        fullName: user.fullname,
+        id: user._id,
+        email: user.email,
+        role: user.role,
+        emailVerification: user.isVerified,
+        assignedCourse: user.assignedCourse,
+        profilePicture: user.image,
+        otherCourse: user.otherCourse,
+      },
+    });
 
   },
   loginWithToken: async (req, res) => {
