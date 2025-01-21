@@ -84,7 +84,7 @@ const courseController = {
                     { assignedTutors: { $in: userId }, approved: true },
                     { category: category, approved: true, instructorId: userId, },
                 ]
-            }).populate({ path: 'enrolledStudents', select: "profilePicture fullname _id" }).lean();;
+            }).populate({ path: 'enrolledStudents', select: "profilePicture fullname _id" }).lean();
 
             return res.status(200).json({ courses });
         } catch (error) {
