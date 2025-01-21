@@ -9,6 +9,8 @@ router.get("/", (req, res) => {
 
 router.get("/logout", authControllers.logout); // TODO: use less
 router.post('/register', authControllers.register);
+router.post('/register/sync', authControllers.sync);
+
 router.post('/login', authControllers.login);
 router.post('/login-with-token', authControllers.loginWithToken);
 
