@@ -302,9 +302,6 @@ const authControllers = {
         return res.status(400).json({ message: "Tutor not found" });
       }
 
-      tutor.teamMembers = [];
-      owner.teamMembers = [];
-
       tutor.teamMembers.push({
         privileges,
         ownerId,
