@@ -603,11 +603,11 @@ const userControllers = {
       // Find the tutor by ID and populate the teamMembers field
       const tutor = await User.findById(tutorId).populate({
         path: 'teamMembers.tutorId',
-        select: 'fullname _id email profilePicture'
+        select: 'fullname _id email profilePicture role assignedCourse otherCourse'
       })
         .populate({
           path: 'teamMembers.ownerId',
-          select: 'fullname _id email profilePicture'
+          select: 'fullname _id email profilePicture role assignedCourse otherCourse'
         });
 
       // If the tutor is not found or doesn't have the correct role, return an error
