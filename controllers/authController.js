@@ -70,6 +70,7 @@ const authControllers = {
       return res.status(500).json({ message: "Unexpected error during registration" });
     }
   },
+
   sync: async (req, res) => {
     try {
       const {
@@ -101,6 +102,7 @@ const authControllers = {
       return res.status(500).json({ message: "Unexpected error during sync" });
     }
   },
+
   login: async (req, res) => {
     const { email, password } = req.body;
     if (!email || !password) {
@@ -156,6 +158,7 @@ const authControllers = {
     });
 
   },
+
   loginWithToken: async (req, res) => {
     const { accessToken } = req.body;
 
@@ -290,28 +293,41 @@ const authControllers = {
     try {
       const { ownerId, tutorId, privileges } = req.body;
 
-      // Check if tutor exists
+      // Check if owner exists and is a tutor
       const owner = await User.findById(ownerId);
-      if (!owner || owner.role !== 'tutor') {
-        return res.status(404).json({ message: "Tutor not found or invalid role" });
+      if (!owner) {
+        return res.status(404).json({ message: "Owner not found or invalid role" });
       }
 
-      // Check if the team member already exists
+      // Check if the tutor exists
       const tutor = await User.findById(tutorId);
       if (!tutor) {
         return res.status(400).json({ message: "Tutor not found" });
       }
 
+      // Check if the tutor is already added by this owner
+      const isAlreadyAdded = owner.teamMembers.some(
+        (member) => {
+          return member.tutorId.toString() === tutorId.toString();
+        }
+      );
+
+      if (isAlreadyAdded) {
+        return res.status(400).json({ message: "Tutor has already been added by this owner" });
+      }
+
+      // Add the team member to both the tutor's and owner's records
       tutor.teamMembers.push({
         privileges,
         ownerId,
-        tutorId
+        tutorId,
       });
       owner.teamMembers.push({
         privileges,
         ownerId,
-        tutorId
+        tutorId,
       });
+
       await tutor.save();
       await owner.save();
 
@@ -324,22 +340,24 @@ const authControllers = {
       res.status(500).json({ message: "Unexpected error during team member addition" });
     }
   },
+
+
   editPrivileges: async (req, res) => {
     try {
       const { ownerId, tutorId, newPrivileges } = req.body;
-  
+
       // Check if the owner exists and is a tutor
       const owner = await User.findById(ownerId);
       if (!owner || owner.role !== 'tutor') {
         return res.status(404).json({ message: "Owner not found or invalid role" });
       }
-  
+
       // Check if the tutor exists
       const tutor = await User.findById(tutorId);
       if (!tutor) {
         return res.status(400).json({ message: "Tutor not found" });
       }
-  
+
       // Check if the tutor is a team member of the owner
       const tutorMember = tutor.teamMembers.find(
         (member) => member.ownerId.toString() === ownerId.toString()
@@ -347,18 +365,18 @@ const authControllers = {
       const ownerMember = owner.teamMembers.find(
         (member) => member.tutorId.toString() === tutorId.toString()
       );
-  
+
       if (!tutorMember || !ownerMember) {
         return res.status(404).json({ message: "Team member relationship not found" });
       }
-  
+
       // Update privileges for both owner and tutor
       tutorMember.privileges = newPrivileges;
       ownerMember.privileges = newPrivileges;
-  
+
       await tutor.save();
       await owner.save();
-  
+
       res.status(200).json({
         success: true,
         message: "Privileges updated successfully",
