@@ -248,9 +248,10 @@ const userControllers = {
 
       // Fetch the tutor's courses
       const courses = await Course.find({
+        approved: true,
         $or: [
-          { assignedTutors: { $in: userId }, approved: true },
-          { approved: true, instructorId: userId },
+          { assignedTutors: { $in: [userId] } },
+          { instructorId: userId }
         ]
       })
         .populate({
