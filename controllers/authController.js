@@ -305,11 +305,13 @@ const authControllers = {
         return res.status(400).json({ message: "Tutor not found" });
       }
 
+      // Ensure teamMembers array exists
+      owner.teamMembers = owner.teamMembers || [];
+      tutor.teamMembers = tutor.teamMembers || [];
+
       // Check if the tutor is already added by this owner
       const isAlreadyAdded = owner.teamMembers.some(
-        (member) => {
-          return member.tutorId.toString() === tutorId.toString();
-        }
+        (member) => member?.tutorId?.toString() === tutorId.toString()
       );
 
       if (isAlreadyAdded) {
@@ -317,19 +319,13 @@ const authControllers = {
       }
 
       // Add the team member to both the tutor's and owner's records
-      tutor.teamMembers.push({
-        privileges,
-        ownerId,
-        tutorId,
-      });
-      owner.teamMembers.push({
-        privileges,
-        ownerId,
-        tutorId,
-      });
+      const newMember = { privileges, ownerId, tutorId };
 
-      await tutor.save();
+      owner.teamMembers.push(newMember);
+      tutor.teamMembers.push(newMember);
+
       await owner.save();
+      await tutor.save();
 
       res.status(201).json({
         success: true,
@@ -340,7 +336,6 @@ const authControllers = {
       res.status(500).json({ message: "Unexpected error during team member addition" });
     }
   },
-
 
   editPrivileges: async (req, res) => {
     try {
