@@ -1,4 +1,3 @@
-const passport = require("passport");
 const bcrypt = require("bcryptjs");
 const User = require("../models/user.js");
 const {
@@ -6,7 +5,7 @@ const {
 } = require("../utils/verficationCodeGenerator.js");
 const { sendVerificationEmail } = require("../utils/nodeMailer.js");
 const determineRole = require("../utils/determinUserType.js");
-const { default: axios } = require("axios");
+// const { default: axios } = require("axios");
 const jwt = require('jsonwebtoken');
 
 const verificationCode = generateVerificationCode();
@@ -54,22 +53,26 @@ const authControllers = {
 
       await newUser.save();
 
-      await axios.post(`${process.env.PEOPLES_POWER_API}/api/v5/auth/sync`, {
-        email,
-        name: fullname,
-        country,
-        state,
-        userType,
-        password: hashPassword
-      });
+      // await axios.post(`${process.env.PEOPLES_POWER_API}/api/v5/auth/sync`, {
+      //   email,
+      //   name: fullname,
+      //   country,
+      //   state,  
+      //   userType,
+      //   password: hashPassword
+      // });
 
       await sendVerificationEmail(newUser.email, verificationCode);
       res.status(200).json({ message: "Verification code sent to email", id: newUser._id });
+
     } catch (error) {
       console.error(error);
       return res.status(500).json({ message: "Unexpected error during registration" });
     }
   },
+
+  
+
   sync: async (req, res) => {
     try {
       const {
@@ -101,6 +104,7 @@ const authControllers = {
       return res.status(500).json({ message: "Unexpected error during sync" });
     }
   },
+
   login: async (req, res) => {
     const { email, password } = req.body;
     if (!email || !password) {

@@ -5,6 +5,7 @@ const userSchema = new mongoose.Schema({
   email: String,
   fullname: String,
   name: String,
+  companyName: String,
   gender: String,
   age: String,
   premiumPlan: {
@@ -34,8 +35,11 @@ const userSchema = new mongoose.Schema({
   profilePicture: String,
   image: String,
 
-  assignedCourse: String,
+  assignedWorkspace: String,
   otherCourse: [{
+    type: String
+  }],
+  otherWorkspace: [{
     type: String
   }],
   accountNumber: String,
