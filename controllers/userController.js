@@ -249,9 +249,10 @@ const userControllers = {
 
       // Fetch the tutor's courses
       const courses = await Course.find({
+        approved: true,
         $or: [
-          { assignedTutors: { $in: userId }, approved: true },
-          { approved: true, instructorId: userId },
+          { assignedTutors: { $in: [userId] } },
+          { instructorId: userId }
         ]
       })
         .populate({
@@ -606,7 +607,14 @@ const userControllers = {
       const { tutorId } = req.params;
 
       // Find the tutor by ID and populate the teamMembers field
-      const tutor = await User.findById(tutorId).populate('teamMembers');
+      const tutor = await User.findById(tutorId).populate({
+        path: 'teamMembers.tutorId',
+        select: 'fullname _id email profilePicture role assignedCourse otherCourse'
+      })
+        .populate({
+          path: 'teamMembers.ownerId',
+          select: 'fullname _id email profilePicture role assignedCourse otherCourse'
+        });
 
       // If the tutor is not found or doesn't have the correct role, return an error
       if (!tutor || tutor.role !== 'tutor') {
@@ -623,6 +631,60 @@ const userControllers = {
       return res.status(500).json({ message: 'Unexpected error!' });
     }
   },
+
+  deleteTeamMembers: async (req, res) => {
+    try {
+      const { tutorId, ownerId } = req.params;
+
+      // Find the tutor by ID and ensure they exist with the correct role
+      const tutor = await User.findById(tutorId).populate('teamMembers');
+      const owner = await User.findById(ownerId).populate('teamMembers');
+
+      if (!tutor || tutor.role !== 'tutor') {
+        return res.status(404).json({ message: 'Tutor not found or invalid role' });
+      }
+
+      if (!owner) {
+        return res.status(404).json({ message: 'Owner not found' });
+      }
+
+      // Check if the team member exists in both tutor and owner
+      const teamMemberInTutor = tutor.teamMembers.some(
+        (member) => member.ownerId.toString() === ownerId
+      );
+
+      const teamMemberInOwner = owner.teamMembers.some(
+        (member) => member.tutorId.toString() === tutorId
+      );
+
+      if (!teamMemberInTutor || !teamMemberInOwner) {
+        return res.status(404).json({
+          message: 'Team member not found in either tutor or owner teamMembers list',
+        });
+      }
+
+      // Remove the team member from both tutor and owner
+      tutor.teamMembers = tutor.teamMembers.filter(
+        (member) => member.ownerId.toString() !== ownerId
+      );
+
+      owner.teamMembers = owner.teamMembers.filter(
+        (member) => member.tutorId.toString() !== tutorId
+      );
+
+      // Save the updated tutor and owner
+      await tutor.save();
+      await owner.save();
+
+      return res.status(200).json({
+        success: true,
+        message: 'Team member successfully deleted from both tutor and owner',
+      });
+    } catch (error) {
+      console.error('Error deleting team member:', error);
+      return res.status(500).json({ message: 'Unexpected error occurred!' });
+    }
+  }
 };
 
 

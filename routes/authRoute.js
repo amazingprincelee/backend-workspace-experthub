@@ -19,6 +19,7 @@ router.post('/verify/:userId', authControllers.verify);
 router.put('/forgot-passowrd', authControllers.forgotPassword);
 router.put('/reset-passowrd', authControllers.resetPassword);
 router.post('/add-team', authControllers.addTeamMember)
+router.post('/edit-team', authControllers.editPrivileges)
 
 
 

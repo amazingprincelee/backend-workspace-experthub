@@ -35,5 +35,6 @@ userRouter.put("/unassign/:userId", userControllers.unassignCourse)
 userRouter.put("/signature/:id", userControllers.addSignature)
 
 userRouter.get('/team/:tutorId', userControllers.getTeamMembers)
+userRouter.delete('/team/:tutorId/:ownerId', userControllers.deleteTeamMembers)
 
 module.exports = userRouter;

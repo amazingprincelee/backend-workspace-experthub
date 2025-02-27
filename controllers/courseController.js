@@ -76,17 +76,16 @@ const courseController = {
     },
 
     getAuthorCourse: async (req, res) => {
-        const category = req.body.category;
         const userId = req.body.id;
-
 
         try {
             const courses = await Course.find({
+                approved: true,
                 $or: [
-                    { assignedTutors: { $in: userId }, approved: true },
-                    { category: category, approved: true, instructorId: userId, },
+                    { assignedTutors: { $in: [userId] } },
+                    { instructorId: userId }
                 ]
-            }).populate({ path: 'enrolledStudents', select: "profilePicture fullname _id" }).lean();;
+            }).populate({ path: 'enrolledStudents', select: "profilePicture fullname _id" }).lean();
 
             return res.status(200).json({ courses });
         } catch (error) {
