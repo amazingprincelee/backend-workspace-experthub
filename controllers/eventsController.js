@@ -209,7 +209,8 @@ const eventsController = {
 
     try {
       const course = await LearningEvent.findById(eventId);
-
+      console.log(course);
+      
       if (!course) {
         return res.status(404).json({ message: 'Event not found' });
       }
