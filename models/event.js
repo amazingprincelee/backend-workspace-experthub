@@ -42,6 +42,10 @@ const eventSchema = new mongoose.Schema({
     type: mongoose.Schema.Types.ObjectId,
     ref: 'User',
   }],
+  timeframe: {
+    value: Number,
+    unit: String,
+  },
   location: String,
   room: String,
 });

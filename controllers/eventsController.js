@@ -11,7 +11,7 @@ const dayjs = require("dayjs");
 
 const eventsController = {
   createEvent: async (req, res) => {
-    const { title, about, duration, type, startDate, endDate, startTime, endTime, category, mode, fee, strikedFee, days, videoUrl, scholarship, meetingPassword, target } = req.body;
+    const { title, about, duration, type, startDate, endDate, startTime, endTime, category, mode, fee, strikedFee, days, videoUrl, timeframe, scholarship, meetingPassword, target } = req.body;
 
     const userId = req.params.userId;
     // Query the user database to get the user's role
@@ -67,6 +67,7 @@ const eventsController = {
           type: req.body.asset.type,
           url: cloudFile
         },
+        timeframe
       };
       if (type === 'online') {
         if (parseInt(duration) > parseInt(process.env.NEXT_PUBLIC_MEETING_DURATION)) {
@@ -156,6 +157,7 @@ const eventsController = {
   getAllEvents: async (req, res) => {
     try {
       const events = await LearningEvent.find().populate({ path: 'enrolledStudents', select: "profilePicture fullname _id" }).lean();
+
       return res.status(200).json({ events });
     } catch (error) {
       console.error(error);
@@ -210,7 +212,7 @@ const eventsController = {
     try {
       const course = await LearningEvent.findById(eventId);
       console.log(course);
-      
+
       if (!course) {
         return res.status(404).json({ message: 'Event not found' });
       }
@@ -329,6 +331,7 @@ const eventsController = {
 
   editEvent: async (req, res) => {
     try {
+
       const event = await LearningEvent.updateOne({
         _id: req.params.id
       }, {
