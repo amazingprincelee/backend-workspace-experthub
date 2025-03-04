@@ -22,6 +22,13 @@ const eventSchema = new mongoose.Schema({
   authorId: String,
   duration: Number,
   mode: String,
+  videoUrl: String,
+  days: [{
+    checked: Boolean,
+    day: String,
+    startTime: String,
+    endTime: String
+  }],
   type: String,
   startDate: String,
   endDate: String,
@@ -35,6 +42,10 @@ const eventSchema = new mongoose.Schema({
     type: mongoose.Schema.Types.ObjectId,
     ref: 'User',
   }],
+  timeframe: {
+    value: Number,
+    unit: String,
+  },
   location: String,
   room: String,
 });

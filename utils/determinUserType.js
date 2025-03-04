@@ -13,6 +13,9 @@ const determineRole = (userType) => {
         case "provider":
             return "provider";
 
+        case "team_member":
+            return "team_member";
+
         case "admin":
             return "admin";
 

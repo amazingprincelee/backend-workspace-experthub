@@ -96,6 +96,14 @@ const userSchema = new mongoose.Schema({
     checked: Boolean,
     name: String
   }],
+  teamMembers: [{
+    ownerId: { type: mongoose.Schema.Types.ObjectId, ref: 'User' },
+    tutorId: { type: mongoose.Schema.Types.ObjectId, ref: 'User' },
+    privileges: [{
+      checked: Boolean,
+      value: String,
+    }]
+  }],
   location: String,
   room: String,
   signature: String,

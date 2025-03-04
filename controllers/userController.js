@@ -4,6 +4,7 @@ const Notification = require("../models/notifications.js");
 const { addCourse } = require("./courseController.js");
 const dayjs = require("dayjs");
 const Course = require("../models/courses.js");
+const { default: mongoose } = require("mongoose");
 
 
 const userControllers = {
@@ -248,9 +249,10 @@ const userControllers = {
 
       // Fetch the tutor's courses
       const courses = await Course.find({
+        approved: true,
         $or: [
-          { assignedTutors: { $in: userId }, approved: true },
-          { approved: true, instructorId: userId },
+          { assignedTutors: { $in: [userId] } },
+          { instructorId: userId }
         ]
       })
         .populate({
@@ -310,8 +312,6 @@ const userControllers = {
       return res.status(500).json({ message: 'Unexpected error during student retrieval' });
     }
   },
-
-
 
   getMyMentees: async (req, res) => {
     try {
@@ -383,41 +383,44 @@ const userControllers = {
   },
   getTutorStudents: async (req, res) => {
     try {
-      const tutorId = req.params.id;
+      const tutorId = req.params.id
 
-      // Find all courses assigned to the tutor
-      const courses = await Course.find({ instructorId: tutorId }).populate('enrolledStudents');
+      const students = await Course.aggregate([
+        { $match: { instructorId: tutorId } },
+        { $unwind: "$enrolledStudents" },
+        { $group: { _id: "$enrolledStudents" } },
+        {
+          $lookup: {
+            from: "users",
+            localField: "_id",
+            foreignField: "_id",
+            as: "studentDetails",
+          },
+        },
+        { $unwind: "$studentDetails" },
+        {
+          $project: {
+            _id: "$studentDetails._id",
+            fullname: "$studentDetails.fullname",
+            email: "$studentDetails.email",
+            profilePicture: "$studentDetails.profilePicture",
+            skillLevel: "$studentDetails.skillLevel",
+            country: "$studentDetails.country",
+          },
+        },
+      ])
 
-      if (!courses || courses.length === 0) {
-        return res.status(404).json({ message: 'No courses found for this tutor' });
+      if (!students || students.length === 0) {
+        return res.status(404).json({ message: "No students found for this tutor" })
       }
 
-      // Extract all students from the courses
-      const allStudents = [];
-      courses.forEach(course => {
-        if (course.enrolledStudents) {
-          allStudents.push(...course.enrolledStudents);
-        }
-      });
-
-      // Remove duplicates based on student IDs
-      const uniqueStudents = Array.from(
-        new Map(allStudents.map(student => [student._id.toString(), student])).values()
-      );
-
-      // Format the student information
-      const studentProfiles = uniqueStudents.map(student => ({
-        id: student._id,
-        fullname: student.fullname,
-      }));
-
       return res.status(200).json({
-        message: 'Students retrieved successfully',
-        students: studentProfiles
-      });
+        message: "Students retrieved successfully",
+        students: students,
+      })
     } catch (error) {
-      console.error(error);
-      return res.status(500).json({ message: 'Unexpected error during student retrieval' });
+      console.error("Error in getTutorStudents:", error)
+      return res.status(500).json({ message: "Unexpected error during student retrieval" })
     }
   },
   getMyInstructors: async (req, res) => {
@@ -596,6 +599,89 @@ const userControllers = {
     } catch (error) {
       console.error(error);
       return res.status(500).json({ message: 'Unexpected error' });
+    }
+  },
+  getTeamMembers: async (req, res) => {
+    try {
+      const { tutorId } = req.params;
+
+      // Find the tutor by ID and populate the teamMembers field
+      const tutor = await User.findById(tutorId).populate({
+        path: 'teamMembers.tutorId',
+        select: 'fullname _id email profilePicture role assignedCourse otherCourse'
+      })
+        .populate({
+          path: 'teamMembers.ownerId',
+          select: 'fullname _id email profilePicture role assignedCourse otherCourse'
+        });
+
+      // If the tutor is not found or doesn't have the correct role, return an error
+      if (!tutor || tutor.role !== 'tutor') {
+        return res.status(404).json({ message: 'Tutor not found or invalid role' });
+      }
+
+      // Return the team members
+      return res.status(200).json({
+        success: true,
+        teamMembers: tutor.teamMembers,
+      });
+    } catch (error) {
+      console.error('Error fetching team members:', error);
+      return res.status(500).json({ message: 'Unexpected error!' });
+    }
+  },
+
+  deleteTeamMembers: async (req, res) => {
+    try {
+      const { tutorId, ownerId } = req.params;
+
+      // Find the tutor by ID and ensure they exist with the correct role
+      const tutor = await User.findById(tutorId).populate('teamMembers');
+      const owner = await User.findById(ownerId).populate('teamMembers');
+
+      if (!tutor || tutor.role !== 'tutor') {
+        return res.status(404).json({ message: 'Tutor not found or invalid role' });
+      }
+
+      if (!owner) {
+        return res.status(404).json({ message: 'Owner not found' });
+      }
+
+      // Check if the team member exists in both tutor and owner
+      const teamMemberInTutor = tutor.teamMembers.some(
+        (member) => member.ownerId.toString() === ownerId
+      );
+
+      const teamMemberInOwner = owner.teamMembers.some(
+        (member) => member.tutorId.toString() === tutorId
+      );
+
+      if (!teamMemberInTutor || !teamMemberInOwner) {
+        return res.status(404).json({
+          message: 'Team member not found in either tutor or owner teamMembers list',
+        });
+      }
+
+      // Remove the team member from both tutor and owner
+      tutor.teamMembers = tutor.teamMembers.filter(
+        (member) => member.ownerId.toString() !== ownerId
+      );
+
+      owner.teamMembers = owner.teamMembers.filter(
+        (member) => member.tutorId.toString() !== tutorId
+      );
+
+      // Save the updated tutor and owner
+      await tutor.save();
+      await owner.save();
+
+      return res.status(200).json({
+        success: true,
+        message: 'Team member successfully deleted from both tutor and owner',
+      });
+    } catch (error) {
+      console.error('Error deleting team member:', error);
+      return res.status(500).json({ message: 'Unexpected error occurred!' });
     }
   }
 };
