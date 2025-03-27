@@ -46,10 +46,23 @@ const io = new Server(server, {
 const PORT = process.env.PORT || 3002;
 startCronJobs()
 // Middleware
+const allowedOrigins = [
+  "http://localhost:3000",
+  "https://experthub-workspace.vercel.app",
+  "https://yourfrontend2.com",
+  "https://yourfrontend3.com"
+];
+
 app.use(cors({
-  origin: "*",
-  allowedHeaders: ["*"],
-  methods: ["*"],
+  origin: function (origin, callback) {
+    if (!origin || allowedOrigins.includes(origin)) {
+      callback(null, true);
+    } else {
+      callback(new Error("Not allowed by CORS"));
+    }
+  },
+  allowedHeaders: ["Content-Type", "Authorization"],
+  methods: ["GET", "POST", "PUT", "DELETE"],
   credentials: true,
 }));
 

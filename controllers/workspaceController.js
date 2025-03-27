@@ -1,7 +1,7 @@
 const WorkSpace = require("../models/workspace.js");
 const Event = require("../models/event.js");
 const User = require("../models/user.js");
-const Category = require("../models/category.js");
+const WorkspaceCategory = require("../models/workspaceCategory.js");
 const { upload } = require("../config/cloudinary.js");
 const KJUR = require("jsrsasign");
 const Notification = require("../models/notifications.js");
@@ -18,50 +18,22 @@ dayjs.extend(isSameOrAfter);
 const workspaceController = {
   getAllCategory: async (req, res) => {
     try {
-      const userId = req.query.id;
-      const allWorkspaces = [];
-
-      // Fetch all categories instead of using a specific ID
-      const categories = await Category.find();
-
-      await Promise.all(
-        categories.map(async (categoryObj) => {
-          await Promise.all(
-            categoryObj.subCategory.map(async (category) => {
-              const workspaces = await WorkSpace.find({
-                category,
-                approved: true,
-                $or: [
-                  { audience: { $exists: false } },
-                  { audience: { $size: 0 } },
-                  { audience: userId },
-                ],
-              })
-                .populate({
-                  path: "registeredClients",
-                  select: "profilePicture fullname _id",
-                })
-                .lean();
-
-              if (workspaces.length !== 0) {
-                allWorkspaces.push({
-                  category,
-                  workspaces,
-                });
-              }
-            })
-          );
-        })
-      );
-
-      return res.status(200).json({ allWorkspaces });
+      const categories = await WorkspaceCategory.find().lean();
+      if (!categories || categories.length === 0) {
+        return res.status(200).json({ categories: [] });
+      }
+  
+      return res.status(200).json({
+        categories: categories.map(cat => ({
+          name: cat.name,
+          subCategory: cat.subCategory,
+        })),
+      });
     } catch (error) {
-      console.error(error);
-      return res
-        .status(500)
-        .json({
-          message: "Unexpected error while fetching workspace category",
-        });
+      console.error("Error fetching categories:", error);
+      return res.status(500).json({
+        message: "Unexpected error while fetching categories",
+      });
     }
   },
 
@@ -176,16 +148,35 @@ const workspaceController = {
     }
   },
 
+  getApprovedProviders:  async (req, res) => {
+    try {
+      const providers = await User.find({ role: "provider" })
+        .select("fullname profilePicture _id") // Only fetch necessary fields
+        .lean();
+  
+      if (!providers || providers.length === 0) {
+        return res.status(404).json({ message: "No approved providers found" });
+      }
+  
+      return res.status(200).json({ providers });
+    } catch (error) {
+      console.error("Error fetching approved providers:", error);
+      return res.status(500).json({
+        message: "Unexpected error while fetching approved providers",
+      });
+    }
+  },
+
   addWorkSpace: async (req, res) => {
     try {
-      const userId = req.params.userId; // Extract userId from params
-
-      if (!userId) {
-        return res.status(400).json({ message: "User ID is required" });
+      const userId = req.params.userId; // Authenticated user ID from params
+      const user = await User.findById(userId);
+      if (!user) {
+        return res.status(401).json({ message: "User not found" });
       }
-
+  
       const {
-        workSpaceTitle,
+        title,
         about,
         duration,
         type,
@@ -198,45 +189,47 @@ const workspaceController = {
         workDuration,
         fee,
         strikedFee,
+        providerName, // Selected from frontend autocomplete for admins
       } = req.body;
-
-      // Check if a file (thumbnail) is provided
-      const file = req.files?.thumbnail; // Assuming 'thumbnail' is the form field name
-
+  
+      const file = req.files?.thumbnail;
       if (!file) {
-        return res.status(400).json({
-          message: "Thumbnail image is required",
-        });
+        return res.status(400).json({ message: "Thumbnail image is required" });
       }
-
-      // Upload the thumbnail to Cloudinary using your existing `upload` function
+  
       const uploadedImage = await upload(file.tempFilePath);
-
-      // Create a new workspace instance
+  
+      // Role-based logic
+      const isAdmin = user.role.toLowerCase() === "admin";
+      const approved = isAdmin; // true if admin, false otherwise (e.g., provider)
+      const providerId = isAdmin ? null : userId; // Providers use their own ID, admins leave it optional
+  
       const newWorkspace = new WorkSpace({
-        workSpaceTitle,
-        about,
-        duration,
-        type,
-        startDate,
-        endDate,
-        startTime,
-        endTime,
-        category,
-        privacy,
-        workDuration,
-        fee,
-        strikedFee,
-        providerId: userId,
+        title,
+        providerName: isAdmin ? providerName : user.fullname, // Admin selects, provider uses own name
+        providerImage: user.profilePicture || "", // Use authenticated user's picture
         thumbnail: {
           type: uploadedImage.resource_type,
           url: uploadedImage.secure_url,
         },
+        category,
+        privacy,
+        about,
+        providerId: providerId || undefined, // Set only for providers
+        duration,
+        type,
+        startDate,
+        endDate,
+        startTime,
+        endTime,
+        workDuration,
+        fee,
+        strikedFee,
+        approved, // true for admin, false for provider
       });
-
-      // Save the new workspace to the database
+  
       const savedWorkspace = await newWorkspace.save();
-
+  
       return res.status(201).json({
         message: "Workspace created successfully",
         workspace: savedWorkspace,
@@ -245,6 +238,49 @@ const workspaceController = {
       console.error("Error creating workspace:", error);
       return res.status(500).json({
         message: "An error occurred while creating the workspace",
+        error: error.message,
+      });
+    }
+  },
+
+  addCategory: async (req, res) => {
+    try {
+      const userId = req.params.userId;
+      const user = await User.findById(userId);
+      if (!user) {
+        return res.status(401).json({ message: "User not found" });
+      }
+  
+      if (user.role.toLowerCase() !== "admin") {
+        return res.status(403).json({ message: "Only admins can add categories" });
+      }
+  
+      const { name, subCategory } = req.body;
+  
+      if (!name) {
+        return res.status(400).json({ message: "Category name is required" });
+      }
+  
+      const existingCategory = await WorkspaceCategory.findOne({ name });
+      if (existingCategory) {
+        return res.status(400).json({ message: "Category already exists" });
+      }
+  
+      const newCategory = new WorkspaceCategory({
+        name,
+        subCategory: subCategory || [],
+      });
+  
+      const savedCategory = await newCategory.save();
+  
+      return res.status(201).json({
+        message: "Category added successfully",
+        category: savedCategory,
+      });
+    } catch (error) {
+      console.error("Error adding category:", error);
+      return res.status(500).json({
+        message: "An error occurred while adding the category",
         error: error.message,
       });
     }

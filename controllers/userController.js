@@ -22,6 +22,7 @@ const userControllers = {
 
       // Extract relevant profile information
       const userProfile = {
+        id: existingUser._id,
         profilePicture: existingUser.image,
         phone: existingUser.phone,
         email: existingUser.email,
@@ -35,7 +36,8 @@ const userControllers = {
         bankCode: existingUser.bankCode,
         premiumPlanExpires: existingUser.premiumPlanExpires,
         premiumPlan: existingUser.premiumPlan,
-        signature: existingUser.signature
+        signature: existingUser.signature,
+        role: existingUser.role
 
       };
 

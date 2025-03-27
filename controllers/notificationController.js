@@ -5,6 +5,8 @@ const Notification = require("../models/notifications.js");
 
 
 const notificationController = {
+
+
     markAsRead: async (req, res) => {
         try { 
             const { id } = req.params;
@@ -25,6 +27,7 @@ const notificationController = {
             return res.status(500).json({ message: 'Unexpected error during resource addition' });
         }
     },
+    
     getUserNotificatins: async (req, res) => {
         try {
             const { id } = req.params;

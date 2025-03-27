@@ -17,6 +17,7 @@ WorkspaceRoute.get("/", (req, res) => {
 //workspace
 WorkspaceRoute.get("/category", workspaceController.getWorkspaceByCategory);
 WorkspaceRoute.get("/category/creator", workspaceController.getSpaceProviderSpaces);
+WorkspaceRoute.get("/approved-providers", workspaceController.getApprovedProviders)
 WorkspaceRoute.get("/creator/:userId", workspaceController.getPlatformWorkspaces);
 
 WorkspaceRoute.get("/all", workspaceController.getAllWorkspaces);
@@ -25,7 +26,8 @@ WorkspaceRoute.get("/all", workspaceController.getAllWorkspaces);
 
 
 WorkspaceRoute.post("/add-workspace/:userId", workspaceController.addWorkSpace);
-WorkspaceRoute.get("/single-workspace/:workspaceId", workspaceController.getWorkSpaceById);
+WorkspaceRoute.post("/add-workspace/:userId", workspaceController.addWorkSpace);
+WorkspaceRoute.post("/category/:userId", workspaceController.addCategory);
 
 //workspace enroll route
 WorkspaceRoute.get("/admissions/:workspaceId", workspaceController.getEnrolledClients);

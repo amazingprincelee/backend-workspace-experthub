@@ -2,7 +2,7 @@ const mongoose = require('mongoose');
 
 
 const workspaceSchema = new mongoose.Schema({
-    workSpaceTitle: String,
+    title: String,
     providerName: String,
     providerImage: String,
     file: String,
@@ -20,8 +20,8 @@ const workspaceSchema = new mongoose.Schema({
     privacy: String,
     about: String,
     providerId: String,
+    persons: Number,
     duration: Number,
-    type: String,
     startDate: String,
     endDate: String,
     startTime: String,

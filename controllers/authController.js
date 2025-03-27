@@ -71,11 +71,6 @@ const authControllers = {
     }
   },
 
-<<<<<<< HEAD
-  
-
-=======
->>>>>>> 2c0a93e8adebad1bc06e271262e681d7fb2f29dd
   sync: async (req, res) => {
     try {
       const {
