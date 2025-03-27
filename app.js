@@ -48,7 +48,7 @@ startCronJobs()
 // Middleware
 const allowedOrigins = [
   "http://localhost:3000",
-  "https://experthub-workspace.vercel.app",
+  "https://frontend-workspace-experthub.vercel.app/",
   "https://yourfrontend2.com",
   "https://yourfrontend3.com"
 ];
