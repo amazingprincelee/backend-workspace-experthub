@@ -27,7 +27,11 @@ WorkspaceRoute.get("/all", workspaceController.getAllWorkspaces);
 
 WorkspaceRoute.post("/add-workspace/:userId", workspaceController.addWorkSpace);
 WorkspaceRoute.post("/add-workspace/:userId", workspaceController.addWorkSpace);
+
+
 WorkspaceRoute.post("/category/:userId", workspaceController.addCategory);
+WorkspaceRoute.delete("/category/:categoryName", workspaceController.deleteCategory);
+WorkspaceRoute.put("/category/:categoryName", workspaceController.updateCategory);
 
 //workspace enroll route
 WorkspaceRoute.get("/admissions/:workspaceId", workspaceController.getEnrolledClients);
@@ -38,7 +42,7 @@ WorkspaceRoute.get("/enrolled-workspaces/:userId", workspaceController.getEnroll
 //get roundom courses
 WorkspaceRoute.get("/recommended-workspaces/:userId", workspaceController.getRecommendedWorkspace);
 
-// get all courses with category
+// get all workspace with category
 
 WorkspaceRoute.get("/all/category", workspaceController.getAllCategory);
 WorkspaceRoute.delete("/delete/:id", workspaceController.deleteWorkspace);

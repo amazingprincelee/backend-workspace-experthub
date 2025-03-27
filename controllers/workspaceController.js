@@ -37,6 +37,74 @@ const workspaceController = {
     }
   },
 
+  deleteCategory: async (req, res) => {
+    try {
+      const categoryName = req.params.categoryName;
+      const userId = req.params.userId; // Optional: if you want to check user role
+      const user = await User.findById(userId);
+
+      if (!user || user.role.toLowerCase() !== "admin") {
+        return res.status(403).json({ message: "Only admins can delete categories" });
+      }
+
+      const category = await WorkspaceCategory.findOneAndDelete({ name: categoryName });
+      if (!category) {
+        return res.status(404).json({ message: "Category not found" });
+      }
+
+      return res.status(200).json({ message: "Category deleted successfully" });
+    } catch (error) {
+      console.error("Error deleting category:", error);
+      return res.status(500).json({
+        message: "Unexpected error while deleting category",
+        error: error.message,
+      });
+    }
+  },
+
+  // Update a category
+  updateCategory: async (req, res) => {
+    try {
+      const categoryName = req.params.categoryName;
+      const userId = req.params.userId; // Optional: if you want to check user role
+      const user = await User.findById(userId);
+
+      if (!user || user.role.toLowerCase() !== "admin") {
+        return res.status(403).json({ message: "Only admins can update categories" });
+      }
+
+      const { name } = req.body;
+      if (!name) {
+        return res.status(400).json({ message: "Category name is required" });
+      }
+
+      const category = await WorkspaceCategory.findOne({ name: categoryName });
+      if (!category) {
+        return res.status(404).json({ message: "Category not found" });
+      }
+
+      // Check if the new name already exists (excluding the current category)
+      const existingCategory = await WorkspaceCategory.findOne({ name, _id: { $ne: category._id } });
+      if (existingCategory) {
+        return res.status(400).json({ message: "Category name already exists" });
+      }
+
+      category.name = name;
+      const updatedCategory = await category.save();
+
+      return res.status(200).json({
+        message: "Category updated successfully",
+        category: updatedCategory,
+      });
+    } catch (error) {
+      console.error("Error updating category:", error);
+      return res.status(500).json({
+        message: "Unexpected error while updating category",
+        error: error.message,
+      });
+    }
+  },
+
   getWorkspaceByCategory: async (req, res) => {
     const category = req.body.category;
 
