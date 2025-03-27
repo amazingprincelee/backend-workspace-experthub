@@ -28,7 +28,7 @@ WorkspaceRoute.get("/all", workspaceController.getAllWorkspaces);
 WorkspaceRoute.post("/add-workspace/:userId", workspaceController.addWorkSpace);
 WorkspaceRoute.post("/add-workspace/:userId", workspaceController.addWorkSpace);
 
-
+//catergory route
 WorkspaceRoute.post("/category/:userId", workspaceController.addCategory);
 WorkspaceRoute.delete("/delete/:categoryName/:userId", workspaceController.deleteCategory);
 WorkspaceRoute.put("/update/:categoryName/:userId", workspaceController.updateCategory);
