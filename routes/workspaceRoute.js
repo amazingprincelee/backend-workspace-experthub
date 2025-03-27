@@ -30,8 +30,8 @@ WorkspaceRoute.post("/add-workspace/:userId", workspaceController.addWorkSpace);
 
 
 WorkspaceRoute.post("/category/:userId", workspaceController.addCategory);
-WorkspaceRoute.delete("/category/:categoryName", workspaceController.deleteCategory);
-WorkspaceRoute.put("/category/:categoryName", workspaceController.updateCategory);
+WorkspaceRoute.delete("/delete/:categoryName/:userId", workspaceController.deleteCategory);
+WorkspaceRoute.put("/update/:categoryName/:userId", workspaceController.updateCategory);
 
 //workspace enroll route
 WorkspaceRoute.get("/admissions/:workspaceId", workspaceController.getEnrolledClients);

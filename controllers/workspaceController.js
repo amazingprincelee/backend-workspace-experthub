@@ -66,7 +66,7 @@ const workspaceController = {
   updateCategory: async (req, res) => {
     try {
       const categoryName = req.params.categoryName;
-      const userId = req.params.userId; // Optional: if you want to check user role
+      const userId = req.params.userId; 
       const user = await User.findById(userId);
 
       if (!user || user.role.toLowerCase() !== "admin") {
