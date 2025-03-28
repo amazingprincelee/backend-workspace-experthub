@@ -1,9 +1,7 @@
 const WorkSpace = require("../models/workspace.js");
-const Event = require("../models/event.js");
 const User = require("../models/user.js");
 const WorkspaceCategory = require("../models/workspaceCategory.js");
 const { upload } = require("../config/cloudinary.js");
-const KJUR = require("jsrsasign");
 const Notification = require("../models/notifications.js");
 const Transaction = require("../models/transactions.js");
 const dayjs = require("dayjs");
@@ -34,6 +32,57 @@ const workspaceController = {
       return res.status(500).json({
         message: "Unexpected error while fetching categories",
       });
+    }
+  },
+
+  // controllers/workspaceController.js
+  getWorkspacesByProvider: async (req, res) => {
+    try {
+      const { providerType, userId } = req.query; // Extract query params
+  
+      // Validate userId
+      const user = await User.findById(userId);
+      if (!user) {
+        return res.status(404).json({ message: "User not found" });
+      }
+  
+      // Validate providerType
+      if (!["ExpertHub", "Provider"].includes(providerType)) {
+        return res.status(400).json({ message: "Invalid providerType" });
+      }
+  
+      // Fetch workspaces based on providerType
+      let query = { providerName: providerType };
+      
+      // For admins, fetch all workspaces (approved and unapproved)
+      if (user.role.toLowerCase() !== "admin") {
+        // For non-admins (e.g., clients), only fetch approved workspaces
+        query.approved = true;
+      }
+  
+      const workspaces = await WorkSpace.find(query)
+        .populate({
+          path: "registeredClients assignedSpaceProvider",
+          select: "profilePicture fullname _id",
+        })
+        .lean();
+  
+      // Group workspaces by category
+      const groupedWorkspaces = workspaces.reduce((acc, workspace) => {
+        const category = workspace.category || "Uncategorized";
+        if (!acc[category]) {
+          acc[category] = [];
+        }
+        acc[category].push(workspace);
+        return acc;
+      }, {});
+  
+      return res.status(200).json({
+        data: { workspaces: groupedWorkspaces },
+      });
+    } catch (error) {
+      console.error("Error fetching workspaces by provider:", error);
+      return res.status(500).json({ message: "Server error" });
     }
   },
 
@@ -107,36 +156,39 @@ const workspaceController = {
 
   getWorkspaceByCategory: async (req, res) => {
     try {
+      const userId = req.body.userId || req.query.userId;
+      const user = await User.findById(userId);
+      if (!user) {
+        return res.status(401).json({ message: "User not found" });
+      }
+  
       const { category, date, timeFrom, timeUntil, numberOfPeople, location } = req.body;
   
-      // Build the query object
-      const query = { approved: true };
+      const query = {};
+      if (user.role.toLowerCase() !== "admin") {
+        query.approved = true; // Non-admins only see approved workspaces
+      }
   
-      // Filter by category if provided
       if (category) {
         query.category = category;
       }
   
-      // Filter by date if provided
       if (date) {
-        query.startDate = { $lte: date }; // Start date should be on or before the selected date
-        query.endDate = { $gte: date };   // End date should be on or after the selected date
+        query.startDate = { $lte: date };
+        query.endDate = { $gte: date };
       }
   
-      // Filter by time range if provided
       if (timeFrom && timeUntil) {
-        query.startTime = { $lte: timeUntil }; // Start time should be on or before the "until" time
-        query.endTime = { $gte: timeFrom };    // End time should be on or after the "from" time
+        query.startTime = { $lte: timeUntil };
+        query.endTime = { $gte: timeFrom };
       }
   
-      // Filter by number of people if provided
       if (numberOfPeople) {
-        query.persons = { $gte: parseInt(numberOfPeople) }; // Ensure the workspace can accommodate the number of people
+        query.persons = { $gte: parseInt(numberOfPeople) };
       }
   
-      // Filter by location if provided
       if (location) {
-        query.location = { $regex: location, $options: "i" }; // Case-insensitive match for location
+        query.location = { $regex: location, $options: "i" };
       }
   
       const workspaces = await WorkSpace.find(query)
@@ -157,12 +209,20 @@ const workspaceController = {
 
   getDefaultWorkspaces: async (req, res) => {
     try {
-      const workspaces = await WorkSpace.find({
-        approved: true,
-        providerName: "ExpertHub", // Filter for ExpertHub provider
-      })
-        .sort({ createdAt: -1 }) // Sort by creation date in descending order (most recent first)
-        .limit(2) // Limit to 2 workspaces for the initial display
+      const userId = req.query.userId;
+      const user = await User.findById(userId);
+      if (!user) {
+        return res.status(401).json({ message: "User not found" });
+      }
+  
+      const query = { providerName: "ExpertHub" };
+      if (user.role.toLowerCase() !== "admin") {
+        query.approved = true;
+      }
+  
+      const workspaces = await WorkSpace.find(query)
+        .sort({ createdAt: -1 })
+        .limit(2)
         .populate({
           path: "registeredClients",
           select: "profilePicture fullname _id",
@@ -228,42 +288,78 @@ const workspaceController = {
 
   getWorkSpaceById: async (req, res) => {
     const workspaceId = req.params.workspaceId;
-
+    const userId = req.query.userId;
+  
     try {
-      const workspace = await WorkSpace.findById(workspaceId);
-
+      const user = await User.findById(userId);
+      if (!user) {
+        return res.status(401).json({ message: "User not found" });
+      }
+  
+      const query = { _id: workspaceId };
+      if (user.role.toLowerCase() !== "admin") {
+        query.approved = true;
+      }
+  
+      const workspace = await WorkSpace.findOne(query)
+        .populate({
+          path: "registeredClients",
+          select: "profilePicture fullname _id",
+        })
+        .lean();
+  
       if (!workspace) {
         return res.status(404).json({ message: "Workspace not found" });
       }
-
+  
       return res.status(200).json({ workspace });
     } catch (error) {
       console.error(error);
-      return res
-        .status(500)
-        .json({ message: "Unexpected error while fetching the workspace" });
+      return res.status(500).json({
+        message: "Unexpected error while fetching the workspace",
+      });
     }
   },
 
   getAllWorkspaces: async (req, res) => {
     try {
-      console.log("hmm na ehere");
-
-      const workspaces = await WorkSpace.find({
-        approved: false,
-      })
+      const userId = req.params.userId || req.query.userId;
+      const user = await User.findById(userId);
+      if (!user) {
+        return res.status(401).json({ message: "User not found" });
+      }
+  
+      const query = {};
+      if (user.role.toLowerCase() !== "admin") {
+        query.approved = true; // Non-admins only see approved workspaces
+      }
+  
+      const workspaces = await WorkSpace.find(query)
         .populate({
           path: "registeredClients assignedSpaceProvider",
           select: "profilePicture fullname _id",
         })
         .lean();
-
-      return res.status(200).json({ workspaces: workspaces });
+  
+      // Group workspaces by category
+      const groupedWorkspaces = workspaces.reduce((acc, workspace) => {
+        const category = workspace.category || "Uncategorized";
+        if (!acc[category]) {
+          acc[category] = [];
+        }
+        acc[category].push(workspace);
+        return acc;
+      }, {});
+  
+      return res.status(200).json({
+        message: "Workspaces fetched successfully",
+        workspaces: groupedWorkspaces,
+      });
     } catch (error) {
-      console.error(error);
-      return res
-        .status(500)
-        .json({ message: "Unexpected error while fetching all workspaces" });
+      console.error("Error fetching all workspaces:", error);
+      return res.status(500).json({
+        message: "Unexpected error while fetching all workspaces",
+      });
     }
   },
 
@@ -409,20 +505,32 @@ const workspaceController = {
     }
   },
 
-  getUnaproved: async (req, res) => {
-    try {
-      const workspaces = await WorkSpace.find({ approved: false });
-
-      return res.status(200).json({ workspaces });
-    } catch (error) {
-      console.error(error);
-      return res
-        .status(500)
-        .json({
-          message: "Unexpected error while fetching workspace by category",
-        });
+  getUnapproved: async (req, res) => {
+  try {
+    const userId = req.query.userId;
+    const user = await User.findById(userId);
+    if (!user) {
+      return res.status(401).json({ message: "User not found" });
     }
-  },
+    if (user.role.toLowerCase() !== "admin") {
+      return res.status(403).json({ message: "Only admins can access this route" });
+    }
+
+    const workspaces = await WorkSpace.find({ approved: false })
+      .populate({
+        path: "registeredClients",
+        select: "profilePicture fullname _id",
+      })
+      .lean();
+
+    return res.status(200).json({ workspaces });
+  } catch (error) {
+    console.error(error);
+    return res.status(500).json({
+      message: "Unexpected error while fetching unapproved workspaces",
+    });
+  }
+},
 
   approveWorkspace: async (req, res) => {
     const workspaceId = req.params.workspaceId;
@@ -559,46 +667,43 @@ const workspaceController = {
 
   getEnrolledWorkspaces: async (req, res) => {
     const userId = req.params.userId;
-
+  
     try {
-      // Find the user by ID
-      // const user = await User.findById(userId);
-
-      // if (!user) {
-      //     return res.status(404).json({ message: 'User not found' });
-      // }
-
-      // Get the enrolled courses using the user's enrolledCourses array
-      const enrolledWorkspaces = await WorkSpace.find({
+      const user = await User.findById(userId);
+      if (!user) {
+        return res.status(401).json({ message: "User not found" });
+      }
+  
+      const query = {
         $or: [{ registeredClients: userId }, { "enrollments.user": userId }],
-      })
+      };
+      if (user.role.toLowerCase() !== "admin") {
+        query.approved = true;
+      }
+  
+      const enrolledWorkspaces = await WorkSpace.find(query)
         .populate({
           path: "registeredClients",
           select: "profilePicture fullname _id",
         })
         .sort({ startDate: -1 })
         .lean();
-      // console.log(enrolledCourses)
-
+  
       if (!enrolledWorkspaces || enrolledWorkspaces.length === 0) {
-        return res
-          .status(404)
-          .json({ message: "No enrolled workspaces found for this user" });
-      }
-
-      return res
-        .status(200)
-        .json({
-          message: "Enrolled workspaces retrieved successfully",
-          enrolledWorkspaces,
+        return res.status(404).json({
+          message: "No enrolled workspaces found for this user",
         });
+      }
+  
+      return res.status(200).json({
+        message: "Enrolled workspaces retrieved successfully",
+        enrolledWorkspaces,
+      });
     } catch (error) {
       console.error(error);
-      return res
-        .status(500)
-        .json({
-          message: "Unexpected error during enrolled workspace retrieval",
-        });
+      return res.status(500).json({
+        message: "Unexpected error during enrolled workspace retrieval",
+      });
     }
   },
 
@@ -654,21 +759,26 @@ const workspaceController = {
   getRecommendedWorkspace: async (req, res) => {
     try {
       const userId = req.params.userId;
-
-      const user = await User.findOne({ _id: userId });
+  
+      const user = await User.findById(userId);
+      if (!user) {
+        return res.status(401).json({ message: "User not found" });
+      }
+  
       const category = [user.assignedWorkspace, ...user.otherWorkspace];
-      // const numberOfCourses = 4; // Set the number of recommended courses you want
       const count = await WorkSpace.countDocuments();
-
+  
       if (count === 0) {
         return res.status(404).json({ message: "No workspaces available" });
       }
-
-      const workspace = await WorkSpace.find({
-        category: { $in: category },
-        approved: true,
-      }).sort({ _id: -1 });
-
+  
+      const query = { category: { $in: category } };
+      if (user.role.toLowerCase() !== "admin") {
+        query.approved = true;
+      }
+  
+      const workspace = await WorkSpace.find(query).sort({ _id: -1 });
+  
       const recommendedWorkspaces = await workspace
         .map((workspace) => {
           if (workspace.registeredClients.includes(userId)) {
@@ -684,30 +794,24 @@ const workspaceController = {
           }
         })
         .filter((item) => item !== null);
-
+  
       if (!recommendedWorkspaces || recommendedWorkspaces.length === 0) {
         return res.status(404).json({ message: "No workspace available" });
       }
-
-      return res
-        .status(200)
-        .json({
-          workspaces: recommendedWorkspaces.filter(
-            (workspace) =>
-              workspace.audience.length === 0 ||
-              workspace.audience.includes(userId)
-          ),
-        });
+  
+      return res.status(200).json({
+        workspaces: recommendedWorkspaces.filter(
+          (workspace) =>
+            workspace.audience.length === 0 || workspace.audience.includes(userId)
+        ),
+      });
     } catch (error) {
       console.error(error);
-      return res
-        .status(500)
-        .json({
-          message: "Unexpected error while fetching recommended workspace",
-        });
+      return res.status(500).json({
+        message: "Unexpected error while fetching recommended workspace",
+      });
     }
   },
-
   // editWorkspace: async (req, res) => {
   //     try {
   //         const workspace = await WorkSpace.updateOne({

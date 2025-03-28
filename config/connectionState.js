@@ -9,29 +9,33 @@ const connectionState = {
 const connect = async () => {
   connectionState.connecting = true;
 
-//'mongodb://127.0.0.1:27017/expertHub'
-
+  mongoose.set("debug", true); // Enable debug mode for detailed logs
 
   try {
     await mongoose.connect(`mongodb+srv://${process.env.DB_USERNAME}:${process.env.DB_PASSWORD}@theplaint.u7pbgty.mongodb.net/?retryWrites=true&w=majority`, {
       useNewUrlParser: true,
       useUnifiedTopology: true,
-      serverSelectionTimeoutMS: 30000, // 30 seconds timeout
-      socketTimeoutMS: 45000, // 45 seconds socket timeout
-    })
-    .then(() => console.log('Connected!'));
+      serverSelectionTimeoutMS: 60000, // Increased timeout to 60 seconds
+      socketTimeoutMS: 90000, // Increased socket timeout to 90 seconds
+    });
+    console.log('Connected to MongoDB!');
     connectionState.connected = true;
   } catch (error) {
     connectionState.error = error;
-    console.log(error);
+    console.error('MongoDB connection error:', error);
   } finally {
     connectionState.connecting = false;
   }
 };
 
 const disconnect = async () => {
-  await mongoose.disconnect();
-  connectionState.connected = false;
+  try {
+    await mongoose.disconnect();
+    connectionState.connected = false;
+    console.log('Disconnected from MongoDB');
+  } catch (error) {
+    console.error('Error disconnecting from MongoDB:', error);
+  }
 };
 
 module.exports = { connectionState, connect, disconnect };
