@@ -15,10 +15,11 @@ WorkspaceRoute.get("/", (req, res) => {
 
 
 //workspace
-WorkspaceRoute.get("/category", workspaceController.getWorkspaceByCategory);
+WorkspaceRoute.post("/category", workspaceController.getWorkspaceByCategory);
 WorkspaceRoute.get("/category/creator", workspaceController.getSpaceProviderSpaces);
 WorkspaceRoute.get("/approved-providers", workspaceController.getApprovedProviders)
 WorkspaceRoute.get("/creator/:userId", workspaceController.getPlatformWorkspaces);
+WorkspaceRoute.get("/default-workspaces", workspaceController.getDefaultWorkspaces);
 
 WorkspaceRoute.get("/all", workspaceController.getAllWorkspaces);
 

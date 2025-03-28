@@ -106,24 +106,75 @@ const workspaceController = {
   },
 
   getWorkspaceByCategory: async (req, res) => {
-    const category = req.body.category;
-
     try {
-      const workspaces = await WorkSpace.find({ category, approved: true })
+      const { category, date, timeFrom, timeUntil, numberOfPeople, location } = req.body;
+  
+      // Build the query object
+      const query = { approved: true };
+  
+      // Filter by category if provided
+      if (category) {
+        query.category = category;
+      }
+  
+      // Filter by date if provided
+      if (date) {
+        query.startDate = { $lte: date }; // Start date should be on or before the selected date
+        query.endDate = { $gte: date };   // End date should be on or after the selected date
+      }
+  
+      // Filter by time range if provided
+      if (timeFrom && timeUntil) {
+        query.startTime = { $lte: timeUntil }; // Start time should be on or before the "until" time
+        query.endTime = { $gte: timeFrom };    // End time should be on or after the "from" time
+      }
+  
+      // Filter by number of people if provided
+      if (numberOfPeople) {
+        query.persons = { $gte: parseInt(numberOfPeople) }; // Ensure the workspace can accommodate the number of people
+      }
+  
+      // Filter by location if provided
+      if (location) {
+        query.location = { $regex: location, $options: "i" }; // Case-insensitive match for location
+      }
+  
+      const workspaces = await WorkSpace.find(query)
         .populate({
           path: "registeredClients",
           select: "profilePicture fullname _id",
         })
         .lean();
-
+  
       return res.status(200).json({ workspaces });
     } catch (error) {
-      console.error(error);
-      return res
-        .status(500)
-        .json({
-          message: "Unexpected error while fetching workspace by category",
-        });
+      console.error("Error fetching workspaces by category:", error);
+      return res.status(500).json({
+        message: "Unexpected error while fetching workspaces by category",
+      });
+    }
+  },
+
+  getDefaultWorkspaces: async (req, res) => {
+    try {
+      const workspaces = await WorkSpace.find({
+        approved: true,
+        providerName: "ExpertHub", // Filter for ExpertHub provider
+      })
+        .sort({ createdAt: -1 }) // Sort by creation date in descending order (most recent first)
+        .limit(2) // Limit to 2 workspaces for the initial display
+        .populate({
+          path: "registeredClients",
+          select: "profilePicture fullname _id",
+        })
+        .lean();
+  
+      return res.status(200).json({ workspaces });
+    } catch (error) {
+      console.error("Error fetching default workspaces:", error);
+      return res.status(500).json({
+        message: "Unexpected error while fetching default workspaces",
+      });
     }
   },
 
@@ -258,6 +309,8 @@ const workspaceController = {
         fee,
         strikedFee,
         providerName, // Selected from frontend autocomplete for admins
+        location, 
+      persons, 
       } = req.body;
   
       const file = req.files?.thumbnail;
@@ -294,6 +347,8 @@ const workspaceController = {
         fee,
         strikedFee,
         approved, // true for admin, false for provider
+        location, // Add location field
+      persons: parseInt(persons), // Add persons field
       });
   
       const savedWorkspace = await newWorkspace.save();
