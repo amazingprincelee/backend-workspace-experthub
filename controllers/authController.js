@@ -16,6 +16,7 @@ const authControllers = {
       const {
         userType,
         fullname,
+        companyName,
         email,
         phone,
         country,
@@ -41,6 +42,7 @@ const authControllers = {
         username: email.toLowerCase(),
         email: email.toLowerCase(),
         fullname,
+        companyName: companyName || "",
         phone,
         country,
         state,
@@ -52,6 +54,9 @@ const authControllers = {
       });
 
       await newUser.save();
+
+      console.log(newUser);
+      
 
       // await axios.post(`${process.env.PEOPLES_POWER_API}/api/v5/auth/sync`, {
       //   email,
@@ -80,22 +85,36 @@ const authControllers = {
         state,
         userType,
         password,
+        companyName, // Add companyName to destructured fields
       } = req.body;
-
+  
       const lowercasedUserType = userType.toLowerCase();
       const role = determineRole(lowercasedUserType);
+  
+      // Update user with provided fields
+      const updateData = {
+        fullname,
+        country,
+        state,
+        role,
+      };
+  
+      // Only update password if provided
+      if (password) {
+        updateData.password = bcrypt.hashSync(password, 10);
+      }
+  
+      // Only update companyName if provided
+      if (companyName !== undefined) {
+        updateData.companyName = companyName;
+      }
+  
       await User.updateOne(
         { email: email.toLowerCase() },
-        {
-          fullname,
-          country,
-          state,
-          password,
-          role,
-        }
+        updateData
       );
-      console.log(`synced`);
-
+  
+      console.log(`User synced: ${email}`);
       res.status(200).json({ message: "User synced successfully" });
     } catch (error) {
       console.error("Error during user sync:", error);

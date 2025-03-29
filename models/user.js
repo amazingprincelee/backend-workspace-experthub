@@ -5,7 +5,7 @@ const userSchema = new mongoose.Schema({
   email: String,
   fullname: String,
   name: String,
-  companyName: String,
+  companyName: { type: String, default: "" },
   gender: String,
   age: String,
   premiumPlan: {
@@ -19,8 +19,6 @@ const userSchema = new mongoose.Schema({
     type: String,
     default: ""
   },
-  gender: String,
-  age: String,
   skillLevel: String,
   country: String,
   state: String,
