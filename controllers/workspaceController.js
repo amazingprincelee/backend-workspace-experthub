@@ -209,36 +209,28 @@ const workspaceController = {
 },
   
 
-  getDefaultWorkspaces: async (req, res) => {
-    try {
-      const userId = req.query.userId;
-      const user = await User.findById(userId);
-      if (!user) {
-        return res.status(401).json({ message: "User not found" });
-      }
-  
-      const query = { providerName: "ExpertHub" };
-      if (user.role.toLowerCase() !== "admin") {
-        query.approved = true;
-      }
-  
-      const workspaces = await WorkSpace.find(query)
-        .sort({ createdAt: -1 })
-        .limit(2)
-        .populate({
-          path: "registeredClients",
-          select: "profilePicture fullname _id",
-        })
-        .lean();
-  
-      return res.status(200).json({ workspaces });
-    } catch (error) {
-      console.error("Error fetching default workspaces:", error);
-      return res.status(500).json({
-        message: "Unexpected error while fetching default workspaces",
-      });
-    }
-  },
+getDefaultWorkspaces: async (req, res) => {
+  try {
+    const query = { providerName: "ExpertHub", approved: true };
+
+    const workspaces = await WorkSpace.find(query)
+      .sort({ createdAt: -1 })
+      .limit(2)
+      .populate({
+        path: "registeredClients",
+        select: "profilePicture fullname _id",
+      })
+      .lean();
+
+    return res.status(200).json({ workspaces });
+  } catch (error) {
+    console.error("Error fetching default workspaces:", error);
+    return res.status(500).json({
+      message: "Unexpected error while fetching default workspaces",
+    });
+  }
+},
+
 
   getSpaceProviderSpaces: async (req, res) => {
     const category = req.body.category;
