@@ -114,7 +114,7 @@ const workspaceController = {
   // Update a category
   updateCategory: async (req, res) => {
     try {
-      const categoryName = req.params.categoryName;
+      const categoryName = req.params.categoryName.toLowerCase();
       const userId = req.params.userId; 
       const user = await User.findById(userId);
 
@@ -133,12 +133,12 @@ const workspaceController = {
       }
 
       // Check if the new name already exists (excluding the current category)
-      const existingCategory = await WorkspaceCategory.findOne({ name, _id: { $ne: category._id } });
+      const existingCategory = await WorkspaceCategory.findOne({ name: name.toLowerCase(), _id: { $ne: category._id } });
       if (existingCategory) {
         return res.status(400).json({ message: "Category name already exists" });
       }
 
-      category.name = name;
+      category.name = name.toLowerCase();
       const updatedCategory = await category.save();
 
       return res.status(200).json({
@@ -156,56 +156,58 @@ const workspaceController = {
 
   getWorkspaceByCategory: async (req, res) => {
     try {
-      const userId = req.body.userId || req.query.userId;
-      const user = await User.findById(userId);
-      if (!user) {
-        return res.status(401).json({ message: "User not found" });
-      }
-  
-      const { category, date, timeFrom, timeUntil, numberOfPeople, location } = req.body;
-  
-      const query = {};
-      if (user.role.toLowerCase() !== "admin") {
-        query.approved = true; // Non-admins only see approved workspaces
-      }
-  
-      if (category) {
-        query.category = category;
-      }
-  
-      if (date) {
-        query.startDate = { $lte: date };
-        query.endDate = { $gte: date };
-      }
-  
-      if (timeFrom && timeUntil) {
-        query.startTime = { $lte: timeUntil };
-        query.endTime = { $gte: timeFrom };
-      }
-  
-      if (numberOfPeople) {
-        query.persons = { $gte: parseInt(numberOfPeople) };
-      }
-  
-      if (location) {
-        query.location = { $regex: location, $options: "i" };
-      }
-  
-      const workspaces = await WorkSpace.find(query)
-        .populate({
-          path: "registeredClients",
-          select: "profilePicture fullname _id",
-        })
-        .lean();
-  
-      return res.status(200).json({ workspaces });
+        const userId = req.body.userId || req.query.userId;
+        const user = await User.findById(userId);
+        if (!user) {
+            return res.status(401).json({ message: "User not found" });
+        }
+
+        let { category, date, timeFrom, timeUntil, numberOfPeople, location } = req.body;
+
+        const query = {};
+        if (user.role.toLowerCase() !== "admin") {
+            query.approved = true; // Non-admins only see approved workspaces
+        }
+
+        if (category) {
+            category = category.trim().toLowerCase().replace(/\s+/g, "-"); // Normalize category
+            query.category = category;
+        }
+
+        if (date) {
+            query.startDate = { $lte: date };
+            query.endDate = { $gte: date };
+        }
+
+        if (timeFrom && timeUntil) {
+            query.startTime = { $lte: timeUntil };
+            query.endTime = { $gte: timeFrom };
+        }
+
+        if (numberOfPeople) {
+            query.persons = { $gte: parseInt(numberOfPeople) };
+        }
+
+        if (location) {
+            query.location = { $regex: location, $options: "i" };
+        }
+
+        const workspaces = await WorkSpace.find(query)
+            .populate({
+                path: "registeredClients",
+                select: "profilePicture fullname _id",
+            })
+            .lean();
+
+        return res.status(200).json({ workspaces });
     } catch (error) {
-      console.error("Error fetching workspaces by category:", error);
-      return res.status(500).json({
-        message: "Unexpected error while fetching workspaces by category",
-      });
+        console.error("Error fetching workspaces by category:", error);
+        return res.status(500).json({
+            message: "Unexpected error while fetching workspaces by category",
+        });
     }
-  },
+},
+  
 
   getDefaultWorkspaces: async (req, res) => {
     try {
@@ -464,46 +466,47 @@ const workspaceController = {
 
   addCategory: async (req, res) => {
     try {
-      const userId = req.params.userId;
-      const user = await User.findById(userId);
-      if (!user) {
-        return res.status(401).json({ message: "User not found" });
-      }
-  
-      if (user.role.toLowerCase() !== "admin") {
-        return res.status(403).json({ message: "Only admins can add categories" });
-      }
-  
-      const { name, subCategory } = req.body;
-  
-      if (!name) {
-        return res.status(400).json({ message: "Category name is required" });
-      }
-  
-      const existingCategory = await WorkspaceCategory.findOne({ name });
-      if (existingCategory) {
-        return res.status(400).json({ message: "Category already exists" });
-      }
-  
-      const newCategory = new WorkspaceCategory({
-        name,
-        subCategory: subCategory || [],
-      });
-  
-      const savedCategory = await newCategory.save();
-  
-      return res.status(201).json({
-        message: "Category added successfully",
-        category: savedCategory,
-      });
+        const userId = req.params.userId;
+        const user = await User.findById(userId);
+        if (!user) {
+            return res.status(401).json({ message: "User not found" });
+        }
+
+        if (user.role.toLowerCase() !== "admin") {
+            return res.status(403).json({ message: "Only admins can add categories" });
+        }
+
+        const { name, subCategory } = req.body;
+
+        if (!name) {
+            return res.status(400).json({ message: "Category name is required" });
+        }
+
+        const categoryName = name.trim().toLowerCase().replace(/\s+/g, "-"); // Normalize category
+        const existingCategory = await WorkspaceCategory.findOne({ name: categoryName });
+        if (existingCategory) {
+            return res.status(400).json({ message: "Category already exists" });
+        }
+
+        const newCategory = new WorkspaceCategory({
+            name: categoryName,
+            subCategory: subCategory || [],
+        });
+
+        const savedCategory = await newCategory.save();
+
+        return res.status(201).json({
+            message: "Category added successfully",
+            category: savedCategory,
+        });
     } catch (error) {
-      console.error("Error adding category:", error);
-      return res.status(500).json({
-        message: "An error occurred while adding the category",
-        error: error.message,
-      });
+        console.error("Error adding category:", error);
+        return res.status(500).json({
+            message: "An error occurred while adding the category",
+            error: error.message,
+        });
     }
-  },
+},
 
   getUnapproved: async (req, res) => {
   try {
@@ -551,6 +554,25 @@ const workspaceController = {
       return res
         .status(500)
         .json({ message: "Unexpected error during enrollment" });
+    }
+  },
+
+  disapproveWorkspace: async (req, res) => {
+    const workspaceId = req.params.workspaceId;
+    try {
+      const workspace = await WorkSpace.findById(workspaceId);
+  
+      if (!workspace) {
+        return res.status(404).json({ message: "Workspace not found" });
+      }
+  
+      workspace.approved = false;
+      await workspace.save();
+  
+      return res.status(200).json({ message: "Disapproved successfully" });
+    } catch (error) {
+      console.error(error);
+      return res.status(500).json({ message: "Unexpected error during disapproval" });
     }
   },
 
@@ -832,7 +854,7 @@ const workspaceController = {
     try {
       const { id } = req.params;
       const {
-        workSpaceTitle,
+        title,
         about,
         duration,
         type,
@@ -845,15 +867,16 @@ const workspaceController = {
         workDuration,
         fee,
         strikedFee,
+        providerName,
+        location,
+        persons,
       } = req.body;
-
-      // Find the workspace by ID
+  
       let workspace = await WorkSpace.findById(id);
       if (!workspace) {
         return res.status(404).json({ message: "Workspace not found" });
       }
-
-      // Check if a new thumbnail is provided
+  
       if (req.files?.thumbnail) {
         const file = req.files.thumbnail;
         const uploadedImage = await upload(file.tempFilePath);
@@ -862,9 +885,9 @@ const workspaceController = {
           url: uploadedImage.secure_url,
         };
       }
-
-      // Update other fields
-      workspace.workSpaceTitle = workSpaceTitle || workspace.workSpaceTitle;
+  
+      // Update fields (fix workSpaceTitle to title)
+      workspace.title = title || workspace.title;
       workspace.about = about || workspace.about;
       workspace.duration = duration || workspace.duration;
       workspace.type = type || workspace.type;
@@ -877,10 +900,12 @@ const workspaceController = {
       workspace.workDuration = workDuration || workspace.workDuration;
       workspace.fee = fee || workspace.fee;
       workspace.strikedFee = strikedFee || workspace.strikedFee;
-
-      // Save the updated workspace
+      workspace.providerName = providerName || workspace.providerName;
+      workspace.location = location || workspace.location;
+      workspace.persons = persons || workspace.persons;
+  
       const updatedWorkspace = await workspace.save();
-
+  
       return res.status(200).json({
         message: "Workspace updated successfully",
         workspace: updatedWorkspace,

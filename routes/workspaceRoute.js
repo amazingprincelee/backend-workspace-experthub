@@ -40,8 +40,10 @@ WorkspaceRoute.get("/all/category", workspaceController.getAllCategory);
 WorkspaceRoute.delete("/delete/:id", workspaceController.deleteWorkspace);
 WorkspaceRoute.put("/edit/:id", workspaceController.editWorkSpace);
 
+
 WorkspaceRoute.get("/unapproved", workspaceController.getUnapproved);
 WorkspaceRoute.put("/approve/:workspaceId", workspaceController.approveWorkspace);
+WorkspaceRoute.put("/disapprove/:workspaceId", workspaceController.disapproveWorkspace);
 
 // Upload video
 WorkspaceRoute.put('/update-status/:workspaceId', workspaceController.updateStatus);
