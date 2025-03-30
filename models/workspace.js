@@ -19,7 +19,10 @@ const workspaceSchema = new mongoose.Schema({
     category: String,
     privacy: String,
     about: String,
-    providerId: String,
+    providerId: {
+        type: mongoose.Schema.Types.ObjectId, 
+        ref: 'User', 
+      },
     persons: Number,
     duration: Number,
     startDate: String,

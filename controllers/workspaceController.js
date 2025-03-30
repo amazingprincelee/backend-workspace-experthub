@@ -40,35 +40,43 @@ const workspaceController = {
   // controllers/workspaceController.js
   getWorkspacesByProvider: async (req, res) => {
     try {
-      const { providerType, userId } = req.query;
-      
-      console.log('Received params:', { providerType, userId });
+      const { adminId } = req.query;
   
-      if (!userId) {
-        return res.status(400).json({ message: "User ID is required" });
-      }
-      if (!providerType) {
-        return res.status(400).json({ message: "Provider type is required" });
+      console.log('Received adminId:', adminId); // Debug
+  
+      if (!adminId) {
+        return res.status(400).json({ message: "Admin ID is required" });
       }
   
-      // Validate user existence
-      const user = await User.findById(userId);
-      if (!user) {
-        return res.status(404).json({ message: "User not found" });
+      // Verify the requesting user is an admin
+      const admin = await User.findById(adminId);
+      if (!admin) {
+        return res.status(404).json({ message: "Admin account not found" });
       }
   
-      // Construct query to find workspaces by this specific provider
-      let query = { 
-        providerId: userId, // This is the key fix - filter by providerId
-        providerName: providerType 
-      };
-  
-      // Only show approved workspaces for non-admins
-      if (user.role.toLowerCase() !== "admin") {
-        query.approved = true;
+      if (admin.role.toLowerCase() !== "admin") {
+        return res.status(403).json({ message: "Only admins can access this endpoint" });
       }
   
-      // Fetch workspaces
+      // Fetch all providers (users with role "provider")
+      const providers = await User.find({ role: "provider" })
+        .select("fullname email phone companyName profilePicture role isVerified blocked _id")
+        .lean();
+  
+      console.log('Fetched providers:', providers); // Debug
+  
+      if (!providers || providers.length === 0) {
+        return res.status(200).json({
+          message: "No providers found",
+          data: { providers: [] },
+        });
+      }
+  
+      // Fetch all workspaces
+      let query = { providerId: { $exists: true, $ne: null } };
+      // Optionally, admins can see all workspaces (approved or not). If you want to change this, uncomment the following:
+      // query.approved = true;
+  
       const workspaces = await WorkSpace.find(query)
         .populate({
           path: "registeredClients assignedSpaceProvider",
@@ -76,10 +84,41 @@ const workspaceController = {
         })
         .lean();
   
-      // Return a flat array of workspaces instead of grouping
+      console.log('Fetched workspaces:', workspaces); // Debug
+  
+      // Count the number of workspaces per provider
+      const providerWorkspaceCounts = workspaces.reduce((acc, workspace) => {
+        const providerId = workspace.providerId?.toString();
+        if (providerId) {
+          acc[providerId] = (acc[providerId] || 0) + 1;
+        }
+        return acc;
+      }, {});
+  
+      console.log('Provider workspace counts:', providerWorkspaceCounts); // Debug
+  
+      // Map providers to the required format, including those with 0 workspaces
+      const providersWithDetails = providers.map(provider => {
+        const providerIdStr = provider._id.toString();
+        return {
+          id: provider._id,
+          fullName: provider.fullname || "N/A",
+          companyName: provider.companyName || "N/A",
+          email: provider.email || "N/A",
+          phone: provider.phone || "N/A",
+          role: provider.role || "provider",
+          profilePicture: provider.profilePicture || "",
+          workspacesCreated: providerWorkspaceCounts[providerIdStr] || 0, // Default to 0 if no workspaces
+          isVerified: provider.isVerified || false,
+          blocked: provider.blocked || false,
+        };
+      });
+  
+      console.log('Providers with details:', providersWithDetails); // Debug
+  
       return res.status(200).json({
-        message: "Workspaces retrieved successfully",
-        workspaces: workspaces // Changed from grouped structure to flat array
+        message: "Providers retrieved successfully",
+        data: { providers: providersWithDetails },
       });
     } catch (error) {
       console.error("Error fetching workspaces by provider:", error);
@@ -92,8 +131,8 @@ const workspaceController = {
   deleteCategory: async (req, res) => {
     try {
       const categoryName = req.params.categoryName;
-      const userId = req.params.userId; // Optional: if you want to check user role
-      const user = await User.findById(userId);
+      const adminId = req.params.adminId; // Optional: if you want to check user role
+      const user = await User.findById(adminId);
 
       if (!user || user.role.toLowerCase() !== "admin") {
         return res.status(403).json({ message: "Only admins can delete categories" });
@@ -118,8 +157,8 @@ const workspaceController = {
   updateCategory: async (req, res) => {
     try {
       const categoryName = req.params.categoryName.toLowerCase();
-      const userId = req.params.userId; 
-      const user = await User.findById(userId);
+      const adminId = req.params.adminId; 
+      const user = await User.findById(adminId);
 
       if (!user || user.role.toLowerCase() !== "admin") {
         return res.status(403).json({ message: "Only admins can update categories" });
@@ -159,8 +198,8 @@ const workspaceController = {
 
   getWorkspaceByCategory: async (req, res) => {
     try {
-        const userId = req.body.userId || req.query.userId;
-        const user = await User.findById(userId);
+        const adminId = req.body.adminId || req.query.adminId;
+        const user = await User.findById(adminId);
         if (!user) {
             return res.status(401).json({ message: "User not found" });
         }
@@ -237,13 +276,13 @@ getDefaultWorkspaces: async (req, res) => {
 
   getSpaceProviderSpaces: async (req, res) => {
     const category = req.body.category;
-    const userId = req.body.id;
+    const adminId = req.body.id;
 
     try {
       const workspace = await WorkSpace.find({
         $or: [
-          { assignedSpaceProvider: { $in: userId }, approved: true },
-          { category: category, approved: true, providerId: userId },
+          { assignedSpaceProvider: { $in: adminId }, approved: true },
+          { category: category, approved: true, providerId: adminId },
         ],
       })
         .populate({
@@ -262,7 +301,7 @@ getDefaultWorkspaces: async (req, res) => {
   },
 
   getPlatformWorkspaces: async (req, res) => {
-    const providerId = req.params.userId;
+    const providerId = req.params.adminId;
 
     try {
       const workspaces = await WorkSpace.find({
@@ -285,10 +324,10 @@ getDefaultWorkspaces: async (req, res) => {
 
   getWorkSpaceById: async (req, res) => {
     const workspaceId = req.params.workspaceId;
-    const userId = req.query.userId;
+    const adminId = req.query.adminId;
   
     try {
-      const user = await User.findById(userId);
+      const user = await User.findById(adminId);
       if (!user) {
         return res.status(401).json({ message: "User not found" });
       }
@@ -320,8 +359,8 @@ getDefaultWorkspaces: async (req, res) => {
 
   getAllWorkspaces: async (req, res) => {
     try {
-      const userId = req.params.userId || req.query.userId;
-      const user = await User.findById(userId);
+      const adminId = req.params.adminId || req.query.adminId;
+      const user = await User.findById(adminId);
       if (!user) {
         return res.status(401).json({ message: "User not found" });
       }
@@ -381,8 +420,8 @@ getDefaultWorkspaces: async (req, res) => {
 
   addWorkSpace: async (req, res) => {
     try {
-      const userId = req.params.userId; // Authenticated user ID from params
-      const user = await User.findById(userId);
+      const adminId = req.params.adminId; // Authenticated user ID from params
+      const user = await User.findById(adminId);
       if (!user) {
         return res.status(401).json({ message: "User not found" });
       }
@@ -416,7 +455,7 @@ getDefaultWorkspaces: async (req, res) => {
       // Role-based logic
       const isAdmin = user.role.toLowerCase() === "admin";
       const approved = isAdmin; // true if admin, false otherwise (e.g., provider)
-      const providerId = isAdmin ? null : userId; // Providers use their own ID, admins leave it optional
+      const providerId = isAdmin ? null : adminId; // Providers use their own ID, admins leave it optional
   
       const newWorkspace = new WorkSpace({
         title,
@@ -461,8 +500,8 @@ getDefaultWorkspaces: async (req, res) => {
 
   addCategory: async (req, res) => {
     try {
-        const userId = req.params.userId;
-        const user = await User.findById(userId);
+        const adminId = req.params.adminId;
+        const user = await User.findById(adminId);
         if (!user) {
             return res.status(401).json({ message: "User not found" });
         }
@@ -505,8 +544,8 @@ getDefaultWorkspaces: async (req, res) => {
 
   getUnapproved: async (req, res) => {
   try {
-    const userId = req.query.userId;
-    const user = await User.findById(userId);
+    const adminId = req.query.adminId;
+    const user = await User.findById(adminId);
     if (!user) {
       return res.status(401).json({ message: "User not found" });
     }
@@ -614,12 +653,12 @@ getDefaultWorkspaces: async (req, res) => {
         title: "Workspace enrolled",
         content: `${user.fullname} Just enrolled for your workspace ${workspace.workSpaceTitle}`,
         contentId: workspace._id,
-        userId: workspace.providerId,
+        adminId: workspace.providerId,
       });
 
       if (workspace.fee > 0) {
         await Transaction.create({
-          userId: creator._id,
+          adminId: creator._id,
           amount: workspace.fee,
           type: "credit",
         });
@@ -669,7 +708,7 @@ getDefaultWorkspaces: async (req, res) => {
           title: "Tutor Assigned",
           content: `${user.fullname} was assigned to your Course ${workspace.workSpaceTitle}`,
           contentId: workspace._id,
-          userId: workspace.providerId,
+          adminId: workspace.providerId,
         });
       }
 
@@ -683,16 +722,16 @@ getDefaultWorkspaces: async (req, res) => {
   },
 
   getEnrolledWorkspaces: async (req, res) => {
-    const userId = req.params.userId;
+    const adminId = req.params.adminId;
   
     try {
-      const user = await User.findById(userId);
+      const user = await User.findById(adminId);
       if (!user) {
         return res.status(401).json({ message: "User not found" });
       }
   
       const query = {
-        $or: [{ registeredClients: userId }, { "enrollments.user": userId }],
+        $or: [{ registeredClients: adminId }, { "enrollments.user": adminId }],
       };
       if (user.role.toLowerCase() !== "admin") {
         query.approved = true;
@@ -775,9 +814,9 @@ getDefaultWorkspaces: async (req, res) => {
   // fetch roundom workspace
   getRecommendedWorkspace: async (req, res) => {
     try {
-      const userId = req.params.userId;
+      const adminId = req.params.adminId;
   
-      const user = await User.findById(userId);
+      const user = await User.findById(adminId);
       if (!user) {
         return res.status(401).json({ message: "User not found" });
       }
@@ -798,11 +837,11 @@ getDefaultWorkspaces: async (req, res) => {
   
       const recommendedWorkspaces = await workspace
         .map((workspace) => {
-          if (workspace.registeredClients.includes(userId)) {
+          if (workspace.registeredClients.includes(adminId)) {
             return null;
           } else if (
             workspace.enrollments?.find(
-              (client) => client.user?.toString() === userId
+              (client) => client.user?.toString() === adminId
             )
           ) {
             return null;
@@ -819,7 +858,7 @@ getDefaultWorkspaces: async (req, res) => {
       return res.status(200).json({
         workspaces: recommendedWorkspaces.filter(
           (workspace) =>
-            workspace.audience.length === 0 || workspace.audience.includes(userId)
+            workspace.audience.length === 0 || workspace.audience.includes(adminId)
         ),
       });
     } catch (error) {
@@ -987,7 +1026,7 @@ getDefaultWorkspaces: async (req, res) => {
 
       if (workspace.fee > 0) {
         await Transaction.create({
-          userId: workspace.instructorId,
+          adminId: workspace.instructorId,
           amount: workspace.fee,
           type: "credit",
         });
@@ -999,7 +1038,7 @@ getDefaultWorkspaces: async (req, res) => {
         title: "Workspace enrollment renewal",
         content: `${user.fullname} Just renewed enrollment for your workspace ${workspace.workSpaceTitle}`,
         contentId: workspace._id,
-        userId: workspace.providerId,
+        adminId: workspace.providerId,
       });
       return res.status(200).json({ message: "Renewed successfully" });
     } catch (error) {
