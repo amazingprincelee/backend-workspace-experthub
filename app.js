@@ -22,7 +22,13 @@ const transactionRouter = require('./routes/transactionRoute');
 const appointmentRouter = require('./routes/appointmentRouter.js');
 const certificateRouter = require('./routes/certificateRouter.js');
 const startUpKitRouter = require('./routes/startupkit.js');
-const workspaceRouter = require('./routes/workspaceRoute.js')
+const workspaceRouter = require('./routes/workspaceRoute.js');
+const feedbackRouter = require('./routes/feebackRoute.js');
+
+
+
+
+
 
 const Chat = require('./models/chat');
 const User = require('./models/user');
@@ -97,6 +103,7 @@ app.use('/appointment', appointmentRouter);
 app.use('/certificate', certificateRouter);
 app.use('/start-up-kit', startUpKitRouter);
 app.use('/workspace', workspaceRouter);
+app.use('/feedback', feedbackRouter);
 
 
 // Socket.io logic

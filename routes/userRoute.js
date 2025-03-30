@@ -42,4 +42,7 @@ userRouter.get("/users-by-role",  userControllers.getUsersByRole);
 userRouter.delete("/:id",  userControllers.deleteUser);
 userRouter.put("/block-user/:id", userControllers.blockUser);
 
+userRouter.put("/verify/:id", userControllers.verifyUser);
+userRouter.put("/unverify/:id", userControllers.unverifyUser);
+
 module.exports = userRouter;

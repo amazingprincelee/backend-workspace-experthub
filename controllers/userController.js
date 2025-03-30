@@ -38,7 +38,8 @@ const userControllers = {
         premiumPlan: existingUser.premiumPlan,
         signature: existingUser.signature,
         role: existingUser.role,
-        companyName: existingUser.companyName
+        companyName: existingUser.companyName,
+        isVerified: existingUser.isVerified,
 
       };
 
@@ -83,6 +84,72 @@ const userControllers = {
       return res.status(500).json({ message: "Unexpected error while fetching users" });
     }
   },
+
+  // Verify a user
+verifyUser: async (req, res) => {
+  try {
+    const { adminId } = req.body;
+    if (!adminId) {
+      return res.status(400).json({ message: "Admin ID is required in the request body" });
+    }
+
+    const adminUser = await User.findById(adminId);
+    if (!adminUser) {
+      return res.status(404).json({ message: "Admin user not found" });
+    }
+
+    if (adminUser.role.toLowerCase() !== "admin") {
+      return res.status(403).json({ message: "Unauthorized: Admin access required" });
+    }
+
+    const userId = req.params.id;
+    const userToVerify = await User.findById(userId);
+    if (!userToVerify) {
+      return res.status(404).json({ message: "User to verify not found" });
+    }
+
+    userToVerify.isVerified = true;
+    await userToVerify.save();
+
+    return res.status(200).json({ message: "User verified successfully" });
+  } catch (error) {
+    console.error("Error verifying user:", error);
+    return res.status(500).json({ message: "Unexpected error while verifying user" });
+  }
+},
+
+// Unverify a user
+unverifyUser: async (req, res) => {
+  try {
+    const { adminId } = req.body;
+    if (!adminId) {
+      return res.status(400).json({ message: "Admin ID is required in the request body" });
+    }
+
+    const adminUser = await User.findById(adminId);
+    if (!adminUser) {
+      return res.status(404).json({ message: "Admin user not found" });
+    }
+
+    if (adminUser.role.toLowerCase() !== "admin") {
+      return res.status(403).json({ message: "Unauthorized: Admin access required" });
+    }
+
+    const userId = req.params.id;
+    const userToUnverify = await User.findById(userId);
+    if (!userToUnverify) {
+      return res.status(404).json({ message: "User to unverify not found" });
+    }
+
+    userToUnverify.isVerified = false;
+    await userToUnverify.save();
+
+    return res.status(200).json({ message: "User unverified successfully" });
+  } catch (error) {
+    console.error("Error unverifying user:", error);
+    return res.status(500).json({ message: "Unexpected error while unverifying user" });
+  }
+},
   
   
   // Delete a user
