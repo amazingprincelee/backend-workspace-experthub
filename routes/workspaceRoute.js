@@ -8,7 +8,7 @@ WorkspaceRoute.get("/", (req, res) => {
 });
 
 // Workspace routes (specific routes first)
-WorkspaceRoute.get("/workspaces-by-provider", workspaceController.getWorkspacesByProvider); // Moved up
+WorkspaceRoute.get("/workspaces-by-provider", workspaceController.getWorkspacesByProvider); 
 WorkspaceRoute.post("/category", workspaceController.getWorkspaceByCategory);
 WorkspaceRoute.get("/category/creator", workspaceController.getSpaceProviderSpaces);
 WorkspaceRoute.get("/approved-providers", workspaceController.getApprovedProviders);
@@ -17,9 +17,9 @@ WorkspaceRoute.get("/default-workspaces", workspaceController.getDefaultWorkspac
 WorkspaceRoute.get("/all", workspaceController.getAllWorkspaces);
 
 // Workspace routes with dynamic parameters (after specific routes)
-WorkspaceRoute.get("/:workspaceId", workspaceController.getWorkSpaceById); // Moved down
+WorkspaceRoute.get("/:workspaceId", workspaceController.getWorkSpaceById); 
 
-WorkspaceRoute.post("/add-workspace/:userId", workspaceController.addWorkSpace); // Removed duplicate
+WorkspaceRoute.post("/add-workspace/:userId", workspaceController.addWorkSpace); 
 
 // Category routes
 WorkspaceRoute.post("/category/:userId", workspaceController.addCategory);

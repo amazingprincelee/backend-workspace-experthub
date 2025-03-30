@@ -1,3 +1,5 @@
+//wo
+
 const WorkSpace = require("../models/workspace.js");
 const User = require("../models/user.js");
 const WorkspaceCategory = require("../models/workspaceCategory.js");
@@ -38,28 +40,35 @@ const workspaceController = {
   // controllers/workspaceController.js
   getWorkspacesByProvider: async (req, res) => {
     try {
-      const { providerType, userId } = req.query; // Extract query params
+      const { providerType, userId } = req.query;
+      
+      console.log('Received params:', { providerType, userId });
   
-      // Validate userId
+      if (!userId) {
+        return res.status(400).json({ message: "User ID is required" });
+      }
+      if (!providerType) {
+        return res.status(400).json({ message: "Provider type is required" });
+      }
+  
+      // Validate user existence
       const user = await User.findById(userId);
       if (!user) {
         return res.status(404).json({ message: "User not found" });
       }
   
-      // Validate providerType
-      if (!["ExpertHub", "Provider"].includes(providerType)) {
-        return res.status(400).json({ message: "Invalid providerType" });
-      }
+      // Construct query to find workspaces by this specific provider
+      let query = { 
+        providerId: userId, // This is the key fix - filter by providerId
+        providerName: providerType 
+      };
   
-      // Fetch workspaces based on providerType
-      let query = { providerName: providerType };
-      
-      // For admins, fetch all workspaces (approved and unapproved)
+      // Only show approved workspaces for non-admins
       if (user.role.toLowerCase() !== "admin") {
-        // For non-admins (e.g., clients), only fetch approved workspaces
         query.approved = true;
       }
   
+      // Fetch workspaces
       const workspaces = await WorkSpace.find(query)
         .populate({
           path: "registeredClients assignedSpaceProvider",
@@ -67,24 +76,18 @@ const workspaceController = {
         })
         .lean();
   
-      // Group workspaces by category
-      const groupedWorkspaces = workspaces.reduce((acc, workspace) => {
-        const category = workspace.category || "Uncategorized";
-        if (!acc[category]) {
-          acc[category] = [];
-        }
-        acc[category].push(workspace);
-        return acc;
-      }, {});
-  
+      // Return a flat array of workspaces instead of grouping
       return res.status(200).json({
-        data: { workspaces: groupedWorkspaces },
+        message: "Workspaces retrieved successfully",
+        workspaces: workspaces // Changed from grouped structure to flat array
       });
     } catch (error) {
       console.error("Error fetching workspaces by provider:", error);
       return res.status(500).json({ message: "Server error" });
     }
   },
+  
+  
 
   deleteCategory: async (req, res) => {
     try {

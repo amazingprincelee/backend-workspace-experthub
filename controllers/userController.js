@@ -37,7 +37,8 @@ const userControllers = {
         premiumPlanExpires: existingUser.premiumPlanExpires,
         premiumPlan: existingUser.premiumPlan,
         signature: existingUser.signature,
-        role: existingUser.role
+        role: existingUser.role,
+        companyName: existingUser.companyName
 
       };
 
@@ -45,6 +46,114 @@ const userControllers = {
     } catch (error) {
       console.error(error);
       return res.status(500).json({ message: 'Unexpected error during profile retrieval' });
+    }
+  },
+
+  //new controller function added by workspace developer getUserByRole, delete and block user
+  getUsersByRole: async (req, res) => {
+    try {
+      // Extract adminId from query parameters instead of request body
+      const { adminId, role } = req.query;
+  
+      if (!adminId) {
+        return res.status(400).json({ message: "Admin ID is required in the query parameters" });
+      }
+  
+      if (!role) {
+        return res.status(400).json({ message: "Role query parameter is required" });
+      }
+  
+      // Fetch the admin user
+      const adminUser = await User.findById(adminId);
+      if (!adminUser) {
+        return res.status(404).json({ message: "Admin user not found" });
+      }
+  
+      // Admin check
+      if (adminUser.role.toLowerCase() !== "admin") {
+        return res.status(403).json({ message: "Unauthorized: Admin access required" });
+      }
+  
+      // Fetch users based on role
+      const users = await User.find({ role: role.toLowerCase() }).lean();
+  
+      return res.status(200).json({ message: "Users retrieved successfully", users });
+    } catch (error) {
+      console.error("Error fetching users by role:", error);
+      return res.status(500).json({ message: "Unexpected error while fetching users" });
+    }
+  },
+  
+  
+  // Delete a user
+  deleteUser: async (req, res) => {
+    try {
+      // Extract the admin's user ID from the request body
+      const { adminId } = req.body;
+      if (!adminId) {
+        return res.status(400).json({ message: "Admin ID is required in the request body" });
+      }
+  
+      // Fetch the admin user
+      const adminUser = await User.findById(adminId);
+      if (!adminUser) {
+        return res.status(404).json({ message: "Admin user not found" });
+      }
+  
+      // Admin check
+      if (adminUser.role.toLowerCase() !== "admin") {
+        return res.status(403).json({ message: "Unauthorized: Admin access required" });
+      }
+  
+      // Fetch the user to delete
+      const userId = req.params.id;
+      const userToDelete = await User.findById(userId);
+      if (!userToDelete) {
+        return res.status(404).json({ message: "User to delete not found" });
+      }
+  
+      await User.deleteOne({ _id: userId });
+      return res.status(200).json({ message: "User deleted successfully" });
+    } catch (error) {
+      console.error("Error deleting user:", error);
+      return res.status(500).json({ message: "Unexpected error while deleting user" });
+    }
+  },
+  
+  // Block a user
+  blockUser: async (req, res) => {
+    try {
+      // Extract the admin's user ID from the request body
+      const { adminId, blocked } = req.body;
+      if (!adminId) {
+        return res.status(400).json({ message: "Admin ID is required in the request body" });
+      }
+  
+      // Fetch the admin user
+      const adminUser = await User.findById(adminId);
+      if (!adminUser) {
+        return res.status(404).json({ message: "Admin user not found" });
+      }
+  
+      // Admin check
+      if (adminUser.role.toLowerCase() !== "admin") {
+        return res.status(403).json({ message: "Unauthorized: Admin access required" });
+      }
+  
+      // Fetch the user to block
+      const userId = req.params.id;
+      const userToBlock = await User.findById(userId);
+      if (!userToBlock) {
+        return res.status(404).json({ message: "User to block not found" });
+      }
+  
+      userToBlock.blocked = blocked;
+      await userToBlock.save();
+  
+      return res.status(200).json({ message: `User ${blocked ? "blocked" : "unblocked"} successfully` });
+    } catch (error) {
+      console.error("Error blocking user:", error);
+      return res.status(500).json({ message: "Unexpected error while blocking user" });
     }
   },
 

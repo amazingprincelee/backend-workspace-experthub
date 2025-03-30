@@ -1,7 +1,7 @@
 const express = require('express');
 const userControllers = require('../controllers/userController.js');
 const userRouter = express.Router();
-const auth = require("../middlewares/auth.js");
+
 
 
 userRouter.get("/", (req, res) => {
@@ -36,5 +36,10 @@ userRouter.put("/signature/:id", userControllers.addSignature)
 
 userRouter.get('/team/:tutorId', userControllers.getTeamMembers)
 userRouter.delete('/team/:tutorId/:ownerId', userControllers.deleteTeamMembers)
+
+// Added routes 
+userRouter.get("/users-by-role",  userControllers.getUsersByRole);
+userRouter.delete("/:id",  userControllers.deleteUser);
+userRouter.put("/block-user/:id", userControllers.blockUser);
 
 module.exports = userRouter;
