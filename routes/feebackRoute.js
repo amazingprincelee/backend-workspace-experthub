@@ -9,5 +9,6 @@ feedbackRouter.get("/", (req, res) => {
 
 feedbackRouter.post("/create", feedbackController.createFeedback);
 feedbackRouter.get("/provider/:providerId", feedbackController.getFeedbackByProvider);
+feedbackRouter.get("/client/:clientId", feedbackController.getFeedbackByClient);
 
 module.exports = feedbackRouter;

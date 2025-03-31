@@ -65,6 +65,31 @@ const feedbackController = {
       return res.status(500).json({ message: "Unexpected error while fetching feedback" });
     }
   },
+
+  getFeedbackByClient: async (req, res) => {
+    try {
+      const clientId = req.params.clientId;
+
+      const feedback = await Feedback.find({ userId: clientId })
+        .populate("userId", "fullname profilePicture")
+        .lean();
+
+      if (!feedback || feedback.length === 0) {
+        return res.status(200).json({
+          message: "No feedback found for this client",
+          feedback: [],
+        });
+      }
+
+      return res.status(200).json({
+        message: "Feedback retrieved successfully",
+        feedback,
+      });
+    } catch (error) {
+      console.error("Error fetching feedback for client:", error);
+      return res.status(500).json({ message: "Unexpected error while fetching feedback for client" });
+    }
+  },
 };
 
 module.exports = feedbackController;

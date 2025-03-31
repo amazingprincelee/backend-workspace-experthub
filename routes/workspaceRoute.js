@@ -9,6 +9,7 @@ WorkspaceRoute.get("/", (req, res) => {
 
 // Workspace routes (specific routes first)
 WorkspaceRoute.get("/workspaces-by-provider", workspaceController.getWorkspacesByProvider); 
+WorkspaceRoute.get("/workspaces-by-client", workspaceController.getWorkspacesByClient);
 WorkspaceRoute.post("/category", workspaceController.getWorkspaceByCategory);
 WorkspaceRoute.get("/category/creator", workspaceController.getSpaceProviderSpaces);
 WorkspaceRoute.get("/approved-providers", workspaceController.getApprovedProviders);

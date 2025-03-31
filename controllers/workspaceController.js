@@ -125,6 +125,89 @@ const workspaceController = {
       return res.status(500).json({ message: "Server error" });
     }
   },
+
+  getWorkspacesByClient: async (req, res) => {
+    try {
+      const { adminId } = req.query;
+  
+      console.log('Received adminId:', adminId); // Debug
+  
+      if (!adminId) {
+        return res.status(400).json({ message: "Admin ID is required" });
+      }
+  
+      // Verify the requesting user is an admin
+      const admin = await User.findById(adminId);
+      if (!admin) {
+        return res.status(404).json({ message: "Admin account not found" });
+      }
+  
+      if (admin.role.toLowerCase() !== "admin") {
+        return res.status(403).json({ message: "Only admins can access this endpoint" });
+      }
+  
+      // Fetch all clients (users with role "client")
+      const clients = await User.find({ role: "client" })
+        .select("fullname email phone profilePicture role isVerified blocked _id")
+        .lean();
+  
+      console.log('Fetched clients:', clients); // Debug
+  
+      if (!clients || clients.length === 0) {
+        return res.status(200).json({
+          message: "No clients found",
+          data: { clients: [] },
+        });
+      }
+  
+      // Fetch all workspaces
+      const workspaces = await WorkSpace.find({})
+        .populate({
+          path: "registeredClients",
+          select: "profilePicture fullname _id",
+        })
+        .lean();
+  
+      console.log('Fetched workspaces:', workspaces); // Debug
+  
+      // Count the number of workspaces each client is enrolled in
+      const clientWorkspaceCounts = workspaces.reduce((acc, workspace) => {
+        workspace.registeredClients.forEach((client) => {
+          const clientId = client._id.toString();
+          acc[clientId] = (acc[clientId] || 0) + 1;
+        });
+        return acc;
+      }, {});
+  
+      console.log('Client workspace counts:', clientWorkspaceCounts); // Debug
+  
+      // Map clients to the required format, including those with 0 enrolled workspaces
+      const clientsWithDetails = clients.map(client => {
+        const clientIdStr = client._id.toString();
+        return {
+          id: client._id,
+          fullName: client.fullname || "N/A",
+          email: client.email || "N/A",
+          phone: client.phone || "N/A",
+          role: client.role || "client",
+          profilePicture: client.profilePicture || "",
+          workspacesEnrolled: clientWorkspaceCounts[clientIdStr] || 0, // Default to 0 if no workspaces
+          isVerified: client.isVerified || false,
+          blocked: client.blocked || false,
+        };
+      });
+  
+      console.log('Clients with details:', clientsWithDetails); // Debug
+  
+      return res.status(200).json({
+        message: "Clients retrieved successfully",
+        data: { clients: clientsWithDetails },
+      });
+    } catch (error) {
+      console.error("Error fetching workspaces by client:", error);
+      return res.status(500).json({ message: "Server error" });
+    }
+  },
   
   
 
