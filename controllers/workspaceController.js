@@ -1,4 +1,4 @@
-//wo
+
 
 const WorkSpace = require("../models/workspace.js");
 const User = require("../models/user.js");
@@ -34,6 +34,54 @@ const workspaceController = {
       return res.status(500).json({
         message: "Unexpected error while fetching categories",
       });
+    }
+  },
+
+  getDashboardStats: async (req, res) => {
+    try {
+      const { adminId } = req.query;
+  
+      if (!adminId) {
+        return res.status(400).json({ message: "Admin ID is required" });
+      }
+  
+      // Verify the requesting user is an admin
+      const admin = await User.findById(adminId);
+      if (!admin) {
+        return res.status(404).json({ message: "Admin account not found" });
+      }
+  
+      if (admin.role.toLowerCase() !== "admin") {
+        return res.status(403).json({ message: "Only admins can access this endpoint" });
+      }
+  
+      // Total number of workspaces
+      const totalWorkspaces = await WorkSpace.countDocuments();
+  
+      // Total number of clients
+      const totalClients = await User.countDocuments({ role: "client" });
+  
+      // Total number of subscriptions (total enrollments across all workspaces)
+      const workspaces = await WorkSpace.find({}).lean();
+      const totalSubscriptions = workspaces.reduce((acc, workspace) => {
+        return acc + (workspace.registeredClients?.length || 0);
+      }, 0);
+  
+      // Total number of workspace providers
+      const totalProviders = await User.countDocuments({ role: "provider" });
+  
+      return res.status(200).json({
+        message: "Dashboard stats retrieved successfully",
+        data: {
+          totalWorkspaces,
+          totalClients,
+          totalSubscriptions,
+          totalProviders,
+        },
+      });
+    } catch (error) {
+      console.error("Error fetching dashboard stats:", error);
+      return res.status(500).json({ message: "Server error" });
     }
   },
 

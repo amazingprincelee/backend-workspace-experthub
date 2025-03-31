@@ -17,6 +17,9 @@ WorkspaceRoute.get("/creator/:userId", workspaceController.getPlatformWorkspaces
 WorkspaceRoute.get("/default-workspaces", workspaceController.getDefaultWorkspaces);
 WorkspaceRoute.get("/all", workspaceController.getAllWorkspaces);
 
+//workspace dashboard
+WorkspaceRoute.get("/dashboard-stats", workspaceController.getDashboardStats);
+
 // Workspace routes with dynamic parameters (after specific routes)
 WorkspaceRoute.get("/:workspaceId", workspaceController.getWorkSpaceById); 
 
