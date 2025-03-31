@@ -14,6 +14,7 @@ const userRouter = require('./routes/userRoute');
 const courseRouter = require('./routes/courseRoute');
 const accessmentRouter = require('./routes/assessments');
 const notificationRouter = require('./routes/notification');
+const workspaceNotificationRouter = require('./routes/workspaceNotification.js');
 const resourceRoute = require('./routes/resourceRouter');
 const eventRouter = require('./routes/eventRoute');
 const categoryRoute = require('./routes/categoryRoute');
@@ -24,6 +25,7 @@ const certificateRouter = require('./routes/certificateRouter.js');
 const startUpKitRouter = require('./routes/startupkit.js');
 const workspaceRouter = require('./routes/workspaceRoute.js');
 const feedbackRouter = require('./routes/feebackRoute.js');
+const announcementRoutes = require('./routes/announcementRoute.js');
 
 
 
@@ -96,6 +98,7 @@ app.use('/events', eventRouter);
 app.use('/resources', resourceRoute);
 app.use('/assessment', accessmentRouter);
 app.use('/notifications', notificationRouter);
+app.use('/space-notifications', workspaceNotificationRouter);
 app.use('/category', categoryRoute);
 app.use('/notice', noticeRouter);
 app.use('/transactions', transactionRouter);
@@ -104,6 +107,7 @@ app.use('/certificate', certificateRouter);
 app.use('/start-up-kit', startUpKitRouter);
 app.use('/workspace', workspaceRouter);
 app.use('/feedback', feedbackRouter);
+app.use('/announcements', announcementRoutes);
 
 
 // Socket.io logic

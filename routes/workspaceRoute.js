@@ -19,11 +19,12 @@ WorkspaceRoute.get("/all", workspaceController.getAllWorkspaces);
 
 //workspace dashboard
 WorkspaceRoute.get("/dashboard-stats", workspaceController.getDashboardStats);
+WorkspaceRoute.get("/recommended", workspaceController.getRecommendedWorkspace);
 
 // Workspace routes with dynamic parameters (after specific routes)
 WorkspaceRoute.get("/:workspaceId", workspaceController.getWorkSpaceById); 
 
-WorkspaceRoute.post("/add-workspace/:userId", workspaceController.addWorkSpace); 
+WorkspaceRoute.post("/add-workspace/:userId", workspaceController.addWorkSpace);
 
 // Category routes
 WorkspaceRoute.post("/category/:userId", workspaceController.addCategory);
@@ -37,7 +38,8 @@ WorkspaceRoute.post("/assign/:workspaceId", workspaceController.assignedSpacePro
 
 WorkspaceRoute.get("/enrolled-workspaces/:userId", workspaceController.getEnrolledWorkspaces);
 // Get random courses
-WorkspaceRoute.get("/recommended-workspaces/:userId", workspaceController.getRecommendedWorkspace);
+WorkspaceRoute.get("/recommendedworkspaces/:userId", workspaceController.getRecommendedWorkspace);
+
 
 // Get all workspaces with category
 WorkspaceRoute.get("/all/category", workspaceController.getAllCategory);

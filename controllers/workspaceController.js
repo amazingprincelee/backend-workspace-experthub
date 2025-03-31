@@ -1,10 +1,10 @@
 
-
+const mongoose = require('mongoose');
 const WorkSpace = require("../models/workspace.js");
 const User = require("../models/user.js");
 const WorkspaceCategory = require("../models/workspaceCategory.js");
 const { upload } = require("../config/cloudinary.js");
-const Notification = require("../models/notifications.js");
+const Notification = require("../models/workspaceNotification.js");
 const Transaction = require("../models/transactions.js");
 const dayjs = require("dayjs");
 const isBetween = require("dayjs/plugin/isBetween.js");
@@ -572,8 +572,8 @@ getDefaultWorkspaces: async (req, res) => {
         fee,
         strikedFee,
         providerName, // Selected from frontend autocomplete for admins
-        location, 
-      persons, 
+        location,
+        persons,
       } = req.body;
   
       const file = req.files?.thumbnail;
@@ -611,10 +611,56 @@ getDefaultWorkspaces: async (req, res) => {
         strikedFee,
         approved, // true for admin, false for provider
         location, // Add location field
-      persons: parseInt(persons), // Add persons field
+        persons: parseInt(persons), // Add persons field
       });
   
       const savedWorkspace = await newWorkspace.save();
+  
+      // Notification Logic
+      const notifications = [];
+  
+      // Notify the user who created the workspace (admin or provider)
+      notifications.push({
+        title: "Workspace Created",
+        content: `You have successfully created the workspace "${savedWorkspace.title}".`,
+        contentId: savedWorkspace._id,
+        userId: user._id, // Changed from adminId to user._id for consistency
+        read: false,
+      });
+  
+      // If the user is an admin and specified a providerName, notify the provider
+      if (isAdmin && providerName) {
+        const provider = await User.findOne({ fullname: providerName, role: "provider" });
+        if (provider) {
+          notifications.push({
+            title: "New Workspace Assigned",
+            content: `A new workspace "${savedWorkspace.title}" has been created for you by ${user.fullname}.`,
+            contentId: savedWorkspace._id,
+            userId: provider._id,
+            read: false,
+          });
+        }
+      }
+  
+      // If the user is a provider (not an admin), notify all admins
+      if (!isAdmin) {
+        const admins = await User.find({ role: "admin" }).lean();
+        if (admins && admins.length > 0) {
+          const adminNotifications = admins.map((admin) => ({
+            title: "New Workspace Created",
+            content: `A new workspace "${savedWorkspace.title}" has been created by ${user.fullname} and is awaiting approval.`,
+            contentId: savedWorkspace._id,
+            userId: admin._id,
+            read: false,
+          }));
+          notifications.push(...adminNotifications);
+        }
+      }
+  
+      // Create all notifications
+      if (notifications.length > 0) {
+        await Notification.insertMany(notifications);
+      }
   
       return res.status(201).json({
         message: "Workspace created successfully",
@@ -756,20 +802,14 @@ getDefaultWorkspaces: async (req, res) => {
       if (!workspace) {
         return res.status(404).json({ message: "workspace not found" });
       }
-      // console.log(course);
-      // Check if the student is already enrolled
+    
       if (workspace.registeredClients.includes(id)) {
         return res
           .status(400)
           .json({ message: "Client is already enrolled in the course" });
       }
 
-      // const student = course.enrollments.find(student => student.user.toString() === id);
-
-      // if (student) {
-      //     return res.status(400).json({ message: 'Student is already enrolled in the course' });
-      // }
-      // Enroll the student in the course
+      
       workspace.registeredClients.push(id);
       workspace.enrollments.push({
         user: id,
@@ -808,20 +848,32 @@ getDefaultWorkspaces: async (req, res) => {
   },
 
   assignedSpaceProvider: async (req, res) => {
+    console.log("Request received:", req.params, req.body); // Debug log
     const workspaceId = req.params.workspaceId;
-
     const { id } = req.body;
-
+  
+    // Validate ObjectIds
+    if (!mongoose.Types.ObjectId.isValid(workspaceId)) {
+      return res.status(400).json({ message: "Invalid workspace ID" });
+    }
+    if (!mongoose.Types.ObjectId.isValid(id)) {
+      return res.status(400).json({ message: "Invalid provider ID" });
+    }
+  
     try {
       const workspace = await WorkSpace.findById(workspaceId);
       const user = await User.findById(id);
-
-      console.log(user);
-      if (!course) {
-        return res.status(404).json({ message: "workspace not found" });
+  
+      console.log("User:", user);
+      console.log("Workspace:", workspace);
+  
+      if (!workspace) {
+        return res.status(404).json({ message: "Workspace not found" });
       }
-      console.log(workspace);
-      // Check if the student is already enrolled
+      if (!user) {
+        return res.status(404).json({ message: "User not found" });
+      }
+  
       if (workspace.assignedSpaceProvider.includes(id)) {
         await workspace.updateOne(
           { _id: workspace._id },
@@ -829,23 +881,23 @@ getDefaultWorkspaces: async (req, res) => {
         );
         return res
           .status(200)
-          .json({ message: "Space Provider is Unassigned to this workspace" });
+          .json({ message: "Space Provider is unassigned from this workspace" });
       } else {
         workspace.assignedSpaceProvider.push(id);
         workspace.contact = false;
         await workspace.save();
-
+  
         await Notification.create({
-          title: "Tutor Assigned",
-          content: `${user.fullname} was assigned to your Course ${workspace.workSpaceTitle}`,
+          title: "Provider Assigned",
+          content: `${user.fullName} was assigned to your workspace ${workspace.title}`,
           contentId: workspace._id,
-          adminId: workspace.providerId,
+          userId: workspace.providerId,
         });
+  
+        return res.status(200).json({ message: "Assigned successfully" });
       }
-
-      return res.status(200).json({ message: "Assigned successfully" });
     } catch (error) {
-      console.error(error);
+      console.error("Error in assignedSpaceProvider:", error);
       return res
         .status(500)
         .json({ message: "Unexpected error during assignment" });
@@ -942,78 +994,42 @@ getDefaultWorkspaces: async (req, res) => {
     }
   },
 
-  // fetch roundom workspace
+
   getRecommendedWorkspace: async (req, res) => {
+    
+  
     try {
-      const adminId = req.params.adminId;
-  
-      const user = await User.findById(adminId);
-      if (!user) {
-        return res.status(401).json({ message: "User not found" });
-      }
-  
-      const category = [user.assignedWorkspace, ...user.otherWorkspace];
-      const count = await WorkSpace.countDocuments();
-  
-      if (count === 0) {
+      // Step 1: Count total workspaces to ensure there are some available
+      const totalWorkspaces = await WorkSpace.countDocuments();
+      if (totalWorkspaces === 0) {
         return res.status(404).json({ message: "No workspaces available" });
       }
   
-      const query = { category: { $in: category } };
-      if (user.role.toLowerCase() !== "admin") {
-        query.approved = true;
+      // Step 2: Fetch all approved workspaces
+      const query = { approved: true }; // Only fetch approved workspaces
+      const workspaces = await WorkSpace.find(query);
+  
+      // Step 3: Check if there are any approved workspaces
+      if (!workspaces || workspaces.length === 0) {
+        return res.status(404).json({ message: "No approved workspaces available" });
       }
   
-      const workspace = await WorkSpace.find(query).sort({ _id: -1 });
+      // Step 4: Select a random workspace from the list
+      const randomIndex = Math.floor(Math.random() * workspaces.length);
+      const recommendedWorkspace = workspaces[randomIndex];
   
-      const recommendedWorkspaces = await workspace
-        .map((workspace) => {
-          if (workspace.registeredClients.includes(adminId)) {
-            return null;
-          } else if (
-            workspace.enrollments?.find(
-              (client) => client.user?.toString() === adminId
-            )
-          ) {
-            return null;
-          } else {
-            return workspace;
-          }
-        })
-        .filter((item) => item !== null);
-  
-      if (!recommendedWorkspaces || recommendedWorkspaces.length === 0) {
-        return res.status(404).json({ message: "No workspace available" });
-      }
-  
+      // Step 5: Return the recommended workspace
       return res.status(200).json({
-        workspaces: recommendedWorkspaces.filter(
-          (workspace) =>
-            workspace.audience.length === 0 || workspace.audience.includes(adminId)
-        ),
+        workspace: recommendedWorkspace,
       });
     } catch (error) {
-      console.error(error);
+      console.error("Error in getRecommendedWorkspace:", error);
       return res.status(500).json({
         message: "Unexpected error while fetching recommended workspace",
       });
     }
   },
-  // editWorkspace: async (req, res) => {
-  //     try {
-  //         const workspace = await WorkSpace.updateOne({
-  //             _id: req.params.id
-  //         }, {
-  //             ...req.body
-  //         }, {
-  //             new: true
-  //         })
-  //         res.json(workspace);
-  //     } catch (error) {
-  //         console.error(error);
-  //         res.status(400).json(error);
-  //     }
-  // },
+ 
 
   editWorkSpace: async (req, res) => {
     try {
