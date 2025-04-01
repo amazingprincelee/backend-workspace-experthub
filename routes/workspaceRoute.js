@@ -18,7 +18,8 @@ WorkspaceRoute.get("/default-workspaces", workspaceController.getDefaultWorkspac
 WorkspaceRoute.get("/all", workspaceController.getAllWorkspaces);
 
 //workspace dashboard
-WorkspaceRoute.get("/dashboard-stats", workspaceController.getDashboardStats);
+WorkspaceRoute.get("/dashboard-stats", workspaceController.getDashAdminStats);
+WorkspaceRoute.get("/provider-stats", workspaceController.getDashProviderStats);
 WorkspaceRoute.get("/recommended", workspaceController.getRecommendedWorkspace);
 
 // Workspace routes with dynamic parameters (after specific routes)

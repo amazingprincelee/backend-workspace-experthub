@@ -37,7 +37,7 @@ const workspaceController = {
     }
   },
 
-  getDashboardStats: async (req, res) => {
+  getDashAdminStats: async (req, res) => {
     try {
       const { adminId } = req.query;
   
@@ -84,6 +84,65 @@ const workspaceController = {
       return res.status(500).json({ message: "Server error" });
     }
   },
+
+
+
+  getDashProviderStats: async (req, res) => {
+    try {
+        const { providerId } = req.query;
+
+     
+        
+
+        if (!providerId) {
+            return res.status(400).json({ message: "Provider ID is required" });
+        }
+
+        // Verify the provider exists
+        const provider = await User.findById(providerId);
+        if (!provider) {
+            return res.status(404).json({ message: "Provider account not found" });
+        }
+
+        if (provider.role.toLowerCase() !== "provider") {
+            return res.status(403).json({ message: "Only providers can access this endpoint" });
+        }
+
+        // Get total number of workspaces created by the provider
+        const totalWorkspaces = await WorkSpace.countDocuments({ providerId });
+
+        
+        
+
+        // Get total number of clients across all workspaces owned by the provider
+        const workspaces = await WorkSpace.find({ providerId }).select("registeredClients enrollments assignedSpaceProvider");
+
+        const totalClients = workspaces.reduce((sum, workspace) => sum + workspace.registeredClients.length, 0);
+
+        // Get total number of subscriptions (enrollments across all workspaces)
+        const totalSubscriptions = workspaces.reduce((sum, workspace) => sum + workspace.enrollments.length, 0);
+
+        // Get total number of workspaces this provider has been assigned to
+        const totalNumbersOfWorkspaceAssignedTo = await WorkSpace.countDocuments({ assignedSpaceProvider: providerId });
+
+        
+
+        return res.status(200).json({
+            message: "Dashboard stats retrieved successfully",
+            data: {
+                totalWorkspaces,
+                totalClients,
+                totalSubscriptions,
+                totalNumbersOfWorkspaceAssignedTo,
+            },
+        });
+    } catch (error) {
+        console.error("Error fetching dashboard stats:", error);
+        return res.status(500).json({ message: "Server error" });
+    }
+},
+
+
 
   // controllers/workspaceController.js
   getWorkspacesByProvider: async (req, res) => {
@@ -551,8 +610,8 @@ getDefaultWorkspaces: async (req, res) => {
 
   addWorkSpace: async (req, res) => {
     try {
-      const adminId = req.params.adminId; // Authenticated user ID from params
-      const user = await User.findById(adminId);
+      const userId = req.params.userId; 
+      const user = await User.findById(userId);
       if (!user) {
         return res.status(401).json({ message: "User not found" });
       }
@@ -586,7 +645,7 @@ getDefaultWorkspaces: async (req, res) => {
       // Role-based logic
       const isAdmin = user.role.toLowerCase() === "admin";
       const approved = isAdmin; // true if admin, false otherwise (e.g., provider)
-      const providerId = isAdmin ? null : adminId; // Providers use their own ID, admins leave it optional
+      const providerId = isAdmin ? null : userId; // Providers use their own ID, admins leave it optional
   
       const newWorkspace = new WorkSpace({
         title,

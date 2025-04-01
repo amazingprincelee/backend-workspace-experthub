@@ -12,12 +12,7 @@ const connect = async () => {
   mongoose.set("debug", true); // Enable debug mode for detailed logs
 
   try {
-    await mongoose.connect(`mongodb+srv://${process.env.DB_USERNAME}:${process.env.DB_PASSWORD}@theplaint.u7pbgty.mongodb.net/?retryWrites=true&w=majority`, {
-      useNewUrlParser: true,
-      useUnifiedTopology: true,
-      serverSelectionTimeoutMS: 60000, // Increased timeout to 60 seconds
-      socketTimeoutMS: 90000, // Increased socket timeout to 90 seconds
-    });
+    await mongoose.connect(`mongodb+srv://${process.env.DB_USERNAME}:${process.env.DB_PASSWORD}@theplaint.u7pbgty.mongodb.net/?retryWrites=true&w=majority`);
     console.log('Connected to MongoDB!');
     connectionState.connected = true;
   } catch (error) {
