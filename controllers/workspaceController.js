@@ -491,27 +491,55 @@ getDefaultWorkspaces: async (req, res) => {
   },
 
   getPlatformWorkspaces: async (req, res) => {
-    const providerId = req.params.adminId;
-
+    const userId = req.params.userId;
+  
     try {
-      const workspaces = await WorkSpace.find({
-        providerId,
-      })
-        .populate({
-          path: "registeredClients",
-          select: "profilePicture fullname _id",
-        })
-        .lean();
-
-      return res.status(200).json({ workspaces });
+      // Fetch user to determine their role
+      const user = await User.findById(userId);
+      if (!user) {
+        return res.status(404).json({ message: "User not found" });
+      }
+  
+      const userRole = user.role?.toLowerCase();
+  
+      if (userRole === "client") {
+        // Clients see only approved workspaces
+        const approvedWorkspaces = await WorkSpace.find({ approved: true })
+          .populate({
+            path: "registeredClients",
+            select: "profilePicture fullname _id",
+          })
+          .lean();
+  
+        return res.status(200).json({ workspaces: approvedWorkspaces });
+      } else {
+        // Other users see both approved and unapproved workspaces
+        const [approvedWorkspaces, unapprovedWorkspaces] = await Promise.all([
+          WorkSpace.find({ approved: true })
+            .populate({
+              path: "registeredClients",
+              select: "profilePicture fullname _id",
+            })
+            .lean(),
+          WorkSpace.find({ approved: false })
+            .populate({
+              path: "registeredClients",
+              select: "profilePicture fullname _id",
+            })
+            .lean(),
+        ]);
+  
+        return res.status(200).json({
+          approvedWorkspaces,
+          unapprovedWorkspaces,
+        });
+      }
     } catch (error) {
-      console.error(error);
-      return res
-        .status(500)
-        .json({ message: "Unexpected error while fetching workspaces" });
+      console.error("Error fetching workspaces:", error);
+      return res.status(500).json({ message: "Unexpected error while fetching workspaces" });
     }
   },
-
+  
   getWorkSpaceById: async (req, res) => {
     const workspaceId = req.params.workspaceId;
     const adminId = req.query.adminId;
@@ -643,9 +671,9 @@ getDefaultWorkspaces: async (req, res) => {
       const uploadedImage = await upload(file.tempFilePath);
   
       // Role-based logic
-      const isAdmin = user.role.toLowerCase() === "admin";
-      const approved = isAdmin; // true if admin, false otherwise (e.g., provider)
-      const providerId = isAdmin ? null : userId; // Providers use their own ID, admins leave it optional
+    const isAdmin = user.role.toLowerCase() === "admin";
+    const approved = isAdmin; // Only true for admins
+    const providerId = isAdmin && providerName ? null : userId; // Use userId as providerId for non-admins
   
       const newWorkspace = new WorkSpace({
         title,
