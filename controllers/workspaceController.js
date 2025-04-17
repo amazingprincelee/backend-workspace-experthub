@@ -16,6 +16,84 @@ dayjs.extend(isSameOrAfter);
 // const categories = ["Virtual Assistant", "Product Management", "Cybersecurity", "Software Development", "AI / Machine Learning", "Data Analysis & Visualisation", "Story Telling", "Animation", "Cloud Computing", "Dev Ops", "UI/UX Design", "Journalism", "Game development", "Data Science", "Digital Marketing", "Advocacy"]
 
 const workspaceController = {
+
+  getMyProviders: async (req, res) => {
+    try {
+      // Get client ID from route parameters
+      const clientId = req.params.clientId;
+
+      // Validate clientId
+      if (!clientId || !mongoose.Types.ObjectId.isValid(clientId)) {
+        return res.status(400).json({ message: "Valid client ID is required" });
+      }
+
+      // Verify the requesting user matches the clientId (from JWT)
+      if (req.user._id !== clientId) {
+        return res.status(403).json({ message: "Unauthorized: You can only access your own providers" });
+      }
+
+      // Verify the user exists and is a client
+      const client = await User.findById(clientId);
+      if (!client) {
+        return res.status(404).json({ message: "Client account not found" });
+      }
+      if (client.role.toLowerCase() !== "client") {
+        return res.status(403).json({ message: "Only clients can access this endpoint" });
+      }
+
+      // Find workspaces where the client is enrolled
+      const workspaces = await WorkSpace.find({
+        registeredClients: clientId,
+        approved: true, // Only include approved workspaces
+      })
+        .select("providerId title") // Select only necessary fields
+        .populate({
+          path: "providerId",
+          select: "fullname email phone companyName profilePicture _id",
+        })
+        .lean();
+
+      if (!workspaces || workspaces.length === 0) {
+        return res.status(200).json({
+          message: "No enrolled workspaces found",
+          providers: [],
+        });
+      }
+
+      // Extract unique providers
+      const providerMap = new Map();
+      workspaces.forEach((workspace) => {
+        if (workspace.providerId) {
+          providerMap.set(workspace.providerId._id.toString(), {
+            id: workspace.providerId._id,
+            fullname: workspace.providerId.fullname || "N/A",
+            email: workspace.providerId.email || "N/A",
+            phone: workspace.providerId.phone || "N/A",
+            companyName: workspace.providerId.companyName || "N/A",
+            profilePicture: workspace.providerId.profilePicture || "",
+            workspaces: [
+              ...(providerMap.get(workspace.providerId._id.toString())?.workspaces || []),
+              { workspaceId: workspace._id, title: workspace.title },
+            ],
+          });
+        }
+      });
+
+      const providers = Array.from(providerMap.values());
+
+      return res.status(200).json({
+        message: "Providers retrieved successfully",
+        providers,
+      });
+    } catch (error) {
+      console.error("Error fetching providers:", error);
+      return res.status(500).json({
+        message: "Unexpected error while fetching providers",
+      });
+    }
+  },
+
+
   getAllCategory: async (req, res) => {
     try {
       const categories = await WorkspaceCategory.find().lean();
@@ -539,6 +617,8 @@ getDefaultWorkspaces: async (req, res) => {
       return res.status(500).json({ message: "Unexpected error while fetching workspaces" });
     }
   },
+
+
   
   getWorkSpaceById: async (req, res) => {
     const workspaceId = req.params.workspaceId;
@@ -1083,17 +1163,15 @@ getDefaultWorkspaces: async (req, res) => {
 
 
   getRecommendedWorkspace: async (req, res) => {
-    
-  
     try {
-      // Step 1: Count total workspaces to ensure there are some available
+      // Step 1: Count total workspaces
       const totalWorkspaces = await WorkSpace.countDocuments();
       if (totalWorkspaces === 0) {
         return res.status(404).json({ message: "No workspaces available" });
       }
   
       // Step 2: Fetch all approved workspaces
-      const query = { approved: true }; // Only fetch approved workspaces
+      const query = { approved: true };
       const workspaces = await WorkSpace.find(query);
   
       // Step 3: Check if there are any approved workspaces
@@ -1101,22 +1179,22 @@ getDefaultWorkspaces: async (req, res) => {
         return res.status(404).json({ message: "No approved workspaces available" });
       }
   
-      // Step 4: Select a random workspace from the list
-      const randomIndex = Math.floor(Math.random() * workspaces.length);
-      const recommendedWorkspace = workspaces[randomIndex];
+      // Step 4: Select multiple random workspaces (e.g., up to 3)
+      const numberOfRecommendations = Math.min(workspaces.length, 3); // Limit to 3 or available workspaces
+      const shuffledWorkspaces = workspaces.sort(() => 0.5 - Math.random()); // Shuffle array
+      const recommendedWorkspaces = shuffledWorkspaces.slice(0, numberOfRecommendations);
   
-      // Step 5: Return the recommended workspace
+      // Step 5: Return the recommended workspaces as an array
       return res.status(200).json({
-        workspace: recommendedWorkspace,
+        workspace: recommendedWorkspaces, // Return array instead of single object
       });
     } catch (error) {
       console.error("Error in getRecommendedWorkspace:", error);
       return res.status(500).json({
-        message: "Unexpected error while fetching recommended workspace",
+        message: "Unexpected error while fetching recommended workspaces",
       });
     }
   },
- 
 
   editWorkSpace: async (req, res) => {
     try {

@@ -5,6 +5,10 @@ const WorkspaceRoute = express.Router();
 
 WorkspaceRoute.get("/", (req, res) => {
   res.status(200).json({ message: "Welcome to ExpertHub Workspace route" });
+ 
+  console.log(req.location);
+  
+
 });
 
 // Workspace routes (specific routes first)
@@ -55,5 +59,8 @@ WorkspaceRoute.put("/disapprove/:workspaceId", workspaceController.disapproveWor
 // Upload video
 WorkspaceRoute.put('/update-status/:workspaceId', workspaceController.updateStatus);
 WorkspaceRoute.get('/renew/:workspaceId/:id', workspaceController.renewWorkspace);
+
+//Client use to get the provider details of the work they enrolled into
+WorkspaceRoute.get('/myproviders/:clientId', workspaceController.getMyProviders);
 
 module.exports = WorkspaceRoute;
