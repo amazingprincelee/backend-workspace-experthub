@@ -743,7 +743,7 @@ getDefaultWorkspaces: async (req, res) => {
         fee,
         strikedFee,
         providerName,
-        location, // Address string from frontend
+        location, 
         persons,
       } = req.body;
   
@@ -759,7 +759,7 @@ getDefaultWorkspaces: async (req, res) => {
   
       const uploadedImage = await upload(file.tempFilePath);
   
-      // Role-based logic
+      
       const isAdmin = user.role.toLowerCase() === "admin";
       const approved = isAdmin;
       const providerId = isAdmin && providerName ? null : userId;
@@ -820,7 +820,7 @@ getDefaultWorkspaces: async (req, res) => {
         return res.status(400).json({ message: "Location is required and cannot be empty" });
       }
   
-      const newWorkspace = new Workspace({
+      const newWorkspace = new WorkSpace({
         title,
         providerName: isAdmin ? providerName : user.fullname,
         providerImage: user.profilePicture || "",
@@ -842,16 +842,16 @@ getDefaultWorkspaces: async (req, res) => {
         fee,
         strikedFee,
         approved,
-        location: locationDoc._id, // Reference the Location document
+        location: locationDoc._id, 
         persons: parseInt(persons),
       });
   
       const savedWorkspace = await newWorkspace.save();
   
-      // Notification Logic
+      
       const notifications = [];
   
-      // Notify the user who created the workspace (admin or provider)
+      
       notifications.push({
         title: "Workspace Created",
         content: `You have successfully created the workspace "${savedWorkspace.title}".`,
@@ -1235,7 +1235,7 @@ getDefaultWorkspaces: async (req, res) => {
         return res.status(400).json({ message: "User ID is required" });
       }
   
-      // Step 1: Get the client's location from the Location model
+      
       const userLocation = await Location.findOne({ userId });
       if (!userLocation || userLocation.location.coordinates.every(coord => coord === 0)) {
         return res.status(404).json({ message: "User location not set. Please update your location." });
@@ -1244,20 +1244,31 @@ getDefaultWorkspaces: async (req, res) => {
       const clientCoordinates = userLocation.location.coordinates;
   
       // Step 2: Count total approved workspaces
-      const totalWorkspaces = await Workspace.countDocuments({ approved: true });
+      const totalWorkspaces = await WorkSpace.countDocuments({ approved: true });
       if (totalWorkspaces === 0) {
         return res.status(404).json({ message: "No approved workspaces available" });
       }
   
-      // Step 3: Fetch workspaces near the client's location
-      const maxDistance = 10000; // 10km in meters
-      const workspaces = await Workspace.aggregate([
+      // Step 3: Get query parameters for flexibility
+      const maxDistance = parseInt(req.query.maxDistance) || 50000; // Default to 50km in meters
+      const limit = parseInt(req.query.limit) || 5; // Default to 5 workspaces
+  
+      // Validate maxDistance and limit
+      if (maxDistance < 1000 || maxDistance > 100000) {
+        return res.status(400).json({ message: "maxDistance must be between 1km and 100km" });
+      }
+      if (limit < 1 || limit > 10) {
+        return res.status(400).json({ message: "limit must be between 1 and 10" });
+      }
+  
+      // Step 4: Fetch workspaces near the client's location, sorted by distance
+      const workspaces = await WorkSpace.aggregate([
         {
           $match: { approved: true },
         },
         {
           $lookup: {
-            from: "locations", // Collection name for Location model
+            from: "locations", 
             localField: "location",
             foreignField: "_id",
             as: "workspaceLocation",
@@ -1272,25 +1283,37 @@ getDefaultWorkspaces: async (req, res) => {
               type: "Point",
               coordinates: clientCoordinates,
             },
-            distanceField: "distance",
-            maxDistance: maxDistance,
+            distanceField: "distance", // Adds distance in meters to each document
+            maxDistance: maxDistance, // Flexible distance range
             spherical: true,
             key: "workspaceLocation.location",
           },
         },
         {
-          $limit: 3,
+          $project: {
+            title: 1,
+            providerName: 1,
+            category: 1,
+            fee: 1,
+            distance: { $divide: ["$distance", 1000] }, // Convert distance from meters to kilometers
+            
+          },
+        },
+        {
+          $limit: limit, 
         },
       ]);
   
-      // Step 4: Check if there are any nearby workspaces
+     
       if (!workspaces || workspaces.length === 0) {
-        return res.status(404).json({ message: "No approved workspaces found within 10km" });
+        return res.status(404).json({ message: `No approved workspaces found within ${maxDistance / 1000}km` });
       }
   
-      // Step 5: Return the recommended workspaces
+      // Step 6: Return the recommended workspaces with distances in kilometers
       res.status(200).json({
         workspace: workspaces,
+        totalNearby: workspaces.length,
+        maxDistanceApplied: maxDistance / 1000, 
       });
     } catch (error) {
       console.error("Error in getRecommendedWorkspace:", error);
@@ -1300,7 +1323,6 @@ getDefaultWorkspaces: async (req, res) => {
       });
     }
   },
-
 
   // getRecommendedWorkspace: async (req, res) => {
   //   try {
