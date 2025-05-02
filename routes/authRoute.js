@@ -1,5 +1,6 @@
 const express = require('express');
 const authControllers = require('../controllers/authController.js');
+const { validateRegistration } = require('../middlewares/validateRegistration.js');
 const router = express.Router();
 
 
@@ -8,7 +9,7 @@ router.get("/", (req, res) => {
 });
 
 router.get("/logout", authControllers.logout); // TODO: use less
-router.post('/register', authControllers.register);
+router.post('/register', validateRegistration, authControllers.register);
 router.post('/register/sync', authControllers.sync);
 
 router.post('/login', authControllers.login);

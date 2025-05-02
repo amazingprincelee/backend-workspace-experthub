@@ -2,6 +2,8 @@
 const mongoose = require('mongoose');
 const WorkSpace = require("../models/workspace.js");
 const User = require("../models/user.js");
+const Location = require("../models/location.js");
+const axios = require("axios");
 const WorkspaceCategory = require("../models/workspaceCategory.js");
 const { upload } = require("../config/cloudinary.js");
 const Notification = require("../models/workspaceNotification.js");
@@ -12,6 +14,8 @@ const isSameOrAfter = require("dayjs/plugin/isSameOrAfter.js");
 
 dayjs.extend(isBetween);
 dayjs.extend(isSameOrAfter);
+
+const GOOGLE_MAPS_API_KEY = process.env.GOOGLE_MAPS_API_KEY;
 
 // const categories = ["Virtual Assistant", "Product Management", "Cybersecurity", "Software Development", "AI / Machine Learning", "Data Analysis & Visualisation", "Story Telling", "Animation", "Cloud Computing", "Dev Ops", "UI/UX Design", "Journalism", "Game development", "Data Science", "Digital Marketing", "Advocacy"]
 
@@ -718,7 +722,7 @@ getDefaultWorkspaces: async (req, res) => {
 
   addWorkSpace: async (req, res) => {
     try {
-      const userId = req.params.userId; 
+      const userId = req.params.userId;
       const user = await User.findById(userId);
       if (!user) {
         return res.status(401).json({ message: "User not found" });
@@ -738,10 +742,15 @@ getDefaultWorkspaces: async (req, res) => {
         workDuration,
         fee,
         strikedFee,
-        providerName, // Selected from frontend autocomplete for admins
-        location,
+        providerName,
+        location, // Address string from frontend
         persons,
       } = req.body;
+  
+      // Validate required fields
+      if (!title || !location || !persons) {
+        return res.status(400).json({ message: "Title, location, and persons are required" });
+      }
   
       const file = req.files?.thumbnail;
       if (!file) {
@@ -751,14 +760,70 @@ getDefaultWorkspaces: async (req, res) => {
       const uploadedImage = await upload(file.tempFilePath);
   
       // Role-based logic
-    const isAdmin = user.role.toLowerCase() === "admin";
-    const approved = isAdmin; // Only true for admins
-    const providerId = isAdmin && providerName ? null : userId; // Use userId as providerId for non-admins
+      const isAdmin = user.role.toLowerCase() === "admin";
+      const approved = isAdmin;
+      const providerId = isAdmin && providerName ? null : userId;
   
-      const newWorkspace = new WorkSpace({
+      // Geocode the location to get coordinates and create a Location document
+      let locationDoc;
+      if (location && location.trim() !== "") {
+        try {
+          const geocodeResponse = await axios.get("https://maps.googleapis.com/maps/api/geocode/json", {
+            params: {
+              address: `${location}, ${user.state || "Nigeria"}`,
+              key: GOOGLE_MAPS_API_KEY,
+            },
+          });
+  
+          if (geocodeResponse.data.status === "OK") {
+            const { lat, lng } = geocodeResponse.data.results[0].geometry.location;
+            const coordinates = [lng, lat];
+  
+            let stateFromGeocode = user.state || "";
+            let city = "";
+            for (const component of geocodeResponse.data.results[0].address_components) {
+              if (component.types.includes("administrative_area_level_1")) {
+                stateFromGeocode = component.long_name;
+              }
+              if (component.types.includes("locality")) {
+                city = component.long_name;
+              }
+            }
+  
+            const fullAddress = geocodeResponse.data.results[0].formatted_address;
+  
+            // Create or update the Location document
+            locationDoc = await Location.findOneAndUpdate(
+              { fullAddress }, // Use fullAddress as a unique identifier (optional, adjust as needed)
+              {
+                location: {
+                  type: "Point",
+                  coordinates,
+                },
+                selectedLocation: {
+                  fullAddress,
+                  state: stateFromGeocode,
+                  city,
+                },
+              },
+              { upsert: true, new: true }
+            );
+          } else {
+            console.warn(`Geocoding failed for location "${location}" for workspace by user ${userId}`);
+            return res.status(400).json({ message: "Failed to geocode location" });
+          }
+        } catch (error) {
+          console.error(`Error geocoding location for workspace by user ${userId}:`, error.message);
+          return res.status(500).json({ message: "Error processing location", error: error.message });
+        }
+      } else {
+        return res.status(400).json({ message: "Location is required and cannot be empty" });
+      }
+  
+      const newWorkspace = new Workspace({
         title,
-        providerName: isAdmin ? providerName : user.fullname, // Admin selects, provider uses own name
-        providerImage: user.profilePicture || "", // Use authenticated user's picture
+        providerName: isAdmin ? providerName : user.fullname,
+        providerImage: user.profilePicture || "",
         thumbnail: {
           type: uploadedImage.resource_type,
           url: uploadedImage.secure_url,
@@ -766,7 +831,7 @@ getDefaultWorkspaces: async (req, res) => {
         category,
         privacy,
         about,
-        providerId: providerId || undefined, // Set only for providers
+        providerId: providerId || undefined,
         duration,
         type,
         startDate,
@@ -776,9 +841,9 @@ getDefaultWorkspaces: async (req, res) => {
         workDuration,
         fee,
         strikedFee,
-        approved, // true for admin, false for provider
-        location, // Add location field
-        persons: parseInt(persons), // Add persons field
+        approved,
+        location: locationDoc._id, // Reference the Location document
+        persons: parseInt(persons),
       });
   
       const savedWorkspace = await newWorkspace.save();
@@ -791,7 +856,7 @@ getDefaultWorkspaces: async (req, res) => {
         title: "Workspace Created",
         content: `You have successfully created the workspace "${savedWorkspace.title}".`,
         contentId: savedWorkspace._id,
-        userId: user._id, // Changed from adminId to user._id for consistency
+        userId: user._id,
         read: false,
       });
   
@@ -1164,37 +1229,112 @@ getDefaultWorkspaces: async (req, res) => {
 
   getRecommendedWorkspace: async (req, res) => {
     try {
-      // Step 1: Count total workspaces
-      const totalWorkspaces = await WorkSpace.countDocuments();
-      if (totalWorkspaces === 0) {
-        return res.status(404).json({ message: "No workspaces available" });
+      const userId = req.params.userId;
+  
+      if (!userId) {
+        return res.status(400).json({ message: "User ID is required" });
       }
   
-      // Step 2: Fetch all approved workspaces
-      const query = { approved: true };
-      const workspaces = await WorkSpace.find(query);
+      // Step 1: Get the client's location from the Location model
+      const userLocation = await Location.findOne({ userId });
+      if (!userLocation || userLocation.location.coordinates.every(coord => coord === 0)) {
+        return res.status(404).json({ message: "User location not set. Please update your location." });
+      }
   
-      // Step 3: Check if there are any approved workspaces
-      if (!workspaces || workspaces.length === 0) {
+      const clientCoordinates = userLocation.location.coordinates;
+  
+      // Step 2: Count total approved workspaces
+      const totalWorkspaces = await Workspace.countDocuments({ approved: true });
+      if (totalWorkspaces === 0) {
         return res.status(404).json({ message: "No approved workspaces available" });
       }
   
-      // Step 4: Select multiple random workspaces (e.g., up to 3)
-      const numberOfRecommendations = Math.min(workspaces.length, 3); // Limit to 3 or available workspaces
-      const shuffledWorkspaces = workspaces.sort(() => 0.5 - Math.random()); // Shuffle array
-      const recommendedWorkspaces = shuffledWorkspaces.slice(0, numberOfRecommendations);
+      // Step 3: Fetch workspaces near the client's location
+      const maxDistance = 10000; // 10km in meters
+      const workspaces = await Workspace.aggregate([
+        {
+          $match: { approved: true },
+        },
+        {
+          $lookup: {
+            from: "locations", // Collection name for Location model
+            localField: "location",
+            foreignField: "_id",
+            as: "workspaceLocation",
+          },
+        },
+        {
+          $unwind: "$workspaceLocation",
+        },
+        {
+          $geoNear: {
+            near: {
+              type: "Point",
+              coordinates: clientCoordinates,
+            },
+            distanceField: "distance",
+            maxDistance: maxDistance,
+            spherical: true,
+            key: "workspaceLocation.location",
+          },
+        },
+        {
+          $limit: 3,
+        },
+      ]);
   
-      // Step 5: Return the recommended workspaces as an array
-      return res.status(200).json({
-        workspace: recommendedWorkspaces, // Return array instead of single object
+      // Step 4: Check if there are any nearby workspaces
+      if (!workspaces || workspaces.length === 0) {
+        return res.status(404).json({ message: "No approved workspaces found within 10km" });
+      }
+  
+      // Step 5: Return the recommended workspaces
+      res.status(200).json({
+        workspace: workspaces,
       });
     } catch (error) {
       console.error("Error in getRecommendedWorkspace:", error);
-      return res.status(500).json({
+      res.status(500).json({
         message: "Unexpected error while fetching recommended workspaces",
+        details: error.message,
       });
     }
   },
+
+
+  // getRecommendedWorkspace: async (req, res) => {
+  //   try {
+  //     // Step 1: Count total workspaces
+  //     const totalWorkspaces = await WorkSpace.countDocuments();
+  //     if (totalWorkspaces === 0) {
+  //       return res.status(404).json({ message: "No workspaces available" });
+  //     }
+  
+  //     // Step 2: Fetch all approved workspaces
+  //     const query = { approved: true };
+  //     const workspaces = await WorkSpace.find(query);
+  
+  //     // Step 3: Check if there are any approved workspaces
+  //     if (!workspaces || workspaces.length === 0) {
+  //       return res.status(404).json({ message: "No approved workspaces available" });
+  //     }
+  
+  //     // Step 4: Select multiple random workspaces (e.g., up to 3)
+  //     const numberOfRecommendations = Math.min(workspaces.length, 3); // Limit to 3 or available workspaces
+  //     const shuffledWorkspaces = workspaces.sort(() => 0.5 - Math.random()); // Shuffle array
+  //     const recommendedWorkspaces = shuffledWorkspaces.slice(0, numberOfRecommendations);
+  
+  //     // Step 5: Return the recommended workspaces as an array
+  //     return res.status(200).json({
+  //       workspace: recommendedWorkspaces, // Return array instead of single object
+  //     });
+  //   } catch (error) {
+  //     console.error("Error in getRecommendedWorkspace:", error);
+  //     return res.status(500).json({
+  //       message: "Unexpected error while fetching recommended workspaces",
+  //     });
+  //   }
+  // },
 
   editWorkSpace: async (req, res) => {
     try {

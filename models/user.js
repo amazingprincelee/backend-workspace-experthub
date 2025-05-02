@@ -103,6 +103,11 @@ const userSchema = new mongoose.Schema({
     }]
   }],
   location: String,
+  location: {
+    type: mongoose.Schema.Types.ObjectId,
+    ref: 'Location', 
+    default: null,
+  },
   room: String,
   signature: String,
 });

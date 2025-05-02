@@ -1,5 +1,7 @@
 const bcrypt = require("bcryptjs");
 const User = require("../models/user.js");
+const Location = require("../models/location.js");
+const axios = require("axios");
 const {
   generateVerificationCode,
 } = require("../utils/verficationCodeGenerator.js");
@@ -7,6 +9,9 @@ const { sendVerificationEmail } = require("../utils/nodeMailer.js");
 const determineRole = require("../utils/determinUserType.js");
 // const { default: axios } = require("axios");
 const jwt = require('jsonwebtoken');
+require("dotenv").config();
+
+const GOOGLE_MAPS_API_KEY = process.env.GOOGLE_MAPS_API_KEY;
 
 const verificationCode = generateVerificationCode();
 
@@ -25,19 +30,21 @@ const authControllers = {
         contact,
         password,
       } = req.body;
-
+  
       const lowercasedUserType = userType.toLowerCase();
       const role = determineRole(lowercasedUserType);
-
+  
       const alreadyExistingUser = await User.findOne({
         email: email.toLowerCase(),
       });
-
+  
       if (alreadyExistingUser) {
         return res.status(400).json({ message: "User already registered" });
       }
-
+  
       const hashPassword = bcrypt.hashSync(password, 10);
+      const verificationCode = Math.floor(100000 + Math.random() * 900000).toString(); // Generate a 6-digit code
+  
       const newUser = new User({
         username: email.toLowerCase(),
         email: email.toLowerCase(),
@@ -52,26 +59,83 @@ const authControllers = {
         contact,
         password: hashPassword,
       });
-
+  
       await newUser.save();
-
-      console.log(newUser);
-      
-
+  
+      // Geocode the address and create a Location document if address is provided
+      if (address && address.trim() !== "") {
+        try {
+          const geocodeResponse = await axios.get("https://maps.googleapis.com/maps/api/geocode/json", {
+            params: {
+              address: address,
+              key: GOOGLE_MAPS_API_KEY,
+            },
+          });
+  
+          if (geocodeResponse.data.status === "OK") {
+            const { lat, lng } = geocodeResponse.data.results[0].geometry.location;
+            const coordinates = [lng, lat];
+  
+            let stateFromGeocode = state || "";
+            let city = "";
+            for (const component of geocodeResponse.data.results[0].address_components) {
+              if (component.types.includes("administrative_area_level_1")) {
+                stateFromGeocode = component.long_name;
+              }
+              if (component.types.includes("locality")) {
+                city = component.long_name;
+              }
+            }
+  
+            const fullAddress = geocodeResponse.data.results[0].formatted_address;
+  
+            // Create or update the Location document
+            const newLocation = await Location.findOneAndUpdate(
+              { userId: newUser._id },
+              {
+                userId: newUser._id,
+                location: {
+                  type: "Point",
+                  coordinates,
+                },
+                selectedLocation: {
+                  fullAddress,
+                  state: stateFromGeocode,
+                  city,
+                },
+              },
+              { upsert: true, new: true }
+            );
+  
+            // Update the User with the Location reference and geocoded state
+            newUser.location = newLocation._id;
+            newUser.state = stateFromGeocode;
+            newUser.address = fullAddress; // Update address with the standardized format
+            await newUser.save();
+          } else {
+            console.warn(`Geocoding failed for address "${address}" during registration for user ${newUser._id}`);
+          }
+        } catch (error) {
+          console.error(`Error geocoding address during registration for user ${newUser._id}:`, error.message);
+        }
+      }
+  
+      console.log("Registered user:", newUser);
+  
+      // Uncomment if you need to sync with an external API
       // await axios.post(`${process.env.PEOPLES_POWER_API}/api/v5/auth/sync`, {
       //   email,
       //   name: fullname,
       //   country,
-      //   state,  
+      //   state,
       //   userType,
-      //   password: hashPassword
+      //   password: hashPassword,
       // });
-
+  
       await sendVerificationEmail(newUser.email, verificationCode);
       res.status(200).json({ message: "Verification code sent to email", id: newUser._id });
-
     } catch (error) {
-      console.error(error);
+      console.error("Error during registration:", error);
       return res.status(500).json({ message: "Unexpected error during registration" });
     }
   },
@@ -85,7 +149,8 @@ const authControllers = {
         state,
         userType,
         password,
-        companyName, // Add companyName to destructured fields
+        companyName,
+        address, // Add address to destructured fields
       } = req.body;
   
       const lowercasedUserType = userType.toLowerCase();
@@ -109,10 +174,78 @@ const authControllers = {
         updateData.companyName = companyName;
       }
   
-      await User.updateOne(
+      // Only update address if provided
+      if (address !== undefined) {
+        updateData.address = address;
+      }
+  
+      const user = await User.findOneAndUpdate(
         { email: email.toLowerCase() },
-        updateData
+        updateData,
+        { new: true }
       );
+  
+      if (!user) {
+        return res.status(404).json({ message: "User not found" });
+      }
+  
+      // Geocode the address and update the Location document if address is provided
+      if (address && address.trim() !== "") {
+        try {
+          const geocodeResponse = await axios.get("https://maps.googleapis.com/maps/api/geocode/json", {
+            params: {
+              address: address,
+              key: GOOGLE_MAPS_API_KEY,
+            },
+          });
+  
+          if (geocodeResponse.data.status === "OK") {
+            const { lat, lng } = geocodeResponse.data.results[0].geometry.location;
+            const coordinates = [lng, lat];
+  
+            let stateFromGeocode = state || "";
+            let city = "";
+            for (const component of geocodeResponse.data.results[0].address_components) {
+              if (component.types.includes("administrative_area_level_1")) {
+                stateFromGeocode = component.long_name;
+              }
+              if (component.types.includes("locality")) {
+                city = component.long_name;
+              }
+            }
+  
+            const fullAddress = geocodeResponse.data.results[0].formatted_address;
+  
+            // Update the Location document
+            await Location.findOneAndUpdate(
+              { userId: user._id },
+              {
+                userId: user._id,
+                location: {
+                  type: "Point",
+                  coordinates,
+                },
+                selectedLocation: {
+                  fullAddress,
+                  state: stateFromGeocode,
+                  city,
+                },
+              },
+              { upsert: true, new: true }
+            );
+  
+            // Update the User with the geocoded state and standardized address
+            await User.findByIdAndUpdate(user._id, {
+              state: stateFromGeocode,
+              address: fullAddress,
+            });
+          } else {
+            console.warn(`Geocoding failed for address "${address}" during sync for user ${user._id}`);
+          }
+        } catch (error) {
+          console.error(`Error geocoding address during sync for user ${user._id}:`, error.message);
+        }
+      }
   
       console.log(`User synced: ${email}`);
       res.status(200).json({ message: "User synced successfully" });

@@ -26,6 +26,7 @@ const startUpKitRouter = require('./routes/startupkit.js');
 const workspaceRouter = require('./routes/workspaceRoute.js');
 const feedbackRouter = require('./routes/feebackRoute.js');
 const announcementRoutes = require('./routes/announcementRoute.js');
+const locationRoutes = require('./routes/locationRoute.js');
 
 
 
@@ -108,6 +109,7 @@ app.use('/start-up-kit', startUpKitRouter);
 app.use('/workspace', workspaceRouter);
 app.use('/feedback', feedbackRouter);
 app.use('/announcements', announcementRoutes);
+app.use('/location', locationRoutes);
 
 
 // Socket.io logic

@@ -42,7 +42,7 @@ WorkspaceRoute.post("/enroll/:workspaceId", workspaceController.enrollWorkspace)
 WorkspaceRoute.post("/assign/:workspaceId", workspaceController.assignedSpaceProvider);
 
 WorkspaceRoute.get("/enrolled-workspaces/:userId", workspaceController.getEnrolledWorkspaces);
-// Get random courses
+// Get recommended workspace by locations
 WorkspaceRoute.get("/recommendedworkspaces/:userId", workspaceController.getRecommendedWorkspace);
 
 
