@@ -139,16 +139,17 @@ const workspaceController = {
   
       // Total number of workspaces
       const totalWorkspaces = await WorkSpace.countDocuments();
-  
+      // Number of running workspaces (approved)
+      const runningWorkspaces = await WorkSpace.countDocuments({ approved: true });
+      // Number of workspaces pending approval
+      const pendingWorkspaces = await WorkSpace.countDocuments({ approved: false });
       // Total number of clients
       const totalClients = await User.countDocuments({ role: "client" });
-  
       // Total number of subscriptions (total enrollments across all workspaces)
       const workspaces = await WorkSpace.find({}).lean();
       const totalSubscriptions = workspaces.reduce((acc, workspace) => {
         return acc + (workspace.registeredClients?.length || 0);
       }, 0);
-  
       // Total number of workspace providers
       const totalProviders = await User.countDocuments({ role: "provider" });
   
@@ -156,6 +157,8 @@ const workspaceController = {
         message: "Dashboard stats retrieved successfully",
         data: {
           totalWorkspaces,
+          runningWorkspaces,
+          pendingWorkspaces,
           totalClients,
           totalSubscriptions,
           totalProviders,
@@ -224,7 +227,58 @@ const workspaceController = {
     }
 },
 
+// In workspaceController.js
+getWorkspacesByProviderId: async (req, res) => {
+  try {
+    const userId = req.params.userId;
 
+    console.log("Fetching workspaces for userId:", userId); // Debug log
+    console.log("Request user:", req.user); // Debug log
+
+    if (!mongoose.Types.ObjectId.isValid(userId)) {
+      return res.status(400).json({ message: "Invalid user ID" });
+    }
+
+    // Verify the requesting user matches the userId (from JWT)
+    if (req.user._id.toString() !== userId) {
+      return res.status(403).json({ message: "Unauthorized: You can only access your own workspaces" });
+    }
+
+    // Verify the user exists
+    const user = await User.findById(userId);
+    if (!user) {
+      return res.status(404).json({ message: "User account not found" });
+    }
+    console.log("User role:", user.role); // Debug log
+
+    // Fetch workspaces where the user is the provider OR assigned as a space provider
+    const workspaces = await WorkSpace.find({
+      $or: [
+        { providerId: userId },
+        { assignedSpaceProvider: userId },
+      ],
+    })
+      .select("_id title")
+      .lean();
+
+    console.log("Found workspaces:", workspaces); // Debug log
+
+    if (!workspaces || workspaces.length === 0) {
+      return res.status(200).json({
+        message: "No workspaces found for this user",
+        workspaces: [],
+      });
+    }
+
+    return res.status(200).json({
+      message: "Workspaces retrieved successfully",
+      workspaces,
+    });
+  } catch (error) {
+    console.error("Error fetching workspaces by provider ID:", error);
+    return res.status(500).json({ message: "Unexpected error while fetching workspaces" });
+  }
+},
 
   // controllers/workspaceController.js
   getWorkspacesByProvider: async (req, res) => {
@@ -1522,6 +1576,180 @@ getDefaultWorkspaces: async (req, res) => {
         .json({ message: "Unexpected error during renewal" });
     }
   },
+
+  //team members functions
+
+  assignTeamMember: async (req, res) => {
+        const workspaceId = req.params.workspaceId;
+        const { userId, role } = req.body;
+
+        try {
+            if (!mongoose.Types.ObjectId.isValid(workspaceId) || !mongoose.Types.ObjectId.isValid(userId)) {
+                return res.status(400).json({ message: "Invalid workspace ID or user ID" });
+            }
+
+            const workspace = await WorkSpace.findById(workspaceId);
+            const user = await User.findById(userId);
+
+            if (!workspace || !user) {
+                return res.status(404).json({ message: "Workspace or user not found" });
+            }
+
+            if (workspace.providerId.toString() !== req.user._id) {
+                return res.status(403).json({ message: "Only the workspace provider can assign team members" });
+            }
+
+            // Check if user is already a team member
+            if (workspace.teamMembers.some(member => member.userId.toString() === userId)) {
+                return res.status(400).json({ message: "User is already a team member" });
+            }
+
+            // Define privileges based on role
+            let privileges = { canCreate: false, canEdit: false, canDelete: false };
+            if (role === 'Admin') {
+                privileges = { canCreate: true, canEdit: true, canDelete: true };
+            } else if (role === 'Editor') {
+                privileges = { canCreate: true, canEdit: true, canDelete: false };
+            } else if (role === 'Viewer') {
+                privileges = { canCreate: false, canEdit: false, canDelete: false };
+            } else {
+                return res.status(400).json({ message: "Invalid role specified" });
+            }
+
+            workspace.teamMembers.push({ userId, role, privileges });
+            await workspace.save();
+
+            await Notification.create({
+                title: "Team Member Assigned",
+                content: `You have been assigned as a ${role} to the workspace "${workspace.title}"`,
+                contentId: workspace._id,
+                userId: userId,
+            });
+
+            return res.status(200).json({ message: "Team member assigned successfully", workspace });
+        } catch (error) {
+            console.error("Error assigning team member:", error);
+            return res.status(500).json({ message: "Unexpected error while assigning team member" });
+        }
+    },
+
+    updateTeamMemberRole: async (req, res) => {
+        const workspaceId = req.params.workspaceId;
+        const { userId, role } = req.body;
+
+        try {
+            if (!mongoose.Types.ObjectId.isValid(workspaceId) || !mongoose.Types.ObjectId.isValid(userId)) {
+                return res.status(400).json({ message: "Invalid workspace ID or user ID" });
+            }
+
+            const workspace = await WorkSpace.findById(workspaceId);
+
+            if (!workspace) {
+                return res.status(404).json({ message: "Workspace not found" });
+            }
+
+            if (workspace.providerId.toString() !== req.user._id) {
+                return res.status(403).json({ message: "Only the workspace provider can update team member roles" });
+            }
+
+            const teamMember = workspace.teamMembers.find(member => member.userId.toString() === userId);
+            if (!teamMember) {
+                return res.status(404).json({ message: "Team member not found" });
+            }
+
+            // Update role and privileges
+            teamMember.role = role;
+            if (role === 'Admin') {
+                teamMember.privileges = { canCreate: true, canEdit: true, canDelete: true };
+            } else if (role === 'Editor') {
+                teamMember.privileges = { canCreate: true, canEdit: true, canDelete: false };
+            } else if (role === 'Viewer') {
+                teamMember.privileges = { canCreate: false, canEdit: false, canDelete: false };
+            } else {
+                return res.status(400).json({ message: "Invalid role specified" });
+            }
+
+            await workspace.save();
+
+            await Notification.create({
+                title: "Team Member Role Updated",
+                content: `Your role has been updated to ${role} for the workspace "${workspace.title}"`,
+                contentId: workspace._id,
+                userId: userId,
+            });
+
+            return res.status(200).json({ message: "Team member role updated successfully", workspace });
+        } catch (error) {
+            console.error("Error updating team member role:", error);
+            return res.status(500).json({ message: "Unexpected error while updating team member role" });
+        }
+    },
+
+    removeTeamMember: async (req, res) => {
+        const workspaceId = req.params.workspaceId;
+        const userId = req.params.userId;
+
+        try {
+            if (!mongoose.Types.ObjectId.isValid(workspaceId) || !mongoose.Types.ObjectId.isValid(userId)) {
+                return res.status(400).json({ message: "Invalid workspace ID or user ID" });
+            }
+
+            const workspace = await WorkSpace.findById(workspaceId);
+
+            if (!workspace) {
+                return res.status(404).json({ message: "Workspace not found" });
+            }
+
+            if (workspace.providerId.toString() !== req.user._id) {
+                return res.status(403).json({ message: "Only the workspace provider can remove team members" });
+            }
+
+            const teamMemberIndex = workspace.teamMembers.findIndex(member => member.userId.toString() === userId);
+            if (teamMemberIndex === -1) {
+                return res.status(404).json({ message: "Team member not found" });
+            }
+
+            workspace.teamMembers.splice(teamMemberIndex, 1);
+            await workspace.save();
+
+            await Notification.create({
+                title: "Team Member Removed",
+                content: `You have been removed from the workspace "${workspace.title}"`,
+                contentId: workspace._id,
+                userId: userId,
+            });
+
+            return res.status(200).json({ message: "Team member removed successfully", workspace });
+        } catch (error) {
+            console.error("Error removing team member:", error);
+            return res.status(500).json({ message: "Unexpected error while removing team member" });
+        }
+    },
+
+    // In workspaceController.js
+searchUsersByEmail: async (req, res) => {
+  try {
+    const { email } = req.query;
+    if (!email) {
+      return res.status(400).json({ message: "Email is required" });
+    }
+
+    // Search for users with matching email (case-insensitive)
+    const users = await User.find({ email: { $regex: new RegExp(email, 'i') } })
+      .select("_id fullname email")
+      .lean();
+
+    if (!users || users.length === 0) {
+      return res.status(200).json({ message: "No users found", users: [] });
+    }
+
+    return res.status(200).json({ message: "Users retrieved successfully", users });
+  } catch (error) {
+    console.error("Error searching users by email:", error);
+    return res.status(500).json({ message: "Unexpected error while searching users" });
+  }
+},
+
 };
 
 module.exports = workspaceController;

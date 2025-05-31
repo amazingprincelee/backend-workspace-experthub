@@ -65,6 +65,27 @@ const workspaceSchema = new mongoose.Schema({
         type: Boolean,
         default: false,
     },
+    teamMembers: [{
+        userId: {
+            type: mongoose.Schema.Types.ObjectId,
+            ref: 'User',
+            required: true
+        },
+        role: {
+            type: String,
+            enum: ['Admin', 'Editor', 'Viewer'],
+            default: 'Viewer'
+        },
+        privileges: {
+            canCreate: { type: Boolean, default: false },
+            canEdit: { type: Boolean, default: false },
+            canDelete: { type: Boolean, default: false }
+        },
+        joinedAt: {
+            type: Date,
+            default: Date.now
+        }
+    }],
     
 });
 

@@ -25,6 +25,9 @@ WorkspaceRoute.get("/all", workspaceController.getAllWorkspaces);
 WorkspaceRoute.get("/dashboard-stats", workspaceController.getDashAdminStats);
 WorkspaceRoute.get("/provider-stats", workspaceController.getDashProviderStats);
 WorkspaceRoute.get("/recommended", workspaceController.getRecommendedWorkspace);
+WorkspaceRoute.get("/workspaces-by-provider-id/:providerId", workspaceController.getWorkspacesByProviderId);
+
+WorkspaceRoute.get('/search-users-by-email', workspaceController.searchUsersByEmail);
 
 // Workspace routes with dynamic parameters (after specific routes)
 WorkspaceRoute.get("/:workspaceId", workspaceController.getWorkSpaceById); 
@@ -50,6 +53,13 @@ WorkspaceRoute.get("/recommendedworkspaces/:userId", workspaceController.getReco
 WorkspaceRoute.get("/all/category", workspaceController.getAllCategory);
 WorkspaceRoute.delete("/delete/:id", workspaceController.deleteWorkspace);
 WorkspaceRoute.put("/edit/:id", workspaceController.editWorkSpace);
+
+// New routes for team member management
+// In workspaceRoutes.js
+
+WorkspaceRoute.post('/assign-team-member/:workspaceId', workspaceController.assignTeamMember);
+WorkspaceRoute.put('/update-team-member/:workspaceId', workspaceController.updateTeamMemberRole);
+WorkspaceRoute.delete('/remove-team-member/:workspaceId/:userId', workspaceController.removeTeamMember);
 
 
 WorkspaceRoute.get("/unapproved", workspaceController.getUnapproved);

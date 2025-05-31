@@ -27,6 +27,7 @@ const workspaceRouter = require('./routes/workspaceRoute.js');
 const feedbackRouter = require('./routes/feebackRoute.js');
 const announcementRoutes = require('./routes/announcementRoute.js');
 const locationRoutes = require('./routes/locationRoute.js');
+const subscriptionPlanRoute = require("./routes/subscriptionPlanRoute.js");
 
 
 
@@ -110,6 +111,7 @@ app.use('/workspace', workspaceRouter);
 app.use('/feedback', feedbackRouter);
 app.use('/announcements', announcementRoutes);
 app.use('/location', locationRoutes);
+app.use("/api/subscription-plans", subscriptionPlanRoute);
 
 
 // Socket.io logic
