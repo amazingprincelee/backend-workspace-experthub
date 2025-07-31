@@ -963,7 +963,10 @@ getDefaultWorkspaces: async (req, res) => {
 
   addCategory: async (req, res) => {
     try {
-        const adminId = req.params.adminId;
+       console.log("I am very rich")
+
+        const adminId = req.params.userId;
+        console.log("admin id is ", adminId)
         const user = await User.findById(adminId);
         if (!user) {
             return res.status(401).json({ message: "User not found" });
