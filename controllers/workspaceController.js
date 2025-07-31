@@ -848,7 +848,7 @@ getDefaultWorkspaces: async (req, res) => {
   
             // Create or update the Location document
             locationDoc = await Location.findOneAndUpdate(
-              { fullAddress }, // Use fullAddress as a unique identifier (optional, adjust as needed)
+              { "selectedLocation.fullAddress": fullAddress }, // Use fullAddress as a unique identifier (optional, adjust as needed)
               {
                 location: {
                   type: "Point",
