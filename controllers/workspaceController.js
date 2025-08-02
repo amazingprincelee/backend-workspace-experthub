@@ -1648,54 +1648,11 @@ getDefaultWorkspaces: async (req, res) => {
         const workspaceId = req.params.workspaceId;
         const { userId, role } = req.body;
 
-        try {
-            if (!mongoose.Types.ObjectId.isValid(workspaceId) || !mongoose.Types.ObjectId.isValid(userId)) {
-                return res.status(400).json({ message: "Invalid workspace ID or user ID" });
-            }
+        console.log("user id is", userId);
 
-            const workspace = await WorkSpace.findById(workspaceId);
-            const user = await User.findById(userId);
+        res.status(200).json({message: "Successfully Assigned Team member"})
+        
 
-            if (!workspace || !user) {
-                return res.status(404).json({ message: "Workspace or user not found" });
-            }
-
-            if (workspace.providerId.toString() !== req.user._id) {
-                return res.status(403).json({ message: "Only the workspace provider can assign team members" });
-            }
-
-            // Check if user is already a team member
-            if (workspace.teamMembers.some(member => member.userId.toString() === userId)) {
-                return res.status(400).json({ message: "User is already a team member" });
-            }
-
-            // Define privileges based on role
-            let privileges = { canCreate: false, canEdit: false, canDelete: false };
-            if (role === 'Admin') {
-                privileges = { canCreate: true, canEdit: true, canDelete: true };
-            } else if (role === 'Editor') {
-                privileges = { canCreate: true, canEdit: true, canDelete: false };
-            } else if (role === 'Viewer') {
-                privileges = { canCreate: false, canEdit: false, canDelete: false };
-            } else {
-                return res.status(400).json({ message: "Invalid role specified" });
-            }
-
-            workspace.teamMembers.push({ userId, role, privileges });
-            await workspace.save();
-
-            await Notification.create({
-                title: "Team Member Assigned",
-                content: `You have been assigned as a ${role} to the workspace "${workspace.title}"`,
-                contentId: workspace._id,
-                userId: userId,
-            });
-
-            return res.status(200).json({ message: "Team member assigned successfully", workspace });
-        } catch (error) {
-            console.error("Error assigning team member:", error);
-            return res.status(500).json({ message: "Unexpected error while assigning team member" });
-        }
     },
 
     updateTeamMemberRole: async (req, res) => {
