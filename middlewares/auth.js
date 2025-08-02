@@ -3,8 +3,11 @@ const jwt = require('jsonwebtoken');
 const authenticate = (req, res, next) => {
     console.log(req.headers);
 
-    const token = req.headers.authorization;
-    if (token) {
+    const authHeader = req.headers.authorization;
+    if (authHeader) {
+        // Extract token from "Bearer <token>" format
+        const token = authHeader.startsWith('Bearer ') ? authHeader.slice(7) : authHeader;
+        
         jwt.verify(token, process.env.JWT_SECRET, (err, user) => {
             if (err) {
                 return res.sendStatus(403); // Forbidden

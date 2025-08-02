@@ -457,7 +457,7 @@ getWorkspacesByProviderId: async (req, res) => {
   deleteCategory: async (req, res) => {
     try {
       const categoryName = req.params.categoryName;
-      const adminId = req.params.adminId; // Optional: if you want to check user role
+      const adminId = req.params.userId; // Optional: if you want to check user role
       const user = await User.findById(adminId);
 
       if (!user || user.role.toLowerCase() !== "admin") {
@@ -483,8 +483,10 @@ getWorkspacesByProviderId: async (req, res) => {
   updateCategory: async (req, res) => {
     try {
       const categoryName = req.params.categoryName.toLowerCase();
-      const adminId = req.params.adminId; 
+      const adminId = req.params.userId; 
       const user = await User.findById(adminId);
+
+      console.log("the admin id is", adminId)
 
       if (!user || user.role.toLowerCase() !== "admin") {
         return res.status(403).json({ message: "Only admins can update categories" });

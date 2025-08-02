@@ -1,5 +1,6 @@
 const express = require('express');
 const workspaceController = require('../controllers/workspaceController');
+const authenticate = require('../middlewares/auth');
 
 const WorkspaceRoute = express.Router();
 
@@ -25,7 +26,7 @@ WorkspaceRoute.get("/all", workspaceController.getAllWorkspaces);
 WorkspaceRoute.get("/dashboard-stats", workspaceController.getDashAdminStats);
 WorkspaceRoute.get("/provider-stats", workspaceController.getDashProviderStats);
 WorkspaceRoute.get("/recommended", workspaceController.getRecommendedWorkspace);
-WorkspaceRoute.get("/workspaces-by-provider-id/:providerId", workspaceController.getWorkspacesByProviderId);
+WorkspaceRoute.get("/workspaces-by-provider-id/:providerId", authenticate, workspaceController.getWorkspacesByProviderId);
 
 WorkspaceRoute.get('/search-users-by-email', workspaceController.searchUsersByEmail);
 
