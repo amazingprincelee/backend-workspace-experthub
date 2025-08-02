@@ -56,21 +56,8 @@ const io = new Server(server, {
 const PORT = process.env.PORT || 3002;
 startCronJobs()
 // Middleware
-const allowedOrigins = [
-  "http://localhost:3000",
-  "https://frontend-workspace-experthub.vercel.app",
-  "https://yourfrontend2.com",
-  "https://yourfrontend3.com"
-];
-
 app.use(cors({
-  origin: function (origin, callback) {
-    if (!origin || allowedOrigins.includes(origin)) {
-      callback(null, true);
-    } else {
-      callback(new Error("Not allowed by CORS"));
-    }
-  },
+  origin: "*",
   allowedHeaders: ["Content-Type", "Authorization"],
   methods: ["GET", "POST", "PUT", "DELETE"],
   credentials: true,
