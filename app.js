@@ -57,7 +57,12 @@ const PORT = process.env.PORT || 3002;
 startCronJobs()
 // Middleware
 app.use(cors({
-  origin: "*",
+  origin: function (origin, callback) {
+    // Allow requests with no origin (like mobile apps or curl requests)
+    if (!origin) return callback(null, true);
+    // Allow all origins
+    callback(null, true);
+  },
   allowedHeaders: ["Content-Type", "Authorization"],
   methods: ["GET", "POST", "PUT", "DELETE"],
   credentials: true,
