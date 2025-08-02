@@ -648,8 +648,41 @@ getDefaultWorkspaces: async (req, res) => {
           .lean();
   
         return res.status(200).json({ workspaces: approvedWorkspaces });
-      } else {
-        // Other users see both approved and unapproved workspaces
+      } else if (userRole === "provider") {
+        // Providers see only their own workspaces (both approved and pending)
+        const [approvedWorkspaces, unapprovedWorkspaces] = await Promise.all([
+          WorkSpace.find({ 
+            approved: true,
+            $or: [
+              { providerId: userId },
+              { assignedSpaceProvider: userId }
+            ]
+          })
+            .populate({
+              path: "registeredClients",
+              select: "profilePicture fullname _id",
+            })
+            .lean(),
+          WorkSpace.find({ 
+            approved: false,
+            $or: [
+              { providerId: userId },
+              { assignedSpaceProvider: userId }
+            ]
+          })
+            .populate({
+              path: "registeredClients",
+              select: "profilePicture fullname _id",
+            })
+            .lean(),
+        ]);
+  
+        return res.status(200).json({
+          approvedWorkspaces,
+          unapprovedWorkspaces,
+        });
+      } else if (userRole === "admin") {
+        // Admins see all workspaces (both approved and unapproved)
         const [approvedWorkspaces, unapprovedWorkspaces] = await Promise.all([
           WorkSpace.find({ approved: true })
             .populate({
@@ -669,6 +702,8 @@ getDefaultWorkspaces: async (req, res) => {
           approvedWorkspaces,
           unapprovedWorkspaces,
         });
+      } else {
+        return res.status(403).json({ message: "Unauthorized access" });
       }
     } catch (error) {
       console.error("Error fetching workspaces:", error);
@@ -816,7 +851,19 @@ getDefaultWorkspaces: async (req, res) => {
       
       const isAdmin = user.role.toLowerCase() === "admin";
       const approved = isAdmin;
-      const providerId = isAdmin && providerName ? null : userId;
+      
+      // Determine the correct providerId
+      let providerId = userId; // Default to the user creating the workspace
+      
+      // If admin is creating workspace for a specific provider, find that provider's ID
+      if (isAdmin && providerName) {
+        const assignedProvider = await User.findOne({ fullname: providerName, role: "provider" });
+        if (assignedProvider) {
+          providerId = assignedProvider._id;
+        } else {
+          return res.status(400).json({ message: "Specified provider not found" });
+        }
+      }
   
       // Geocode the location to get coordinates and create a Location document
       let locationDoc;
@@ -875,10 +922,22 @@ getDefaultWorkspaces: async (req, res) => {
         return res.status(400).json({ message: "Location is required and cannot be empty" });
       }
   
+      // Get provider details for workspace
+      let workspaceProviderName = user.fullname;
+      let workspaceProviderImage = user.profilePicture || "";
+      
+      if (isAdmin && providerName) {
+        const assignedProvider = await User.findById(providerId);
+        if (assignedProvider) {
+          workspaceProviderName = assignedProvider.fullname;
+          workspaceProviderImage = assignedProvider.profilePicture || "";
+        }
+      }
+      
       const newWorkspace = new WorkSpace({
         title,
-        providerName: isAdmin ? providerName : user.fullname,
-        providerImage: user.profilePicture || "",
+        providerName: workspaceProviderName,
+        providerImage: workspaceProviderImage,
         thumbnail: {
           type: uploadedImage.resource_type,
           url: uploadedImage.secure_url,
@@ -886,7 +945,7 @@ getDefaultWorkspaces: async (req, res) => {
         category,
         privacy,
         about,
-        providerId: providerId || undefined,
+        providerId: providerId,
         duration,
         type,
         startDate,

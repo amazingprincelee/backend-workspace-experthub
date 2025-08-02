@@ -7,6 +7,8 @@ const Course = require("../models/courses.js");
 const { default: mongoose } = require("mongoose");
 
 
+
+
 const userControllers = {
 
   // To get user profile
