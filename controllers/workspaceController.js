@@ -850,6 +850,7 @@ getDefaultWorkspaces: async (req, res) => {
             locationDoc = await Location.findOneAndUpdate(
               { "selectedLocation.fullAddress": fullAddress }, // Use fullAddress as a unique identifier (optional, adjust as needed)
               {
+                userId: userId, // Add userId to associate location with user
                 location: {
                   type: "Point",
                   coordinates,
