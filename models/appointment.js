@@ -12,7 +12,7 @@ const appointmentSchema = new mongoose.Schema(
     workspaceId: {
     type: mongoose.Schema.Types.ObjectId,
     ref: 'Workspace',
-    required: true,
+    
   },
     mode: {
       type: String,
