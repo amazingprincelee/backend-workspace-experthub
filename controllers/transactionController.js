@@ -205,6 +205,241 @@ const transactionController = {
     } catch (error) {
       res.status(500).send(error.response.data.message);
     }
+  },
+
+  // Secure payment initialization endpoint
+  initializePayment: async (req, res) => {
+    const { userId, amount, currency = 'NGN' } = req.body;
+    
+    try {
+      const user = await User.findById(userId);
+      if (!user) {
+        return res.status(404).json({ error: 'User not found' });
+      }
+
+      if (!amount || amount <= 0) {
+        return res.status(400).json({ error: 'Invalid amount' });
+      }
+
+      const tx_ref = `tx-${Date.now()}-${userId}`;
+      
+      const paymentData = {
+        tx_ref,
+        amount,
+        currency,
+        redirect_url: `${process.env.FRONTEND_URL || 'http://localhost:3000'}/wallet/payment-callback`,
+        payment_options: 'card,mobilemoney,ussd',
+        customer: {
+          email: user.email,
+          name: user.fullName || user.fullname,
+          phone_number: user.phone || ''
+        },
+        customizations: {
+          title: 'ExpertHub Wallet Funding',
+          description: 'Add funds to your wallet',
+          logo: ''
+        }
+      };
+
+      const response = await axios.post(`${flutterwaveBaseURL}payments`, paymentData, {
+        headers: {
+          Authorization: `Bearer ${flutterwaveSecretKey}`,
+          'Content-Type': 'application/json'
+        }
+      });
+
+      if (response.data.status === 'success') {
+        return res.status(200).json({
+          status: 'success',
+          data: {
+            link: response.data.data.link,
+            tx_ref
+          }
+        });
+      } else {
+        return res.status(400).json({ error: 'Payment initialization failed' });
+      }
+
+    } catch (error) {
+      console.error('Payment initialization error:', error.response ? error.response.data : error.message);
+      res.status(500).json({ error: 'Internal server error' });
+    }
+  },
+
+  // Verify payment and add funds
+  verifyPayment: async (req, res) => {
+    const { tx_ref, transaction_id } = req.body;
+    
+    try {
+      const response = await axios.get(`${flutterwaveBaseURL}transactions/${transaction_id}/verify`, {
+        headers: {
+          Authorization: `Bearer ${flutterwaveSecretKey}`
+        }
+      });
+
+      if (response.data.status === 'success' && response.data.data.status === 'successful') {
+        const { amount, customer, tx_ref: verifiedTxRef } = response.data.data;
+        
+        // Extract userId from tx_ref
+        const userId = verifiedTxRef.split('-')[2];
+        
+        const user = await User.findById(userId);
+        if (!user) {
+          return res.status(404).json({ error: 'User not found' });
+        }
+
+        // Check if transaction already processed
+        const existingTransaction = await Transaction.findOne({ 
+          reference: verifiedTxRef,
+          type: 'credit'
+        });
+        
+        if (existingTransaction) {
+          return res.status(400).json({ error: 'Transaction already processed' });
+        }
+
+        // Add funds to user balance
+        user.balance += amount;
+        await user.save();
+
+        // Create transaction record
+        await Transaction.create({
+          userId: user._id,
+          amount: amount,
+          type: 'credit',
+          reference: verifiedTxRef,
+          status: 'successful'
+        });
+
+        return res.status(200).json({ 
+          message: 'Payment verified and funds added successfully',
+          balance: user.balance
+        });
+      } else {
+        return res.status(400).json({ error: 'Payment verification failed' });
+      }
+
+    } catch (error) {
+      console.error('Payment verification error:', error.response ? error.response.data : error.message);
+      res.status(500).json({ error: 'Internal server error' });
+    }
+  },
+
+  // Initialize payment for course enrollment
+  initializeCoursePayment: async (req, res) => {
+    const { userId, courseId, amount, currency = 'NGN' } = req.body;
+    
+    try {
+      const user = await User.findById(userId);
+      if (!user) {
+        return res.status(404).json({ error: 'User not found' });
+      }
+
+      if (!amount || amount <= 0) {
+        return res.status(400).json({ error: 'Invalid amount' });
+      }
+
+      const tx_ref = `course-${Date.now()}-${userId}-${courseId}`;
+      
+      const paymentData = {
+        tx_ref,
+        amount,
+        currency,
+        redirect_url: `${process.env.FRONTEND_URL || 'http://localhost:3000'}/courses/payment-callback`,
+        payment_options: 'card,mobilemoney,ussd',
+        customer: {
+          email: user.email,
+          name: user.fullName || user.fullname,
+          phone_number: user.phone || ''
+        },
+        customizations: {
+          title: 'ExpertHub Course Enrollment',
+          description: 'Course enrollment payment',
+          logo: ''
+        }
+      };
+
+      const response = await axios.post(`${flutterwaveBaseURL}payments`, paymentData, {
+        headers: {
+          Authorization: `Bearer ${flutterwaveSecretKey}`,
+          'Content-Type': 'application/json'
+        }
+      });
+
+      if (response.data.status === 'success') {
+        return res.status(200).json({
+          status: 'success',
+          data: {
+            link: response.data.data.link,
+            tx_ref
+          }
+        });
+      } else {
+        return res.status(400).json({ error: 'Payment initialization failed' });
+      }
+
+    } catch (error) {
+      console.error('Course payment initialization error:', error.response ? error.response.data : error.message);
+      res.status(500).json({ error: 'Internal server error' });
+    }
+  },
+
+  // Verify course payment and process enrollment
+  verifyCoursePayment: async (req, res) => {
+    const { tx_ref, transaction_id } = req.body;
+    
+    try {
+      const response = await axios.get(`${flutterwaveBaseURL}transactions/${transaction_id}/verify`, {
+        headers: {
+          Authorization: `Bearer ${flutterwaveSecretKey}`
+        }
+      });
+
+      if (response.data.status === 'success' && response.data.data.status === 'successful') {
+        const { amount, customer, tx_ref: verifiedTxRef } = response.data.data;
+        
+        // Extract userId and courseId from tx_ref
+        const txParts = verifiedTxRef.split('-');
+        const userId = txParts[2];
+        const courseId = txParts[3];
+        
+        const user = await User.findById(userId);
+        if (!user) {
+          return res.status(404).json({ error: 'User not found' });
+        }
+
+        // Check if transaction already processed
+        const existingTransaction = await Transaction.findOne({ 
+          reference: verifiedTxRef,
+          type: 'debit'
+        });
+        
+        if (existingTransaction) {
+          return res.status(400).json({ error: 'Transaction already processed' });
+        }
+
+        // Create transaction record for course payment
+        await Transaction.create({
+          userId: user._id,
+          courseId: courseId,
+          amount: amount,
+          type: 'debit',
+          reference: verifiedTxRef,
+          status: 'successful'
+        });
+
+        return res.status(200).json({ 
+          message: 'Course payment verified successfully',
+          courseId: courseId
+        });
+      } else {
+        return res.status(400).json({ error: 'Payment verification failed' });
+      }
+
+    } catch (error) {
+      console.error('Course payment verification error:', error.response ? error.response.data : error.message);
+      res.status(500).json({ error: 'Internal server error' });
+    }
   }
 }
 

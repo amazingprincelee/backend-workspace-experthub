@@ -7,6 +7,8 @@ const transactionSchema = new mongoose.Schema({
   amount: Number,
   type: String,
   soldBy: { type: mongoose.Schema.Types.ObjectId, ref: 'User', required: false },
+  reference: { type: String, required: false }, // For payment reference tracking
+  status: { type: String, required: false, default: 'pending' }, // pending, successful, failed
   date: { type: Date, default: Date.now },
 });
 

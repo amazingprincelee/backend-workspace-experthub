@@ -9,6 +9,12 @@ transactionRouter.post('/create-recipient', transactionController.createRecipien
 transactionRouter.post('/withdraw', transactionController.withdraw)
 transactionRouter.post('/add-funds', transactionController.addFunds)
 transactionRouter.post('/pay-with', transactionController.payWith)
+// Secure payment routes
+transactionRouter.post('/initialize-payment', transactionController.initializePayment)
+transactionRouter.post('/verify-payment', transactionController.verifyPayment)
+// Course payment routes
+transactionRouter.post('/initialize-course-payment', transactionController.initializeCoursePayment)
+transactionRouter.post('/verify-course-payment', transactionController.verifyCoursePayment)
 
 
 module.exports = transactionRouter;
