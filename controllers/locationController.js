@@ -194,9 +194,222 @@ const createLocation = async (req, res) => {
 };
 
 
+const getNearByWorkspaceByAddress = async (req, res) => {
+  try {
+    const userAddress = req.params.address;
+    const maxDistance = req.query.maxDistance || 5000; // Default 5km
+    const limit = req.query.limit || 8; // Default 8 results
+
+    // Validate address
+    if (!userAddress || typeof userAddress !== 'string' || userAddress.trim() === '') {
+      return res.status(400).json({ message: "Valid address string is required" });
+    }
+
+    // Validate query parameters
+    const maxDistanceNum = parseInt(maxDistance);
+    const limitNum = parseInt(limit);
+    if (maxDistanceNum < 1000 || maxDistanceNum > 50000) {
+      return res.status(400).json({ message: "maxDistance must be between 1km and 50km" });
+    }
+    if (limitNum < 1 || limitNum > 20) {
+      return res.status(400).json({ message: "limit must be between 1 and 20" });
+    }
+
+    // Check if Google Maps API key is available
+    if (!GOOGLE_MAPS_API_KEY) {
+      return res.status(500).json({ error: "Google Maps API key is missing" });
+    }
+
+    // Geocode the provided address
+    const geocodeResponse = await axios.get("https://maps.googleapis.com/maps/api/geocode/json", {
+      params: {
+        address: userAddress,
+        key: GOOGLE_MAPS_API_KEY,
+      },
+    });
+
+    console.log("geocode response status:", geocodeResponse.data.status);
+    console.log("geocode results count:", geocodeResponse.data.results?.length || 0);
+
+    // Check if geocoding was successful
+    if (geocodeResponse.data.status !== "OK" || !geocodeResponse.data.results.length) {
+      return res.status(400).json({ 
+        message: "Address not found or geocoding failed",
+        status: geocodeResponse.data.status 
+      });
+    }
+
+    // Extract coordinates from geocoding response
+    const { lat, lng } = geocodeResponse.data.results[0].geometry.location;
+    const userCoordinates = [lng, lat]; // [longitude, latitude] for MongoDB
+
+    console.log("User coordinates:", userCoordinates);
+    console.log("Searching within radius (meters):", maxDistanceNum);
+
+    // First, let's check if there are any locations in the database
+    const totalLocations = await Location.countDocuments();
+    console.log("Total locations in database:", totalLocations);
+
+    // Find nearby locations first
+    const nearbyLocationIds = await Location.find({
+      location: {
+        $near: {
+          $geometry: {
+            type: "Point",
+            coordinates: userCoordinates
+          },
+          $maxDistance: maxDistanceNum // Distance in meters
+        }
+      }
+    })
+    .select('_id location selectedLocation')
+    .limit(limitNum * 3) // Get more locations to ensure we have enough workspaces
+    .lean();
+
+    console.log("Nearby locations found:", nearbyLocationIds.length);
+    if (nearbyLocationIds.length > 0) {
+      console.log("Sample nearby location:", {
+        id: nearbyLocationIds[0]._id,
+        coordinates: nearbyLocationIds[0].location.coordinates,
+        address: nearbyLocationIds[0].selectedLocation?.fullAddress
+      });
+    }
+
+    // Extract location IDs
+    const locationIds = nearbyLocationIds.map(loc => loc._id);
+
+    // Check total workspaces in database
+    const totalWorkspaces = await WorkSpace.countDocuments();
+    const approvedWorkspaces = await WorkSpace.countDocuments({ approved: true });
+    console.log("Total workspaces in database:", totalWorkspaces);
+    console.log("Approved workspaces in database:", approvedWorkspaces);
+
+    // If no nearby locations found, let's try a broader search
+    if (locationIds.length === 0) {
+      console.log("No nearby locations found, trying broader search...");
+      
+      // Try finding any workspaces first to see if there are any in the database
+      const anyWorkspaces = await WorkSpace.find({ approved: true })
+        .populate({
+          path: 'location',
+          select: 'location selectedLocation'
+        })
+        .limit(5)
+        .lean();
+      
+      console.log("Sample workspaces in database:", anyWorkspaces.length);
+      if (anyWorkspaces.length > 0) {
+        console.log("Sample workspace location:", {
+          title: anyWorkspaces[0].title,
+          coordinates: anyWorkspaces[0].location?.location?.coordinates,
+          address: anyWorkspaces[0].location?.selectedLocation?.fullAddress
+        });
+      }
+      
+      return res.json({
+        message: "No workspaces found within the specified radius",
+        userAddress,
+        userCoordinates,
+        searchRadiusKm: maxDistanceNum / 1000,
+        totalLocationsInDb: totalLocations,
+        totalWorkspacesInDb: totalWorkspaces,
+        approvedWorkspacesInDb: approvedWorkspaces,
+        nearbyLocationsFound: 0,
+        workspaces: [],
+        suggestion: "Try increasing the search radius or check if there are workspaces in your area"
+      });
+    }
+
+    // Find workspaces that have these locations
+    const nearbyWorkspaces = await WorkSpace.find({
+      location: { $in: locationIds },
+      approved: true // Only return approved workspaces
+    })
+    .populate({
+      path: 'location',
+      select: 'location selectedLocation'
+    })
+    .populate('providerId', 'name email userType')
+    .limit(limitNum)
+    .lean();
+
+    console.log("Workspaces found with nearby locations:", nearbyWorkspaces.length);
+
+     // If no workspaces found, let's debug what location IDs the workspaces are actually using
+     if (nearbyWorkspaces.length === 0) {
+       console.log("Debugging: Checking what location IDs workspaces are using...");
+       const allWorkspaces = await WorkSpace.find({ approved: true })
+         .select('_id title location')
+         .limit(10)
+         .lean();
+       
+       console.log("Sample workspace location IDs:");
+       allWorkspaces.forEach((workspace, index) => {
+         console.log(`Workspace ${index + 1}: ${workspace.title} -> Location ID: ${workspace.location}`);
+       });
+       
+       console.log("Looking for location ID:", locationIds[0]);
+       console.log("Available location IDs in workspaces:", allWorkspaces.map(w => w.location.toString()));
+     }
+
+    // Calculate distances and format response
+    const workspacesWithDistance = nearbyWorkspaces.map(workspace => {
+      const distance = calculateDistance(userCoordinates, workspace.location.location.coordinates);
+      return {
+        _id: workspace._id,
+        title: workspace.title,
+        providerName: workspace.providerName,
+        providerImage: workspace.providerImage,
+        thumbnail: workspace.thumbnail,
+        category: workspace.category,
+        about: workspace.about,
+        providerId: workspace.providerId,
+        persons: workspace.persons,
+        duration: workspace.duration,
+        startDate: workspace.startDate,
+        endDate: workspace.endDate,
+        startTime: workspace.startTime,
+        endTime: workspace.endTime,
+        fee: workspace.fee,
+        strikedFee: workspace.strikedFee,
+        room: workspace.room,
+        location: {
+          fullAddress: workspace.location.selectedLocation.fullAddress,
+          state: workspace.location.selectedLocation.state,
+          city: workspace.location.selectedLocation.city,
+          coordinates: workspace.location.location.coordinates
+        },
+        distanceKm: Math.round(distance * 100) / 100 // Round to 2 decimal places
+      };
+    });
+
+    // Sort by distance
+    workspacesWithDistance.sort((a, b) => a.distanceKm - b.distanceKm);
+
+    res.json({
+      message: "Nearby workspaces found successfully",
+      userAddress,
+      userCoordinates,
+      totalFound: workspacesWithDistance.length,
+      maxDistanceKm: maxDistanceNum / 1000,
+      workspaces: workspacesWithDistance
+    });
+
+  } catch (error) {
+    console.error("Get nearby workspaces error:", error.message);
+    res.status(500).json({ 
+      error: "Failed to find nearby workspaces", 
+      details: error.message 
+    });
+  }
+}
+
+
+
 
 module.exports = {
   searchLocation,
   getPlaceDetails,
   createLocation,
+  getNearByWorkspaceByAddress,
 };

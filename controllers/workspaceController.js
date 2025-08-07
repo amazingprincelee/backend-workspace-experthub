@@ -896,10 +896,10 @@ getDefaultWorkspaces: async (req, res) => {
             const fullAddress = geocodeResponse.data.results[0].formatted_address;
   
             // Create or update the Location document
-            locationDoc = await Location.findOneAndUpdate(
-              { "selectedLocation.fullAddress": fullAddress }, // Use fullAddress as a unique identifier (optional, adjust as needed)
-              {
-                userId: userId, // Add userId to associate location with user
+            locationDoc = await Location.findOne({ userId, "selectedLocation.fullAddress": fullAddress });
+            if (!locationDoc) {
+              locationDoc = new Location({
+                userId,
                 location: {
                   type: "Point",
                   coordinates,
@@ -909,9 +909,9 @@ getDefaultWorkspaces: async (req, res) => {
                   state: stateFromGeocode,
                   city,
                 },
-              },
-              { upsert: true, new: true }
-            );
+              });
+              await locationDoc.save();
+            }
           } else {
             console.warn(`Geocoding failed for location "${location}" for workspace by user ${userId}`);
             return res.status(400).json({ message: "Failed to geocode location" });
