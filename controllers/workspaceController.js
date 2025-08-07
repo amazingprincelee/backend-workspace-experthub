@@ -716,39 +716,46 @@ getDefaultWorkspaces: async (req, res) => {
 
   
   getWorkSpaceById: async (req, res) => {
-    const workspaceId = req.params.workspaceId;
-    const adminId = req.query.adminId;
-  
-    try {
+  const workspaceId = req.params.workspaceId;
+  const adminId = req.query.adminId;
+
+  console.log("I got hit o");
+
+  try {
+    let isAdmin = false;
+
+    if (adminId) {
       const user = await User.findById(adminId);
-      if (!user) {
-        return res.status(401).json({ message: "User not found" });
+      if (user && user.role.toLowerCase() === "admin") {
+        isAdmin = true;
       }
-  
-      const query = { _id: workspaceId };
-      if (user.role.toLowerCase() !== "admin") {
-        query.approved = true;
-      }
-  
-      const workspace = await WorkSpace.findOne(query)
-        .populate({
-          path: "registeredClients",
-          select: "profilePicture fullname _id",
-        })
-        .lean();
-  
-      if (!workspace) {
-        return res.status(404).json({ message: "Workspace not found" });
-      }
-  
-      return res.status(200).json({ workspace });
-    } catch (error) {
-      console.error(error);
-      return res.status(500).json({
-        message: "Unexpected error while fetching the workspace",
-      });
     }
-  },
+
+    const query = { _id: workspaceId };
+    if (!isAdmin) {
+      query.approved = true;
+    }
+
+    const workspace = await WorkSpace.findOne(query)
+      .populate({
+        path: "registeredClients",
+        select: "profilePicture fullname _id",
+      })
+      .lean();
+
+    if (!workspace) {
+      return res.status(404).json({ message: "Workspace not found" });
+    }
+
+    return res.status(200).json({ workspace });
+  } catch (error) {
+    console.error(error);
+    return res.status(500).json({
+      message: "Unexpected error while fetching the workspace",
+    });
+  }
+},
+
 
   getAllWorkspaces: async (req, res) => {
     try {
