@@ -757,16 +757,22 @@ getWorkspacesByProviderId: async (req, res) => {
   getWorkspaceByCategory: async (req, res) => {
     try {
         const adminId = req.body.adminId || req.query.adminId;
-        const user = await User.findById(adminId);
-        if (!user) {
-            return res.status(401).json({ message: "User not found" });
+        let user = null;
+        
+        // If adminId is provided, validate the user
+        if (adminId) {
+            user = await User.findById(adminId);
+            if (!user) {
+                return res.status(401).json({ message: "User not found" });
+            }
         }
 
         let { category, date, timeFrom, timeUntil, numberOfPeople, location } = req.body;
 
         const query = {};
-        if (user.role.toLowerCase() !== "admin") {
-            query.approved = true; // Non-admins only see approved workspaces
+        // Only admins can see unapproved workspaces, everyone else (including public) sees only approved
+        if (!user || user.role.toLowerCase() !== "admin") {
+            query.approved = true;
         }
 
         if (category) {
