@@ -18,9 +18,9 @@ const categoryController = {
   
   getAllCategory: async (req, res) => {
     try {
-      const category = await Category.find()
+      const categories = await Category.find()
 
-      return res.status(200).json({ category });
+      return res.status(200).json({ categories });
 
     } catch (error) {
       console.log(error);

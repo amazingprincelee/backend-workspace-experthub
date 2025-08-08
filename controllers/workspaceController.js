@@ -1573,16 +1573,16 @@ getDefaultWorkspaces: async (req, res) => {
   },
 
   getEnrolledWorkspaces: async (req, res) => {
-    const adminId = req.params.adminId;
+    const userId = req.params.userId;
   
     try {
-      const user = await User.findById(adminId);
+      const user = await User.findById(userId);
       if (!user) {
         return res.status(401).json({ message: "User not found" });
       }
   
       const query = {
-        $or: [{ registeredClients: adminId }, { "enrollments.user": adminId }],
+        $or: [{ registeredClients: userId }, { "enrollments.user": userId }],
       };
       if (user.role.toLowerCase() !== "admin") {
         query.approved = true;
