@@ -1,4 +1,5 @@
 const Location = require("../models/location.js");
+const WorkSpace = require("../models/workspace.js");
 const User = require("../models/user.js");
 const axios = require("axios");
 require("dotenv").config();
@@ -197,7 +198,9 @@ const createLocation = async (req, res) => {
 const getNearByWorkspaceByAddress = async (req, res) => {
   try {
     const userAddress = req.params.address;
-    const maxDistance = req.query.maxDistance || 5000; // Default 5km
+    console.log("userAddress", userAddress);
+    
+    const maxDistance = req.query.maxDistance || 50000; // Default 50km for testing
     const limit = req.query.limit || 8; // Default 8 results
 
     // Validate address

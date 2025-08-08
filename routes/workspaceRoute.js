@@ -37,8 +37,9 @@ WorkspaceRoute.post("/add-workspace/:userId", workspaceController.addWorkSpace);
 
 // Category routes
 WorkspaceRoute.post("/category/:userId", workspaceController.addCategory);
-WorkspaceRoute.delete("/delete/:categoryName/:userId", workspaceController.deleteCategory);
-WorkspaceRoute.put("/update/:categoryName/:userId", workspaceController.updateCategory);
+WorkspaceRoute.delete("/delete/:categoryId/:userId", workspaceController.deleteCategory);
+WorkspaceRoute.put("/update/:categoryId/:userId", workspaceController.updateCategory);
+WorkspaceRoute.get("/categories/workspace-type/:workspaceTypeId", workspaceController.getCategoriesByWorkspaceType);
 
 // Workspace enroll routes
 WorkspaceRoute.get("/admissions/:workspaceId", workspaceController.getEnrolledClients);
@@ -52,6 +53,13 @@ WorkspaceRoute.get("/recommendedworkspaces/:userId", workspaceController.getReco
 
 // Get all workspaces with category
 WorkspaceRoute.get("/all/category", workspaceController.getAllCategory);
+
+// Workspace Type routes
+WorkspaceRoute.get("/all/workspace-types", workspaceController.getAllWorkspaceTypes);
+WorkspaceRoute.post("/workspace-type/:userId", workspaceController.addWorkspaceType);
+WorkspaceRoute.put("/workspace-type/:id/:userId", workspaceController.updateWorkspaceType);
+WorkspaceRoute.delete("/workspace-type/:id/:userId", workspaceController.deleteWorkspaceType);
+
 WorkspaceRoute.delete("/delete/:id", workspaceController.deleteWorkspace);
 WorkspaceRoute.put("/edit/:id", workspaceController.editWorkSpace);
 

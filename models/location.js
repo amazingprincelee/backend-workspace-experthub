@@ -6,6 +6,11 @@ const locationSchema = new mongoose.Schema({
     ref: 'User', 
     
   },
+  workspaceId: {
+    type: mongoose.Schema.Types.ObjectId,
+    ref: 'Workspace', 
+    
+  },
   location: {
     type: {
       type: String,

@@ -55,6 +55,7 @@ const workspaceSchema = new mongoose.Schema({
             type: String
         }
     }],
+    address: {type: String, required: true },
     location: {
         type: mongoose.Schema.Types.ObjectId,
         ref: 'Location', 

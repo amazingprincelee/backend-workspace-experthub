@@ -16,7 +16,7 @@ const userControllers = {
     try {
       const userId = req.params.id;
       // Check if the user exists
-      const existingUser = await User.findById(userId);
+      const existingUser = await User.findById(userId).populate('location');
 
       if (!existingUser) {
         return res.status(404).json({ message: 'User not found' });
@@ -28,6 +28,7 @@ const userControllers = {
         profilePicture: existingUser.image,
         phone: existingUser.phone,
         email: existingUser.email,
+        location: existingUser.location ? existingUser.location.selectedLocation.fullAddress : null,
         gender: existingUser.gender,
         age: existingUser.age,
         skillLevel: existingUser.skillLevel,

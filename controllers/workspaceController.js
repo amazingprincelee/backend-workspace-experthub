@@ -5,6 +5,7 @@ const User = require("../models/user.js");
 const Location = require("../models/location.js");
 const axios = require("axios");
 const WorkspaceCategory = require("../models/workspaceCategory.js");
+const WorkspaceType = require("../models/workspaceType.js");
 const { upload } = require("../config/cloudinary.js");
 const Notification = require("../models/workspaceNotification.js");
 const Transaction = require("../models/transactions.js");
@@ -100,21 +101,215 @@ const workspaceController = {
 
   getAllCategory: async (req, res) => {
     try {
-      const categories = await WorkspaceCategory.find().lean();
+      const categories = await WorkspaceCategory.find({ isActive: true })
+        .populate('workspaceType', 'name')
+        .lean();
       if (!categories || categories.length === 0) {
         return res.status(200).json({ categories: [] });
       }
   
       return res.status(200).json({
         categories: categories.map(cat => ({
+          _id: cat._id,
           name: cat.name,
-          subCategory: cat.subCategory,
+          workspaceType: cat.workspaceType,
         })),
       });
     } catch (error) {
       console.error("Error fetching categories:", error);
       return res.status(500).json({
         message: "Unexpected error while fetching categories",
+      });
+    }
+  },
+
+  // Get categories by workspace type
+  getCategoriesByWorkspaceType: async (req, res) => {
+    try {
+      const { workspaceTypeId } = req.params;
+      
+      if (!mongoose.Types.ObjectId.isValid(workspaceTypeId)) {
+        return res.status(400).json({ message: "Invalid workspace type ID" });
+      }
+
+      const categories = await WorkspaceCategory.find({ 
+        workspaceType: workspaceTypeId, 
+        isActive: true 
+      })
+        .populate('workspaceType', 'name')
+        .lean();
+
+      return res.status(200).json({
+        categories: categories.map(cat => ({
+          _id: cat._id,
+          name: cat.name,
+          workspaceType: cat.workspaceType,
+        })),
+      });
+    } catch (error) {
+      console.error("Error fetching categories by workspace type:", error);
+      return res.status(500).json({
+        message: "Unexpected error while fetching categories",
+      });
+    }
+  },
+
+  // Workspace Type Controllers
+  getAllWorkspaceTypes: async (req, res) => {
+    try {
+      const workspaceTypes = await WorkspaceType.find({ isActive: true }).lean();
+      if (!workspaceTypes || workspaceTypes.length === 0) {
+        return res.status(200).json({ workspaceTypes: [] });
+      }
+  
+      return res.status(200).json({
+        workspaceTypes: workspaceTypes.map(type => ({
+          _id: type._id,
+          name: type.name,
+          description: type.description,
+        })),
+      });
+    } catch (error) {
+      console.error("Error fetching workspace types:", error);
+      return res.status(500).json({
+        message: "Unexpected error while fetching workspace types",
+      });
+    }
+  },
+
+  addWorkspaceType: async (req, res) => {
+    try {
+      const { name, description } = req.body;
+  
+      if (!name || name.trim() === "") {
+        return res.status(400).json({
+          message: "Workspace type name is required",
+        });
+      }
+  
+      // Check if workspace type already exists
+      const existingType = await WorkspaceType.findOne({ 
+        name: { $regex: new RegExp(`^${name.trim()}$`, 'i') } 
+      });
+  
+      if (existingType) {
+        return res.status(400).json({
+          message: "Workspace type already exists",
+        });
+      }
+  
+      const newWorkspaceType = new WorkspaceType({
+        name: name.trim(),
+        description: description?.trim() || ""
+      });
+  
+      await newWorkspaceType.save();
+  
+      return res.status(201).json({
+        message: "Workspace type added successfully",
+        workspaceType: {
+          _id: newWorkspaceType._id,
+          name: newWorkspaceType.name,
+          description: newWorkspaceType.description
+        }
+      });
+    } catch (error) {
+      console.error("Error adding workspace type:", error);
+      return res.status(500).json({
+        message: "Unexpected error while adding workspace type",
+      });
+    }
+  },
+
+  updateWorkspaceType: async (req, res) => {
+    try {
+      const { id } = req.params;
+      const { name, description } = req.body;
+  
+      if (!mongoose.Types.ObjectId.isValid(id)) {
+        return res.status(400).json({
+          message: "Invalid workspace type ID",
+        });
+      }
+  
+      if (!name || name.trim() === "") {
+        return res.status(400).json({
+          message: "Workspace type name is required",
+        });
+      }
+  
+      // Check if another workspace type with the same name exists
+      const existingType = await WorkspaceType.findOne({ 
+        name: { $regex: new RegExp(`^${name.trim()}$`, 'i') },
+        _id: { $ne: id }
+      });
+  
+      if (existingType) {
+        return res.status(400).json({
+          message: "Workspace type with this name already exists",
+        });
+      }
+  
+      const updatedType = await WorkspaceType.findByIdAndUpdate(
+        id,
+        { 
+          name: name.trim(),
+          description: description?.trim() || ""
+        },
+        { new: true }
+      );
+  
+      if (!updatedType) {
+        return res.status(404).json({
+          message: "Workspace type not found",
+        });
+      }
+  
+      return res.status(200).json({
+        message: "Workspace type updated successfully",
+        workspaceType: {
+          _id: updatedType._id,
+          name: updatedType.name,
+          description: updatedType.description
+        }
+      });
+    } catch (error) {
+      console.error("Error updating workspace type:", error);
+      return res.status(500).json({
+        message: "Unexpected error while updating workspace type",
+      });
+    }
+  },
+
+  deleteWorkspaceType: async (req, res) => {
+    try {
+      const { id } = req.params;
+  
+      if (!mongoose.Types.ObjectId.isValid(id)) {
+        return res.status(400).json({
+          message: "Invalid workspace type ID",
+        });
+      }
+  
+      const deletedType = await WorkspaceType.findByIdAndUpdate(
+        id,
+        { isActive: false },
+        { new: true }
+      );
+  
+      if (!deletedType) {
+        return res.status(404).json({
+          message: "Workspace type not found",
+        });
+      }
+  
+      return res.status(200).json({
+        message: "Workspace type deleted successfully",
+      });
+    } catch (error) {
+      console.error("Error deleting workspace type:", error);
+      return res.status(500).json({
+        message: "Unexpected error while deleting workspace type",
       });
     }
   },
@@ -456,15 +651,25 @@ getWorkspacesByProviderId: async (req, res) => {
 
   deleteCategory: async (req, res) => {
     try {
-      const categoryName = req.params.categoryName;
-      const adminId = req.params.userId; // Optional: if you want to check user role
+      const categoryId = req.params.categoryId;
+      const adminId = req.params.userId;
       const user = await User.findById(adminId);
 
       if (!user || user.role.toLowerCase() !== "admin") {
         return res.status(403).json({ message: "Only admins can delete categories" });
       }
 
-      const category = await WorkspaceCategory.findOneAndDelete({ name: categoryName });
+      if (!mongoose.Types.ObjectId.isValid(categoryId)) {
+        return res.status(400).json({ message: "Invalid category ID" });
+      }
+
+      // Soft delete by setting isActive to false
+      const category = await WorkspaceCategory.findByIdAndUpdate(
+        categoryId,
+        { isActive: false },
+        { new: true }
+      );
+      
       if (!category) {
         return res.status(404).json({ message: "Category not found" });
       }
@@ -482,34 +687,59 @@ getWorkspacesByProviderId: async (req, res) => {
   // Update a category
   updateCategory: async (req, res) => {
     try {
-      const categoryName = req.params.categoryName.toLowerCase();
+      const categoryId = req.params.categoryId;
       const adminId = req.params.userId; 
       const user = await User.findById(adminId);
-
-      console.log("the admin id is", adminId)
 
       if (!user || user.role.toLowerCase() !== "admin") {
         return res.status(403).json({ message: "Only admins can update categories" });
       }
 
-      const { name } = req.body;
+      if (!mongoose.Types.ObjectId.isValid(categoryId)) {
+        return res.status(400).json({ message: "Invalid category ID" });
+      }
+
+      const { name, workspaceType } = req.body;
       if (!name) {
         return res.status(400).json({ message: "Category name is required" });
       }
 
-      const category = await WorkspaceCategory.findOne({ name: categoryName });
+      const category = await WorkspaceCategory.findById(categoryId);
       if (!category) {
         return res.status(404).json({ message: "Category not found" });
       }
 
-      // Check if the new name already exists (excluding the current category)
-      const existingCategory = await WorkspaceCategory.findOne({ name: name.toLowerCase(), _id: { $ne: category._id } });
-      if (existingCategory) {
-        return res.status(400).json({ message: "Category name already exists" });
+      // If workspaceType is being updated, validate it exists
+      if (workspaceType && workspaceType !== category.workspaceType.toString()) {
+        if (!mongoose.Types.ObjectId.isValid(workspaceType)) {
+          return res.status(400).json({ message: "Invalid workspace type ID" });
+        }
+        
+        const workspaceTypeExists = await WorkspaceType.findById(workspaceType);
+        if (!workspaceTypeExists) {
+          return res.status(400).json({ message: "Workspace type not found" });
+        }
       }
 
-      category.name = name.toLowerCase();
+      const newWorkspaceType = workspaceType || category.workspaceType;
+      
+      // Check if the new name already exists within the same workspace type (excluding current category)
+      const existingCategory = await WorkspaceCategory.findOne({ 
+        name: { $regex: new RegExp(`^${name.trim()}$`, 'i') },
+        workspaceType: newWorkspaceType,
+        _id: { $ne: categoryId }
+      });
+      if (existingCategory) {
+        return res.status(400).json({ message: "Category name already exists in this workspace type" });
+      }
+
+      category.name = name.trim();
+      if (workspaceType) {
+        category.workspaceType = workspaceType;
+      }
+      
       const updatedCategory = await category.save();
+      await updatedCategory.populate('workspaceType', 'name');
 
       return res.status(200).json({
         message: "Category updated successfully",
@@ -834,13 +1064,41 @@ getDefaultWorkspaces: async (req, res) => {
         fee,
         strikedFee,
         providerName,
-        location, 
+        address,
+        state,
+        city,
+        country,
         persons,
       } = req.body;
+
+      
+
+      console.log({
+  title,
+  about,
+  duration,
+  type,
+  startDate,
+  endDate,
+  startTime,
+  endTime,
+  category,
+  privacy,
+  workDuration,
+  fee,
+  strikedFee,
+  providerName,
+  address,
+  state,
+  city,
+  country,
+  persons,
+});
+      
   
       // Validate required fields
-      if (!title || !location || !persons) {
-        return res.status(400).json({ message: "Title, location, and persons are required" });
+      if (!title || !address || !persons) {
+        return res.status(400).json({ message: "Title, address, and persons are required" });
       }
   
       const file = req.files?.thumbnail;
@@ -865,65 +1123,8 @@ getDefaultWorkspaces: async (req, res) => {
         } else {
           return res.status(400).json({ message: "Specified provider not found" });
         }
-      }
-  
-      // Geocode the location to get coordinates and create a Location document
-      let locationDoc;
-      if (location && location.trim() !== "") {
-        try {
-          const geocodeResponse = await axios.get("https://maps.googleapis.com/maps/api/geocode/json", {
-            params: {
-              address: `${location}, ${user.state || "Nigeria"}`,
-              key: GOOGLE_MAPS_API_KEY,
-            },
-          });
-  
-          if (geocodeResponse.data.status === "OK") {
-            const { lat, lng } = geocodeResponse.data.results[0].geometry.location;
-            const coordinates = [lng, lat];
-  
-            let stateFromGeocode = user.state || "";
-            let city = "";
-            for (const component of geocodeResponse.data.results[0].address_components) {
-              if (component.types.includes("administrative_area_level_1")) {
-                stateFromGeocode = component.long_name;
-              }
-              if (component.types.includes("locality")) {
-                city = component.long_name;
-              }
-            }
-  
-            const fullAddress = geocodeResponse.data.results[0].formatted_address;
-  
-            // Create or update the Location document
-            locationDoc = await Location.findOne({ userId, "selectedLocation.fullAddress": fullAddress });
-            if (!locationDoc) {
-              locationDoc = new Location({
-                userId,
-                location: {
-                  type: "Point",
-                  coordinates,
-                },
-                selectedLocation: {
-                  fullAddress,
-                  state: stateFromGeocode,
-                  city,
-                },
-              });
-              await locationDoc.save();
-            }
-          } else {
-            console.warn(`Geocoding failed for location "${location}" for workspace by user ${userId}`);
-            return res.status(400).json({ message: "Failed to geocode location" });
-          }
-        } catch (error) {
-          console.error(`Error geocoding location for workspace by user ${userId}:`, error.message);
-          return res.status(500).json({ message: "Error processing location", error: error.message });
-        }
-      } else {
-        return res.status(400).json({ message: "Location is required and cannot be empty" });
-      }
-  
+      };
+
       // Get provider details for workspace
       let workspaceProviderName = user.fullname;
       let workspaceProviderImage = user.profilePicture || "";
@@ -947,6 +1148,10 @@ getDefaultWorkspaces: async (req, res) => {
         category,
         privacy,
         about,
+        state,
+        address,
+        city,
+        country,
         providerId: providerId,
         duration,
         type,
@@ -958,11 +1163,89 @@ getDefaultWorkspaces: async (req, res) => {
         fee,
         strikedFee,
         approved,
-        location: locationDoc._id, 
         persons: parseInt(persons),
       });
   
       const savedWorkspace = await newWorkspace.save();
+
+      const workspaceId = savedWorkspace._id
+  
+      // Geocode the location to get coordinates and create a Location document
+      let locationDoc;
+      if (address && address.trim() !== "") {
+        try {
+          const geocodeResponse = await axios.get("https://maps.googleapis.com/maps/api/geocode/json", {
+            params: {
+              address: `${address}, ${state || country || "Nigeria"}`,
+              key: GOOGLE_MAPS_API_KEY,
+            },
+          });
+  
+          if (geocodeResponse.data.status === "OK") {
+            const { lat, lng } = geocodeResponse.data.results[0].geometry.location;
+            const coordinates = [lng, lat];
+  
+            let stateFromGeocode = user.state || "";
+            let city = "";
+            for (const component of geocodeResponse.data.results[0].address_components) {
+              if (component.types.includes("administrative_area_level_1")) {
+                stateFromGeocode = component.long_name;
+              }
+              if (component.types.includes("locality")) {
+                city = component.long_name;
+              }
+            }
+  
+            const fullAddress = geocodeResponse.data.results[0].formatted_address;
+
+
+  
+            // Create or update the Location document
+            const newLocation = await Location.findOneAndUpdate(
+              { workspaceId: workspaceId },
+              {
+                workspaceId: workspaceId,
+                location: {
+                  type: "Point",
+                  coordinates,
+                },
+                selectedLocation: {
+                  fullAddress,
+                  state: stateFromGeocode,
+                  city,
+                },
+              },
+              { upsert: true, new: true }
+            );
+
+            // Update the workspace with the Location reference and geocoded data
+            savedWorkspace.location = newLocation._id;
+            savedWorkspace.state = stateFromGeocode || state;
+            savedWorkspace.city = city || savedWorkspace.city;
+            savedWorkspace.address = fullAddress; // Update address with the standardized format
+
+            await savedWorkspace.save();
+            
+            locationDoc = newLocation;
+
+            console.log(savedWorkspace);
+            
+  
+
+          } else {
+            console.warn(`Geocoding failed for address "${address}" for workspace by user ${userId}`);
+            return res.status(400).json({ message: "Failed to geocode address" });
+          }
+          
+        } catch (error) {
+          console.error(`Error geocoding address for workspace by user ${userId}:`, error.message);
+          return res.status(500).json({ message: "Error processing address", error: error.message });
+        }
+      } else {
+        return res.status(400).json({ message: "Address is required and cannot be empty" });
+      }
+  
+      
   
       
       const notifications = [];
@@ -1025,10 +1308,7 @@ getDefaultWorkspaces: async (req, res) => {
 
   addCategory: async (req, res) => {
     try {
-       console.log("I am very rich")
-
         const adminId = req.params.userId;
-        console.log("admin id is ", adminId)
         const user = await User.findById(adminId);
         if (!user) {
             return res.status(401).json({ message: "User not found" });
@@ -1038,24 +1318,40 @@ getDefaultWorkspaces: async (req, res) => {
             return res.status(403).json({ message: "Only admins can add categories" });
         }
 
-        const { name, subCategory } = req.body;
+        const { name, workspaceType } = req.body;
 
-        if (!name) {
-            return res.status(400).json({ message: "Category name is required" });
+        if (!name || !workspaceType) {
+            return res.status(400).json({ message: "Category name and workspace type are required" });
         }
 
-        const categoryName = name.trim().toLowerCase().replace(/\s+/g, "-"); // Normalize category
-        const existingCategory = await WorkspaceCategory.findOne({ name: categoryName });
+        // Validate workspace type exists
+        if (!mongoose.Types.ObjectId.isValid(workspaceType)) {
+            return res.status(400).json({ message: "Invalid workspace type ID" });
+        }
+
+        const workspaceTypeExists = await WorkspaceType.findById(workspaceType);
+        if (!workspaceTypeExists) {
+            return res.status(400).json({ message: "Workspace type not found" });
+        }
+
+        const categoryName = name.trim();
+        
+        // Check if category already exists within the same workspace type
+        const existingCategory = await WorkspaceCategory.findOne({ 
+            name: { $regex: new RegExp(`^${categoryName}$`, 'i') },
+            workspaceType: workspaceType 
+        });
         if (existingCategory) {
-            return res.status(400).json({ message: "Category already exists" });
+            return res.status(400).json({ message: "Category already exists in this workspace type" });
         }
 
         const newCategory = new WorkspaceCategory({
             name: categoryName,
-            subCategory: subCategory || [],
+            workspaceType: workspaceType,
         });
 
         const savedCategory = await newCategory.save();
+        await savedCategory.populate('workspaceType', 'name');
 
         return res.status(201).json({
             message: "Category added successfully",

@@ -102,7 +102,6 @@ const userSchema = new mongoose.Schema({
       value: String,
     }]
   }],
-  location: String,
   location: {
     type: mongoose.Schema.Types.ObjectId,
     ref: 'Location', 

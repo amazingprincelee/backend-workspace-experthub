@@ -120,7 +120,7 @@ const authControllers = {
         }
       }
   
-      console.log("Registered user:", newUser);
+      
   
       // Uncomment if you need to sync with an external API
       // await axios.post(`${process.env.PEOPLES_POWER_API}/api/v5/auth/sync`, {

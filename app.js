@@ -43,6 +43,7 @@ const { startCronJobs } = require('./utils/ReminderSetupEmail');
 const bodyParser = require('body-parser');
 const { connect } = require('./config/connectionState');
 const { default: axios } = require('axios');
+const mongoose = require('mongoose');
 
 
 
@@ -85,6 +86,55 @@ app.use(fileUpload({
 
 // Connect to database
 connect();
+
+// Migration to standardize workspace locations
+// async function migrateWorkspaces() {
+//   try {
+//     const WorkSpace = require('./models/workspace');
+//     const Location = require('./models/location');
+//     const workspaces = await WorkSpace.find({});
+//     for (const workspace of workspaces) {
+//       if (typeof workspace.location === 'string' && workspace.location.trim() !== '' && !mongoose.Types.ObjectId.isValid(workspace.location)) {
+//         console.log(`Migrating workspace ${workspace._id} with location string: ${workspace.location}`);
+//         const geocodeResponse = await axios.get('https://maps.googleapis.com/maps/api/geocode/json', {
+//           params: {
+//             address: workspace.location,
+//             key: process.env.GOOGLE_MAPS_API_KEY,
+//           },
+//         });
+//         if (geocodeResponse.data.status === 'OK') {
+//           const { lat, lng } = geocodeResponse.data.results[0].geometry.location;
+//           const coordinates = [lng, lat];
+//           let state = '';
+//           let city = '';
+//           for (const component of geocodeResponse.data.results[0].address_components) {
+//             if (component.types.includes('administrative_area_level_1')) state = component.long_name;
+//             if (component.types.includes('locality')) city = component.long_name;
+//           }
+//           const fullAddress = geocodeResponse.data.results[0].formatted_address;
+//           let locationDoc = await Location.findOne({ 'selectedLocation.fullAddress': fullAddress });
+//           if (!locationDoc) {
+//             locationDoc = new Location({
+//               userId: workspace.providerId,
+//               location: { type: 'Point', coordinates },
+//               selectedLocation: { fullAddress, state, city },
+//             });
+//             await locationDoc.save();
+//           }
+//           workspace.location = locationDoc._id;
+//           await workspace.save();
+//           console.log(`Updated workspace ${workspace._id} to location ID: ${locationDoc._id}`);
+//         } else {
+//           console.warn(`Geocoding failed for ${workspace.location}`);
+//         }
+//       }
+//     }
+//     console.log('Workspace migration completed');
+//   } catch (error) {
+//     console.error('Migration error:', error);
+//   }
+// }
+// migrateWorkspaces();
 
 // Routes
 app.use('/auth', authRoute);
