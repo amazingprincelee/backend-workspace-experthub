@@ -1,6 +1,7 @@
 const { log } = require("handlebars");
 const Transaction = require("../models/transactions.js");
 const User = require("../models/user.js");
+const WorkSpace = require("../models/workspace.js");
 const axios = require("axios");
 
 const flutterwaveSecretKey = process.env.FLUTTERWAVE_SECRET;
@@ -438,6 +439,142 @@ const transactionController = {
 
     } catch (error) {
       console.error('Course payment verification error:', error.response ? error.response.data : error.message);
+      res.status(500).json({ error: 'Internal server error' });
+    }
+  },
+
+  // Initialize payment for workspace booking
+  initializeWorkspacePayment: async (req, res) => {
+    const { userId, workspaceId, amount, currency = 'NGN' } = req.body;
+    
+    try {
+      const user = await User.findById(userId);
+      if (!user) {
+        return res.status(404).json({ error: 'User not found' });
+      }
+
+      if (!amount || amount <= 0) {
+        return res.status(400).json({ error: 'Invalid amount' });
+      }
+
+      const tx_ref = `workspace-${Date.now()}-${userId}-${workspaceId}`;
+      
+      const paymentData = {
+        tx_ref,
+        amount,
+        currency,
+        redirect_url: `${process.env.FRONTEND_URL || 'http://localhost:3000'}/reservation/payment-callback`,
+        payment_options: 'card,mobilemoney,ussd',
+        customer: {
+          email: user.email,
+          name: user.fullName || user.fullname,
+          phone_number: user.phone || ''
+        },
+        customizations: {
+          title: 'ExpertHub Workspace Booking',
+          description: 'Workspace reservation payment',
+          logo: ''
+        }
+      };
+
+      const response = await axios.post(`${flutterwaveBaseURL}payments`, paymentData, {
+        headers: {
+          Authorization: `Bearer ${flutterwaveSecretKey}`,
+          'Content-Type': 'application/json'
+        }
+      });
+
+      if (response.data.status === 'success') {
+        return res.status(200).json({
+          status: 'success',
+          data: {
+            link: response.data.data.link,
+            tx_ref
+          }
+        });
+      } else {
+        return res.status(400).json({ error: 'Payment initialization failed' });
+      }
+
+    } catch (error) {
+      console.error('Workspace payment initialization error:', error.response ? error.response.data : error.message);
+      res.status(500).json({ error: 'Internal server error' });
+    }
+  },
+
+  // Verify workspace payment and process booking
+  verifyWorkspacePayment: async (req, res) => {
+    const { tx_ref, transaction_id } = req.body;
+    
+    try {
+      const response = await axios.get(`${flutterwaveBaseURL}transactions/${transaction_id}/verify`, {
+        headers: {
+          Authorization: `Bearer ${flutterwaveSecretKey}`
+        }
+      });
+
+      if (response.data.status === 'success' && response.data.data.status === 'successful') {
+        const { amount, customer, tx_ref: verifiedTxRef } = response.data.data;
+        
+        // Extract userId and workspaceId from tx_ref
+        const txParts = verifiedTxRef.split('-');
+        const userId = txParts[2];
+        const workspaceId = txParts[3];
+        
+        const user = await User.findById(userId);
+        if (!user) {
+          return res.status(404).json({ error: 'User not found' });
+        }
+
+        // Check if transaction already processed
+        const existingTransaction = await Transaction.findOne({ 
+          reference: verifiedTxRef,
+          type: 'debit'
+        });
+        
+        if (existingTransaction) {
+          return res.status(400).json({ error: 'Transaction already processed' });
+        }
+
+        // Find the workspace
+        const workspace = await WorkSpace.findById(workspaceId);
+        if (!workspace) {
+          return res.status(404).json({ error: 'Workspace not found' });
+        }
+
+        // Check if user is already enrolled
+        if (!workspace.registeredClients.includes(userId)) {
+          // Enroll user in workspace
+          workspace.registeredClients.push(userId);
+          workspace.enrollments.push({
+            user: userId,
+            status: "active",
+            enrolledOn: new Date()
+          });
+          await workspace.save();
+        }
+
+        // Create transaction record for workspace payment
+        await Transaction.create({
+          userId: user._id,
+          workspaceId: workspaceId,
+          amount: amount,
+          type: 'debit',
+          reference: verifiedTxRef,
+          status: 'successful'
+        });
+
+        return res.status(200).json({ 
+          message: 'Workspace payment verified and booking confirmed successfully',
+          workspaceId: workspaceId,
+          enrolled: true
+        });
+      } else {
+        return res.status(400).json({ error: 'Payment verification failed' });
+      }
+
+    } catch (error) {
+      console.error('Workspace payment verification error:', error.response ? error.response.data : error.message);
       res.status(500).json({ error: 'Internal server error' });
     }
   }

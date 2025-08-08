@@ -15,6 +15,9 @@ transactionRouter.post('/verify-payment', transactionController.verifyPayment)
 // Course payment routes
 transactionRouter.post('/initialize-course-payment', transactionController.initializeCoursePayment)
 transactionRouter.post('/verify-course-payment', transactionController.verifyCoursePayment)
+// Workspace payment routes
+transactionRouter.post('/initialize-workspace-payment', transactionController.initializeWorkspacePayment)
+transactionRouter.post('/verify-workspace-payment', transactionController.verifyWorkspacePayment)
 
 
 module.exports = transactionRouter;
