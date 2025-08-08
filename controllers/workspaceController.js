@@ -1665,92 +1665,101 @@ getDefaultWorkspaces: async (req, res) => {
 
   getRecommendedWorkspace: async (req, res) => {
     try {
+      // Check if userId is provided (for location-based recommendations)
       const userId = req.params.userId;
-  
-      if (!userId) {
-        return res.status(400).json({ message: "User ID is required" });
-      }
-  
       
-      const userLocation = await Location.findOne({ userId });
-      if (!userLocation || userLocation.location.coordinates.every(coord => coord === 0)) {
-        return res.status(404).json({ message: "User location not set. Please update your location." });
+      if (userId) {
+        // Try location-based recommendations, fall back to general if location issues
+        try {
+          const userLocation = await Location.findOne({ userId });
+          if (userLocation && !userLocation.location.coordinates.every(coord => coord === 0)) {
+            const clientCoordinates = userLocation.location.coordinates;
+            const maxDistance = parseInt(req.query.maxDistance) || 50000;
+            const limit = parseInt(req.query.limit) || 5;
+
+            if (maxDistance >= 1000 && maxDistance <= 100000 && limit >= 1 && limit <= 10) {
+              // Use Location collection for geoNear since it has the geospatial index
+              const nearbyLocations = await Location.aggregate([
+                {
+                  $geoNear: {
+                    near: {
+                      type: "Point",
+                      coordinates: clientCoordinates,
+                    },
+                    distanceField: "distance",
+                    maxDistance: maxDistance,
+                    spherical: true,
+                  },
+                },
+                {
+                  $lookup: {
+                    from: "workspaces",
+                    localField: "_id",
+                    foreignField: "location",
+                    as: "workspace",
+                  },
+                },
+                { $unwind: "$workspace" },
+                { $match: { "workspace.approved": true } },
+                {
+                  $project: {
+                    "workspace.title": 1,
+                    "workspace.providerName": 1,
+                    "workspace.category": 1,
+                    "workspace.fee": 1,
+                    "workspace._id": 1,
+                    distance: { $divide: ["$distance", 1000] },
+                  },
+                },
+                { $limit: limit },
+              ]);
+
+              const workspaces = nearbyLocations.map(item => ({
+                ...item.workspace,
+                distance: item.distance
+              }));
+
+              if (workspaces && workspaces.length > 0) {
+                return res.status(200).json({
+                  workspace: workspaces,
+                  totalNearby: workspaces.length,
+                  maxDistanceApplied: maxDistance / 1000, 
+                });
+              }
+            }
+          }
+        } catch (locationError) {
+          console.log("Location-based recommendation failed, falling back to general:", locationError.message);
+        }
+        
+        // Fall back to general recommendations if location-based fails
+      } else {
+        // General recommendations (no location required)
+        const totalWorkspaces = await WorkSpace.countDocuments({ approved: true });
+        if (totalWorkspaces === 0) {
+          return res.status(404).json({ message: "No approved workspaces available" });
+        }
+  
+        const workspaces = await WorkSpace.find({ approved: true })
+          .populate({
+            path: "registeredClients",
+            select: "profilePicture fullname _id",
+          })
+          .lean();
+  
+        if (!workspaces || workspaces.length === 0) {
+          return res.status(404).json({ message: "No approved workspaces available" });
+        }
+  
+        // Select random workspaces (up to 6 for dashboard)
+        const numberOfRecommendations = Math.min(workspaces.length, 6);
+        const shuffledWorkspaces = workspaces.sort(() => 0.5 - Math.random());
+        const recommendedWorkspaces = shuffledWorkspaces.slice(0, numberOfRecommendations);
+  
+        return res.status(200).json({
+          workspace: recommendedWorkspaces,
+        });
       }
-  
-      const clientCoordinates = userLocation.location.coordinates;
-  
-      // Step 2: Count total approved workspaces
-      const totalWorkspaces = await WorkSpace.countDocuments({ approved: true });
-      if (totalWorkspaces === 0) {
-        return res.status(404).json({ message: "No approved workspaces available" });
-      }
-  
-      // Step 3: Get query parameters for flexibility
-      const maxDistance = parseInt(req.query.maxDistance) || 50000; // Default to 50km in meters
-      const limit = parseInt(req.query.limit) || 5; // Default to 5 workspaces
-  
-      // Validate maxDistance and limit
-      if (maxDistance < 1000 || maxDistance > 100000) {
-        return res.status(400).json({ message: "maxDistance must be between 1km and 100km" });
-      }
-      if (limit < 1 || limit > 10) {
-        return res.status(400).json({ message: "limit must be between 1 and 10" });
-      }
-  
-      // Step 4: Fetch workspaces near the client's location, sorted by distance
-      const workspaces = await WorkSpace.aggregate([
-        {
-          $match: { approved: true },
-        },
-        {
-          $lookup: {
-            from: "locations", 
-            localField: "location",
-            foreignField: "_id",
-            as: "workspaceLocation",
-          },
-        },
-        {
-          $unwind: "$workspaceLocation",
-        },
-        {
-          $geoNear: {
-            near: {
-              type: "Point",
-              coordinates: clientCoordinates,
-            },
-            distanceField: "distance", // Adds distance in meters to each document
-            maxDistance: maxDistance, // Flexible distance range
-            spherical: true,
-            key: "workspaceLocation.location",
-          },
-        },
-        {
-          $project: {
-            title: 1,
-            providerName: 1,
-            category: 1,
-            fee: 1,
-            distance: { $divide: ["$distance", 1000] }, // Convert distance from meters to kilometers
-            
-          },
-        },
-        {
-          $limit: limit, 
-        },
-      ]);
-  
-     
-      if (!workspaces || workspaces.length === 0) {
-        return res.status(404).json({ message: `No approved workspaces found within ${maxDistance / 1000}km` });
-      }
-  
-      // Step 6: Return the recommended workspaces with distances in kilometers
-      res.status(200).json({
-        workspace: workspaces,
-        totalNearby: workspaces.length,
-        maxDistanceApplied: maxDistance / 1000, 
-      });
     } catch (error) {
       console.error("Error in getRecommendedWorkspace:", error);
       res.status(500).json({
@@ -1760,39 +1769,7 @@ getDefaultWorkspaces: async (req, res) => {
     }
   },
 
-  // getRecommendedWorkspace: async (req, res) => {
-  //   try {
-  //     // Step 1: Count total workspaces
-  //     const totalWorkspaces = await WorkSpace.countDocuments();
-  //     if (totalWorkspaces === 0) {
-  //       return res.status(404).json({ message: "No workspaces available" });
-  //     }
-  
-  //     // Step 2: Fetch all approved workspaces
-  //     const query = { approved: true };
-  //     const workspaces = await WorkSpace.find(query);
-  
-  //     // Step 3: Check if there are any approved workspaces
-  //     if (!workspaces || workspaces.length === 0) {
-  //       return res.status(404).json({ message: "No approved workspaces available" });
-  //     }
-  
-  //     // Step 4: Select multiple random workspaces (e.g., up to 3)
-  //     const numberOfRecommendations = Math.min(workspaces.length, 3); // Limit to 3 or available workspaces
-  //     const shuffledWorkspaces = workspaces.sort(() => 0.5 - Math.random()); // Shuffle array
-  //     const recommendedWorkspaces = shuffledWorkspaces.slice(0, numberOfRecommendations);
-  
-  //     // Step 5: Return the recommended workspaces as an array
-  //     return res.status(200).json({
-  //       workspace: recommendedWorkspaces, // Return array instead of single object
-  //     });
-  //   } catch (error) {
-  //     console.error("Error in getRecommendedWorkspace:", error);
-  //     return res.status(500).json({
-  //       message: "Unexpected error while fetching recommended workspaces",
-  //     });
-  //   }
-  // },
+
 
   editWorkSpace: async (req, res) => {
     try {
