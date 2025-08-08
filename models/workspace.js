@@ -59,7 +59,7 @@ const workspaceSchema = new mongoose.Schema({
     location: {
         type: mongoose.Schema.Types.ObjectId,
         ref: 'Location', 
-        required: true,
+        required: false,
     },
     room: String,
     approved: {
