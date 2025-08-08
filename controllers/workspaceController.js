@@ -973,6 +973,14 @@ getDefaultWorkspaces: async (req, res) => {
       })
       .lean();
 
+    // If category is an ObjectId, populate it to get the category name
+    if (workspace && workspace.category && mongoose.Types.ObjectId.isValid(workspace.category)) {
+      const categoryDoc = await WorkspaceCategory.findById(workspace.category).select('name').lean();
+      if (categoryDoc) {
+        workspace.category = categoryDoc.name;
+      }
+    }
+
     if (!workspace) {
       return res.status(404).json({ message: "Workspace not found" });
     }
