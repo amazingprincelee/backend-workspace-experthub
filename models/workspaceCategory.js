@@ -1,4 +1,5 @@
 // models/workspaceCategory.js
+//checking...
 const mongoose = require("mongoose");
 
 const workspaceCategorySchema = new mongoose.Schema({
