@@ -8,6 +8,12 @@ const userSchema = new mongoose.Schema({
   companyName: { type: String, default: "" },
   gender: String,
   age: String,
+  workspaceInterests: [
+  {
+    category: { type: String, required: true },
+    subCategory: { type: String, required: true }
+  }
+],
   premiumPlan: {
     type: String,
     default: "basic"

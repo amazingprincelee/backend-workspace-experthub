@@ -45,4 +45,10 @@ userRouter.put("/block-user/:id", userControllers.blockUser);
 userRouter.put("/verify/:id", userControllers.verifyUser);
 userRouter.put("/unverify/:id", userControllers.unverifyUser);
 
+//User's workspace interest
+userRouter.get("/interest/:userId", userControllers.getWorkspaceInterests);
+userRouter.post("/interest", userControllers.addWorkspaceInterests);
+userRouter.delete("/interest/:userId/:interestId", userControllers.deleteWorkspaceInterest);
+
+
 module.exports = userRouter;
