@@ -19,5 +19,8 @@ transactionRouter.post('/verify-course-payment', transactionController.verifyCou
 transactionRouter.post('/initialize-workspace-payment', transactionController.initializeWorkspacePayment)
 transactionRouter.post('/verify-workspace-payment', transactionController.verifyWorkspacePayment)
 
+// Flutterwave webhook route (no authentication required)
+transactionRouter.post('/flutterwave-webhook', transactionController.flutterwaveWebhook)
+
 
 module.exports = transactionRouter;

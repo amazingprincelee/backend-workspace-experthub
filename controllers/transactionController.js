@@ -2,6 +2,7 @@ const { log } = require("handlebars");
 const Transaction = require("../models/transactions.js");
 const User = require("../models/user.js");
 const WorkSpace = require("../models/workspace.js");
+const Course = require("../models/courses.js");
 const axios = require("axios");
 
 const flutterwaveSecretKey = process.env.FLUTTERWAVE_SECRET;
@@ -9,6 +10,59 @@ const flutterwaveBaseURL = 'https://api.flutterwave.com/v3/';
 
 const transactionController = {
   getBalance: async (req, res) => {
+    const { userId } = req.params;
+
+    try {
+      const user = await User.findById(userId);
+      if (!user) {
+        return res.status(404).send('User not found');
+      }
+
+      res.status(200).json({ balance: user.walletBalance || 0 });
+    } catch (error) {
+      console.error('Error fetching balance:', error);
+      res.status(500).json({ error: 'Failed to fetch balance' });
+    }
+  },
+
+  // Flutterwave webhook handler for automatic payment processing
+  flutterwaveWebhook: async (req, res) => {
+    try {
+      const secretHash = process.env.FLUTTERWAVE_SECRET_HASH;
+      const signature = req.headers['verif-hash'];
+      
+      if (!signature || signature !== secretHash) {
+        return res.status(401).json({ error: 'Unauthorized webhook request' });
+      }
+
+      const payload = req.body;
+      console.log('Flutterwave webhook payload:', payload);
+
+      // Only process successful payments
+      if (payload.event === 'charge.completed' && payload.data.status === 'successful') {
+        const { tx_ref, amount, customer, id: transaction_id } = payload.data;
+        
+        // Extract payment type and details from tx_ref
+        const txParts = tx_ref.split('-');
+        const paymentType = txParts[0]; // 'workspace', 'course', or 'wallet'
+        
+        if (paymentType === 'workspace') {
+          await processWorkspacePayment(tx_ref, transaction_id, amount, customer);
+        } else if (paymentType === 'course') {
+          await processCoursePayment(tx_ref, transaction_id, amount, customer);
+        } else if (paymentType === 'wallet') {
+          await processWalletPayment(tx_ref, transaction_id, amount, customer);
+        }
+      }
+
+      res.status(200).json({ status: 'success' });
+    } catch (error) {
+      console.error('Webhook processing error:', error);
+      res.status(500).json({ error: 'Webhook processing failed' });
+    }
+  },
+
+  getTransactions: async (req, res) => {
     const { userId } = req.params;
 
     try {
@@ -239,6 +293,9 @@ const transactionController = {
           title: 'ExpertHub Wallet Funding',
           description: 'Add funds to your wallet',
           logo: ''
+        },
+        meta: {
+          webhook_url: `${process.env.BACKEND_URL || 'http://localhost:3002'}/transactions/flutterwave-webhook`
         }
       };
 
@@ -357,6 +414,9 @@ const transactionController = {
           title: 'ExpertHub Course Enrollment',
           description: 'Course enrollment payment',
           logo: ''
+        },
+        meta: {
+          webhook_url: `${process.env.BACKEND_URL || 'http://localhost:3002'}/transactions/flutterwave-webhook`
         }
       };
 
@@ -474,6 +534,9 @@ const transactionController = {
           title: 'ExpertHub Workspace Booking',
           description: 'Workspace reservation payment',
           logo: ''
+        },
+        meta: {
+          webhook_url: `${process.env.BACKEND_URL || 'http://localhost:3002'}/transactions/flutterwave-webhook`
         }
       };
 
@@ -580,5 +643,164 @@ const transactionController = {
   }
 }
 
+// Helper function to process workspace payments
+async function processWorkspacePayment(tx_ref, transaction_id, amount, customer) {
+  try {
+    // Check if transaction already processed
+    const existingTransaction = await Transaction.findOne({ 
+      reference: tx_ref,
+      type: 'debit'
+    });
+    
+    if (existingTransaction) {
+      console.log('Workspace transaction already processed:', tx_ref);
+      return;
+    }
+
+    // Extract userId and workspaceId from tx_ref
+    const txParts = tx_ref.split('-');
+    const userId = txParts[2];
+    const workspaceId = txParts[3];
+    
+    const user = await User.findById(userId);
+    if (!user) {
+      console.error('User not found for workspace payment:', userId);
+      return;
+    }
+
+    // Find the workspace
+    const workspace = await WorkSpace.findById(workspaceId);
+    if (!workspace) {
+      console.error('Workspace not found:', workspaceId);
+      return;
+    }
+
+    // Check if user is already enrolled
+    if (!workspace.registeredClients.includes(userId)) {
+      // Enroll user in workspace
+      workspace.registeredClients.push(userId);
+      workspace.enrollments.push({
+        user: userId,
+        status: "active",
+        enrolledOn: new Date()
+      });
+      await workspace.save();
+      console.log('User enrolled in workspace via webhook:', userId, workspaceId);
+    }
+
+    // Create transaction record
+    await Transaction.create({
+      userId: user._id,
+      workspaceId: workspaceId,
+      amount: amount,
+      type: 'debit',
+      reference: tx_ref,
+      status: 'successful'
+    });
+
+    console.log('Workspace payment processed successfully via webhook:', tx_ref);
+  } catch (error) {
+    console.error('Error processing workspace payment:', error);
+  }
+}
+
+// Helper function to process course payments
+async function processCoursePayment(tx_ref, transaction_id, amount, customer) {
+  try {
+    // Check if transaction already processed
+    const existingTransaction = await Transaction.findOne({ 
+      reference: tx_ref,
+      type: 'debit'
+    });
+    
+    if (existingTransaction) {
+      console.log('Course transaction already processed:', tx_ref);
+      return;
+    }
+
+    // Extract userId and courseId from tx_ref
+    const txParts = tx_ref.split('-');
+    const userId = txParts[2];
+    const courseId = txParts[3];
+    
+    const user = await User.findById(userId);
+    if (!user) {
+      console.error('User not found for course payment:', userId);
+      return;
+    }
+
+    // Find the course
+    const course = await Course.findById(courseId);
+    if (!course) {
+      console.error('Course not found:', courseId);
+      return;
+    }
+
+    // Check if user is already enrolled
+    if (!course.enrolledStudents.includes(userId)) {
+      // Enroll user in course
+      course.enrolledStudents.push(userId);
+      await course.save();
+      console.log('User enrolled in course via webhook:', userId, courseId);
+    }
+
+    // Create transaction record
+    await Transaction.create({
+      userId: user._id,
+      courseId: courseId,
+      amount: amount,
+      type: 'debit',
+      reference: tx_ref,
+      status: 'successful'
+    });
+
+    console.log('Course payment processed successfully via webhook:', tx_ref);
+  } catch (error) {
+    console.error('Error processing course payment:', error);
+  }
+}
+
+// Helper function to process wallet payments
+async function processWalletPayment(tx_ref, transaction_id, amount, customer) {
+  try {
+    // Check if transaction already processed
+    const existingTransaction = await Transaction.findOne({ 
+      reference: tx_ref,
+      type: 'credit'
+    });
+    
+    if (existingTransaction) {
+      console.log('Wallet transaction already processed:', tx_ref);
+      return;
+    }
+
+    // Extract userId from tx_ref
+    const txParts = tx_ref.split('-');
+    const userId = txParts[2];
+    
+    const user = await User.findById(userId);
+    if (!user) {
+      console.error('User not found for wallet payment:', userId);
+      return;
+    }
+
+    // Add funds to user's balance
+    user.balance = (user.balance || 0) + amount;
+    await user.save();
+
+    // Create transaction record
+    await Transaction.create({
+      userId: user._id,
+      amount: amount,
+      type: 'credit',
+      reference: tx_ref,
+      status: 'successful'
+    });
+
+    console.log('Wallet payment processed successfully via webhook:', tx_ref);
+  } catch (error) {
+    console.error('Error processing wallet payment:', error);
+  }
+}
 
 module.exports = transactionController;
