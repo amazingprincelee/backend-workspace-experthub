@@ -55,6 +55,9 @@ const workspaceSchema = new mongoose.Schema({
             type: String
         }
     }],
+    benefits: [{
+        type: String
+    }],
     address: {type: String, required: true },
     location: {
         type: mongoose.Schema.Types.ObjectId,

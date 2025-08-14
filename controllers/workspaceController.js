@@ -1090,6 +1090,7 @@ getDefaultWorkspaces: async (req, res) => {
         city,
         country,
         persons,
+        benefits,
       } = req.body;
 
       
@@ -1185,6 +1186,7 @@ getDefaultWorkspaces: async (req, res) => {
         strikedFee,
         approved,
         persons: parseInt(persons),
+        benefits: benefits || [],
       });
   
       const savedWorkspace = await newWorkspace.save();
