@@ -82,4 +82,7 @@ WorkspaceRoute.get('/renew/:workspaceId/:id', workspaceController.renewWorkspace
 //Client use to get the provider details of the work they enrolled into
 WorkspaceRoute.get('/myproviders/:clientId', workspaceController.getMyProviders);
 
+//Provider use to get the client details of the work they created
+WorkspaceRoute.get('/myclients/:providerId', workspaceController.getMyClients);
+
 module.exports = WorkspaceRoute;

@@ -161,6 +161,20 @@ const appointmentControllers = {
       console.error(e);
       return res.status(500).json({ message: 'Unexpected error' });
     }
+  },
+
+  getAllAppointments: async (req, res) => {
+    try {
+      const appointments = await Appointment.find({})
+        .populate({ path: 'from to', select: "profilePicture fullname _id" })
+        .sort({ createdAt: -1 })
+        .lean();
+
+      return res.status(200).json({ appointments });
+    } catch (error) {
+      console.error(error);
+      return res.status(500).json({ message: 'Unexpected error during appointment processing' });
+    }
   }
 }
 

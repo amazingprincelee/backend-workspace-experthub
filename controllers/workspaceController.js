@@ -98,6 +98,88 @@ const workspaceController = {
     }
   },
 
+  getMyClients: async (req, res) => {
+    const providerId = req.params.providerId;
+
+    try {
+      // Verify the requesting user matches the providerId (from JWT)
+      if (req.user._id !== providerId) {
+        return res.status(403).json({ message: "Unauthorized: You can only access your own clients" });
+      }
+
+      // Verify the user exists and is a provider
+      const provider = await User.findById(providerId);
+      if (!provider) {
+        return res.status(404).json({ message: "Provider account not found" });
+      }
+      if (provider.role.toLowerCase() !== "provider") {
+        return res.status(403).json({ message: "Only providers can access this endpoint" });
+      }
+
+      // Find workspaces where the provider is the owner or assigned
+      const workspaces = await WorkSpace.find({
+        $or: [
+          { providerId: providerId },
+          { assignedSpaceProvider: providerId }
+        ],
+        approved: true, // Only include approved workspaces
+        registeredClients: { $exists: true, $not: { $size: 0 } } // Only workspaces with enrolled clients
+      })
+        .select("registeredClients title") // Select only necessary fields
+        .populate({
+          path: "registeredClients",
+          select: "fullname email phone profilePicture _id",
+        })
+        .lean();
+
+      if (!workspaces || workspaces.length === 0) {
+        return res.status(200).json({
+          message: "No enrolled clients found",
+          clients: [],
+        });
+      }
+
+      // Extract unique clients
+      const clientMap = new Map();
+      workspaces.forEach((workspace) => {
+        if (workspace.registeredClients && workspace.registeredClients.length > 0) {
+          workspace.registeredClients.forEach((client) => {
+            if (client) {
+              const clientId = client._id.toString();
+              if (!clientMap.has(clientId)) {
+                clientMap.set(clientId, {
+                  id: client._id,
+                  fullname: client.fullname || "N/A",
+                  email: client.email || "N/A",
+                  phone: client.phone || "N/A",
+                  profilePicture: client.profilePicture || "",
+                  workspaces: [],
+                });
+              }
+              // Add workspace to client's workspaces list
+              clientMap.get(clientId).workspaces.push({
+                workspaceId: workspace._id,
+                title: workspace.title,
+              });
+            }
+          });
+        }
+      });
+
+      const clients = Array.from(clientMap.values());
+
+      return res.status(200).json({
+        message: "Clients retrieved successfully",
+        clients,
+      });
+    } catch (error) {
+      console.error("Error fetching clients:", error);
+      return res.status(500).json({
+        message: "Unexpected error while fetching clients",
+      });
+    }
+  },
+
 
   getAllCategory: async (req, res) => {
     try {
