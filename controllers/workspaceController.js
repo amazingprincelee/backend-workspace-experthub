@@ -1020,7 +1020,7 @@ getDefaultWorkspaces: async (req, res) => {
           select: "profilePicture fullname _id",
         })
         .lean();
-  
+
       // Group workspaces by category
       const groupedWorkspaces = workspaces.reduce((acc, workspace) => {
         const category = workspace.category || "Uncategorized";
