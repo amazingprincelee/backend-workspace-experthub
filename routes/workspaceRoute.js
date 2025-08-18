@@ -66,9 +66,9 @@ WorkspaceRoute.put("/edit/:id", workspaceController.editWorkSpace);
 // New routes for team member management
 // In workspaceRoutes.js
 
-WorkspaceRoute.post('/assign-team-member/:workspaceId', authenticate, workspaceController.assignTeamMember);
-WorkspaceRoute.put('/update-team-member/:workspaceId', authenticate, workspaceController.updateTeamMemberRole);
-WorkspaceRoute.delete('/remove-team-member/:workspaceId/:userId', authenticate, workspaceController.removeTeamMember);
+WorkspaceRoute.post('/assign-team-member/:workspaceId', workspaceController.assignTeamMember);
+WorkspaceRoute.put('/update-team-member/:workspaceId',  workspaceController.updateTeamMemberRole);
+WorkspaceRoute.delete('/remove-team-member/:workspaceId/:userId',  workspaceController.removeTeamMember);
 
 
 WorkspaceRoute.get("/unapproved", workspaceController.getUnapproved);
@@ -84,5 +84,8 @@ WorkspaceRoute.get('/myproviders/:clientId', workspaceController.getMyProviders)
 
 //Provider use to get the client details of the work they created
 WorkspaceRoute.get('/myclients/:providerId', workspaceController.getMyClients);
+
+//Client use to get admin users for messaging
+WorkspaceRoute.get('/myadmins/:clientId', workspaceController.getAdminUsers);
 
 module.exports = WorkspaceRoute;

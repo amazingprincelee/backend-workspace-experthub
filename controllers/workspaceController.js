@@ -27,15 +27,14 @@ const workspaceController = {
       // Get client ID from route parameters
       const clientId = req.params.clientId;
 
+      console.log("the clientId", clientId);
+      
+
       // Validate clientId
       if (!clientId || !mongoose.Types.ObjectId.isValid(clientId)) {
         return res.status(400).json({ message: "Valid client ID is required" });
       }
 
-      // Verify the requesting user matches the clientId (from JWT)
-      if (req.user._id !== clientId) {
-        return res.status(403).json({ message: "Unauthorized: You can only access your own providers" });
-      }
 
       // Verify the user exists and is a client
       const client = await User.findById(clientId);
@@ -102,11 +101,6 @@ const workspaceController = {
     const providerId = req.params.providerId;
 
     try {
-      // Verify the requesting user matches the providerId (from JWT)
-      if (req.user._id !== providerId) {
-        return res.status(403).json({ message: "Unauthorized: You can only access your own clients" });
-      }
-
       // Verify the user exists and is a provider
       const provider = await User.findById(providerId);
       if (!provider) {
@@ -2147,6 +2141,62 @@ searchUsersByEmail: async (req, res) => {
   } catch (error) {
     console.error("Error searching users by email:", error);
     return res.status(500).json({ message: "Unexpected error while searching users" });
+  }
+},
+
+getAdminUsers: async (req, res) => {
+  try {
+    // Get client ID from route parameters
+    const clientId = req.params.clientId;
+
+    // Validate clientId
+    if (!clientId || !mongoose.Types.ObjectId.isValid(clientId)) {
+      return res.status(400).json({ message: "Valid client ID is required" });
+    }
+
+    // Verify the user exists and is a client
+    const client = await User.findById(clientId);
+    if (!client) {
+      return res.status(404).json({ message: "Client account not found" });
+    }
+    if (client.role.toLowerCase() !== "client") {
+      return res.status(403).json({ message: "Only clients can access this endpoint" });
+    }
+
+    // Find all admin users
+    const adminUsers = await User.find({
+      role: "admin",
+      blocked: { $ne: true } // Exclude blocked admin users
+    })
+      .select("fullname email phone profilePicture _id")
+      .lean();
+
+    if (!adminUsers || adminUsers.length === 0) {
+      return res.status(200).json({
+        message: "No admin users found",
+        admins: [],
+      });
+    }
+
+    // Format admin users for messaging
+    const formattedAdmins = adminUsers.map(admin => ({
+      id: admin._id,
+      fullname: admin.fullname || "Admin",
+      email: admin.email || "N/A",
+      phone: admin.phone || "N/A",
+      companyName: "ExpertHub Admin",
+      profilePicture: admin.profilePicture || "",
+    }));
+
+    return res.status(200).json({
+      message: "Admin users retrieved successfully",
+      admins: formattedAdmins,
+    });
+  } catch (error) {
+    console.error("Error fetching admin users:", error);
+    return res.status(500).json({
+      message: "Unexpected error while fetching admin users",
+    });
   }
 },
 
