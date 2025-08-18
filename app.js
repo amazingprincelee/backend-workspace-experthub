@@ -165,7 +165,7 @@ app.use("/api/subscription-plans", subscriptionPlanRoute);
 io.on('connection', async (socket) => {
   const user_id = socket.handshake.query["user_id"];
 
-  console.log(`User connected ${socket.id}`);
+  console.log(`User connected ${socket.id} with user_id: ${user_id}`);
 
   // if (user_id) {
   //   try {

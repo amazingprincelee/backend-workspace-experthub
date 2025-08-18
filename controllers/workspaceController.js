@@ -100,6 +100,8 @@ const workspaceController = {
   getMyClients: async (req, res) => {
     const providerId = req.params.providerId;
 
+    console.log("the providerId", providerId);
+
     try {
       // Verify the user exists and is a provider
       const provider = await User.findById(providerId);
