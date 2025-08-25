@@ -257,6 +257,8 @@ io.on('connection', async (socket) => {
       chat.messages.push(new_message);
       await chat.save({ new: true, validateModifiedOnly: true });
 
+      const savedMessage = chat.messages[chat.messages.length - 1];
+
       await Notification.create({
         title: "Message",
         content: `${from_user.fullname} Just sent you a message '${text}'`,
@@ -264,11 +266,17 @@ io.on('connection', async (socket) => {
         userId: to,
       });
 
-      io.to(to_user?.socket_id).broadcast.emit("new_message", {
+      io.to(to_user?.socket_id).emit("new_message", {
         conversation_id,
-        message: new_message,
+        message: savedMessage,
       });
 
+      io.to(from_user?.socket_id).emit("message_delivered", {
+        conversation_id,
+        message_id: savedMessage._id,
+        status: 'delivered',
+        clientId: data.clientId || null
+      });
     } catch (e) {
       console.error('Error blocking user:', e);
     }
@@ -434,24 +442,36 @@ io.on('connection', async (socket) => {
     socket.broadcast.emit('user_stopped_typing', { conversation_id });
   });
 
-  socket.on('mark_all_as_read', async ({ chat_id, user_id }) => {
+  socket.on('mark_all_as_read', async (data) => {
     try {
-      // Update messages to mark them as read in the specific chat document
-      const result = await Chat.updateMany(
-        { _id: chat_id, 'messages.to': user_id },
-        { $set: { 'messages.$[elem].read': true } },
-        {
-          arrayFilters: [{ 'elem.to': user_id }],
+      const { chat_id, user_id } = data;
+      const chat = await Chat.findById(chat_id);
+  
+      if (!chat) return;
+  
+      // Update all messages not from this user to read: true
+      chat.messages = chat.messages.map(msg => {
+        if (msg.from.toString() !== user_id && !msg.read) {
+          return { ...msg, read: true };
         }
-      );
-
-      // Log the result to see if any documents were modified
-      // console.log('Messages marked as read:', result);
-
-      // Notify other participants in the chat
-      socket.broadcast.emit('all_messages_read', { chat_id, user_id });
-    } catch (error) {
-      console.error('Error marking messages as read:', error);
+        return msg;
+      });
+  
+      await chat.save();
+  
+      // Find the other participant
+      const otherParticipantId = chat.participants.find(p => p.toString() !== user_id);
+      const otherUser = await User.findById(otherParticipantId);
+  
+      if (otherUser?.socket_id) {
+        io.to(otherUser.socket_id).emit('messages_seen', {
+          conversation_id: chat_id,
+          seen_by: user_id
+        });
+      }
+  
+    } catch (e) {
+      console.error('Error marking messages as read:', e);
     }
   });
 
